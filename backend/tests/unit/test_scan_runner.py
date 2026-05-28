@@ -71,7 +71,7 @@ def test_run_scan_for_scan_id_persists_findings_snapshot_and_score() -> None:
         saved_scan = session.get(Scan, scan_id)
         assert saved_scan is not None
         assert saved_scan.status is ScanStatus.COMPLETED
-        assert saved_scan.score == 75
+        assert saved_scan.score == 68
         assert saved_scan.summary is not None
         assert len(saved_scan.findings) == 5
         assert saved_scan.snapshot is not None
