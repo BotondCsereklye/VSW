@@ -45,7 +45,7 @@ test('ReportDetail renders score, snapshot highlights and findings', () => {
 
   expect(screen.getByRole('heading', { name: /example.com/i })).toBeInTheDocument()
   expect(screen.getByText(/63\/100/i)).toBeInTheDocument()
-  expect(screen.getByText(/legacy ca/i)).toBeInTheDocument()
+  expect(screen.getAllByText(/legacy ca/i)).toHaveLength(2)
   expect(screen.getByText(/tls certificate is expired/i)).toBeInTheDocument()
 })
 

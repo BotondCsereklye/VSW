@@ -26,3 +26,18 @@ export type ScanSummary = {
   created_at: string
   updated_at: string
 }
+
+export type ReportSnapshot = {
+  id: string
+  http_headers: Record<string, unknown>
+  tls_analysis: Record<string, unknown>
+  port_results: Array<Record<string, unknown>>
+  misconfigurations: Array<Record<string, unknown>>
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export type ScanDetail = ScanSummary & {
+  findings: ScanFinding[]
+  snapshot: ReportSnapshot | null
+}
