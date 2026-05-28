@@ -1,8 +1,9 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.health import router as health_router
 from app.api.routes.scans import router as scans_router
-from app.core.config import Settings, get_settings
+from app.core.config import Settings, get_settings, parse_cors_origins
 from app.core.rate_limit import InMemoryRateLimiter
 from app.db.base import Base
 from app.db.session import create_engine_from_settings, create_session_factory
@@ -15,6 +16,13 @@ from app.services.web import probe_http_target
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     app = FastAPI(title=settings.app_name, version=settings.app_version)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=parse_cors_origins(settings),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     engine = create_engine_from_settings(settings)
     session_factory = create_session_factory(engine)
