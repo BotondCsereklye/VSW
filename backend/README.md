@@ -1,3 +1,3 @@
 # Backend
 
-Interner Paketbereich fuer die FastAPI-Anwendung.
+Interner Paketbereich für die FastAPI-Anwendung.
