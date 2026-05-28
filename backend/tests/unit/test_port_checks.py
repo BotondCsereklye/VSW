@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 
 from app.services.ports import (
@@ -36,7 +34,7 @@ async def test_probe_port_marks_closed_connections() -> None:
 @pytest.mark.asyncio
 async def test_probe_port_marks_timeouts() -> None:
     async def connector(host: str, port: int, timeout_seconds: float) -> None:
-        raise asyncio.TimeoutError
+        raise TimeoutError
 
     result = await probe_port("example.com", 8080, connector=connector)
 

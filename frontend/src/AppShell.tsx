@@ -1,11 +1,11 @@
-import { startTransition, useEffect, useEffectEvent, useState } from 'react'
+import { startTransition, useEffect, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router-dom'
 
 import { createScan, getScanDetail, listScans } from './api/client'
 import { ReportDetail } from './components/ReportDetail'
 import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
-import { ScanDetail, ScanSummary } from './types/scan'
+import type { ScanDetail, ScanSummary } from './types/scan'
 
 
 export function AppShell() {
@@ -19,55 +19,86 @@ export function AppShell() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const loadScans = useEffectEvent(async () => {
-    setIsLoadingScans(true)
-    try {
-      const response = await listScans()
-      startTransition(() => {
-        setScans(response)
-        setErrorMessage(null)
-      })
-    } catch {
-      setErrorMessage('Unable to load scans.')
-    } finally {
-      setIsLoadingScans(false)
-    }
-  })
-
-  const loadScanDetail = useEffectEvent(async (activeScanId: string) => {
-    try {
-      const response = await getScanDetail(activeScanId)
-      startTransition(() => {
-        setSelectedScan(response)
-        setErrorMessage(null)
-      })
-    } catch {
-      setErrorMessage('Unable to load report details.')
-    }
-  })
-
   useEffect(() => {
+    let isActive = true
+
+    async function loadScans() {
+      try {
+        const response = await listScans()
+        if (!isActive) {
+          return
+        }
+
+        startTransition(() => {
+          setScans(response)
+          setErrorMessage(null)
+        })
+      } catch {
+        if (isActive) {
+          setErrorMessage('Unable to load scans.')
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingScans(false)
+        }
+      }
+    }
+
     void loadScans()
+
+    return () => {
+      isActive = false
+    }
   }, [])
 
   useEffect(() => {
     if (!scanId) {
-      setSelectedScan(null)
       return
     }
 
-    void loadScanDetail(scanId)
+    let isActive = true
+    const activeScanId = scanId
+
+    async function loadScanDetail() {
+      try {
+        const response = await getScanDetail(activeScanId)
+        if (!isActive) {
+          return
+        }
+
+        startTransition(() => {
+          setSelectedScan(response)
+          setErrorMessage(null)
+        })
+      } catch {
+        if (isActive) {
+          setErrorMessage('Unable to load report details.')
+        }
+      }
+    }
+
+    void loadScanDetail()
+
+    return () => {
+      isActive = false
+    }
   }, [scanId])
 
   async function handleCreateScan(target: string) {
     setIsSubmitting(true)
+    setIsLoadingScans(true)
     try {
       const createdScan = await createScan(target)
-      await loadScans()
+      const refreshedScans = await listScans()
+      startTransition(() => {
+        setScans(refreshedScans)
+        setErrorMessage(null)
+      })
       navigate(`/scans/${createdScan.id}`)
     } catch {
       setErrorMessage('Unable to create a scan right now.')
     } finally {
+      setIsLoadingScans(false)
       setIsSubmitting(false)
     }
   }
@@ -101,7 +132,7 @@ export function AppShell() {
           )}
         </div>
         <div className="app-shell__panel">
-          <ReportDetail scan={selectedScan} />
+          <ReportDetail scan={scanId ? selectedScan : null} />
         </div>
       </section>
     </main>

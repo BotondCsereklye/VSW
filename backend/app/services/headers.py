@@ -35,7 +35,9 @@ def analyze_security_headers(headers: dict[str, str]) -> HeaderAnalysis:
     for header_name in RequiredHeader:
         value = normalized_headers.get(header_name.value)
         present = value is not None and value.strip() != ""
-        checks.append(HeaderCheck(name=header_name, present=present, value=value if present else None))
+        checks.append(
+            HeaderCheck(name=header_name, present=present, value=value if present else None)
+        )
         if not present:
             missing_headers.append(header_name)
 

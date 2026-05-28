@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from app.models.finding import Finding
 from app.models.report_snapshot import ReportSnapshot
@@ -17,7 +16,6 @@ from app.services.ports import PortResult, probe_standard_ports
 from app.services.scoring import calculate_score
 from app.services.tls import TlsAnalysis
 from app.services.web import HttpScanResult
-
 
 HttpProbe = Callable[[str], HttpScanResult | Awaitable[HttpScanResult]]
 TlsProbe = Callable[[str], TlsAnalysis | Awaitable[TlsAnalysis]]
@@ -64,7 +62,9 @@ def run_scan_for_scan_id(
                 scan_id=scan.id,
                 http_headers=http_result.headers,
                 tls_analysis=_serialize_tls_analysis(tls_analysis),
-                port_results=[{"port": result.port, "state": result.state.value} for result in port_results],
+                port_results=[
+                    {"port": result.port, "state": result.state.value} for result in port_results
+                ],
                 misconfigurations=[_serialize_finding(finding) for finding in findings],
                 report_metadata={"target": scan.normalized_target},
             )

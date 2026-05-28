@@ -1,4 +1,4 @@
-import { ScanDetail } from '../types/scan'
+import type { ScanDetail } from '../types/scan'
 import { FindingCard } from './FindingCard'
 import { ScoreBadge } from './ScoreBadge'
 

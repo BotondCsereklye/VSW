@@ -6,7 +6,6 @@ from typing import Any
 
 import httpx
 
-
 Fetcher = Callable[[str], Awaitable[Any]]
 
 

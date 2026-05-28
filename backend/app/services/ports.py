@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Awaitable, Callable
-
 
 SAFE_PORTS = [80, 443, 22, 25, 53, 3306, 5432, 6379, 8080]
 
@@ -34,7 +33,7 @@ async def probe_port(
 
     try:
         await connector(host, port, timeout_seconds)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         state = PortState.TIMEOUT
     except (ConnectionRefusedError, OSError):
         state = PortState.CLOSED

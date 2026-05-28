@@ -1,6 +1,5 @@
 from app.services.misconfigurations import FindingDraft, FindingSeverity
 
-
 SEVERITY_PENALTIES = {
     FindingSeverity.HIGH: 25,
     FindingSeverity.MEDIUM: 12,

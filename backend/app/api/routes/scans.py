@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -6,8 +8,8 @@ from app.schemas.scan import ScanCreateRequest, ScanDetailResponse, ScanListItem
 from app.services.scan_service import create_scan, get_scan_or_404, list_scans
 from app.services.targeting import InvalidTargetError
 
-
 router = APIRouter(prefix="/scans", tags=["scans"])
+DbSession = Annotated[Session, Depends(get_db_session)]
 
 
 @router.post("", response_model=ScanListItemResponse, status_code=status.HTTP_202_ACCEPTED)
@@ -15,7 +17,7 @@ def create_scan_endpoint(
     payload: ScanCreateRequest,
     background_tasks: BackgroundTasks,
     request: Request,
-    session: Session = Depends(get_db_session),
+    session: DbSession,
 ) -> ScanListItemResponse:
     client_host = request.client.host if request.client is not None else "unknown"
     rate_limiter = request.app.state.rate_limiter
@@ -41,10 +43,10 @@ def create_scan_endpoint(
 
 
 @router.get("", response_model=list[ScanListItemResponse])
-def list_scans_endpoint(session: Session = Depends(get_db_session)) -> list[ScanListItemResponse]:
+def list_scans_endpoint(session: DbSession) -> list[ScanListItemResponse]:
     return [ScanListItemResponse.model_validate(scan) for scan in list_scans(session)]
 
 
 @router.get("/{scan_id}", response_model=ScanDetailResponse)
-def get_scan_detail_endpoint(scan_id: str, session: Session = Depends(get_db_session)) -> ScanDetailResponse:
+def get_scan_detail_endpoint(scan_id: str, session: DbSession) -> ScanDetailResponse:
     return ScanDetailResponse.model_validate(get_scan_or_404(session, scan_id))

@@ -1,4 +1,4 @@
-import { ScanFinding } from '../types/scan'
+import type { ScanFinding } from '../types/scan'
 
 type FindingCardProps = {
   finding: ScanFinding

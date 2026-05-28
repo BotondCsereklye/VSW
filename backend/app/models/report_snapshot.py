@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String
+from sqlalchemy import JSON, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -26,9 +26,17 @@ class ReportSnapshot(Base):
     )
     http_headers: Mapped[dict[str, object]] = mapped_column(JSON, default=dict, nullable=False)
     tls_analysis: Mapped[dict[str, object]] = mapped_column(JSON, default=dict, nullable=False)
-    port_results: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list, nullable=False)
-    misconfigurations: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list, nullable=False)
-    report_metadata: Mapped[dict[str, object]] = mapped_column("metadata", JSON, default=dict, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    port_results: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    misconfigurations: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    report_metadata: Mapped[dict[str, object]] = mapped_column(
+        "metadata", JSON, default=dict, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
     scan = relationship("Scan", back_populates="snapshot")

@@ -1,4 +1,4 @@
-import { ScanStatus } from '../types/scan'
+import type { ScanStatus } from '../types/scan'
 
 type ScanStatusBadgeProps = {
   status: ScanStatus
