@@ -158,7 +158,7 @@ describe('AppShell', () => {
       )
     })
 
-    expect(await screen.findByRole('heading', { name: /demo.example/i })).toBeInTheDocument()
+    expect(await screen.findByText(/waiting for scan results/i)).toBeInTheDocument()
   })
 
   test('shows an error message when the scan list cannot be loaded', async () => {
