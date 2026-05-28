@@ -14,6 +14,7 @@ def settings(tmp_path: pytest.TempPathFactory) -> Settings:
     database_path = tmp_path / "vsw-test.db"
     return Settings(
         database_url=f"sqlite:///{database_path}",
+        enable_background_scans=False,
         rate_limit_max_requests=50,
         rate_limit_window_seconds=60,
     )

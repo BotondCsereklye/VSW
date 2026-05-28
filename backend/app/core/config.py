@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     api_prefix: str = "/api/v1"
     database_url: str = "sqlite:///./vsw.db"
+    enable_background_scans: bool = True
     rate_limit_max_requests: int = Field(default=15, ge=1)
     rate_limit_window_seconds: int = Field(default=60, ge=1)
 
