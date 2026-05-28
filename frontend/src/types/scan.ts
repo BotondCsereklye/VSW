@@ -12,3 +12,17 @@ export type ScanFinding = {
   evidence: Record<string, unknown>
   created_at: string
 }
+
+export type ScanSummary = {
+  id: string
+  target: string
+  normalized_target: string
+  target_type: 'domain' | 'ip'
+  status: ScanStatus
+  score: number | null
+  summary: string | null
+  started_at: string | null
+  completed_at: string | null
+  created_at: string
+  updated_at: string
+}

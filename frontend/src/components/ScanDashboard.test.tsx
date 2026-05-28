@@ -31,7 +31,7 @@ test('ScanDashboard renders scan rows and notifies when a report is selected', a
     />,
   )
 
-  expect(screen.getByText(/example.com/i)).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: /example.com/i })).toBeInTheDocument()
   expect(screen.getByText(/mostly secure/i)).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: /open report for example.com/i }))
