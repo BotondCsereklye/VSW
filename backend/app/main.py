@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.routes.health import router as health_router
 from app.api.routes.scans import router as scans_router
 from app.core.config import Settings, get_settings
+from app.core.rate_limit import InMemoryRateLimiter
 from app.db.base import Base
 from app.db.session import create_engine_from_settings, create_session_factory
 from app.services.ports import probe_standard_ports
@@ -22,6 +23,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = session_factory
+    app.state.rate_limiter = InMemoryRateLimiter(
+        max_requests=settings.rate_limit_max_requests,
+        window_seconds=settings.rate_limit_window_seconds,
+    )
     app.state.scan_runner = (
         _build_scan_runner(session_factory) if settings.enable_background_scans else None
     )

@@ -17,6 +17,14 @@ def create_scan_endpoint(
     request: Request,
     session: Session = Depends(get_db_session),
 ) -> ScanListItemResponse:
+    client_host = request.client.host if request.client is not None else "unknown"
+    rate_limiter = request.app.state.rate_limiter
+    if not rate_limiter.allow(f"scan-create:{client_host}"):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded. Please try again later.",
+        )
+
     try:
         scan = create_scan(session, payload.target)
     except InvalidTargetError as exc:
