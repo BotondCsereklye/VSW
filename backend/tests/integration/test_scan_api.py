@@ -21,6 +21,16 @@ def test_create_scan_rejects_invalid_targets(client) -> None:
     assert response.json()["detail"] == "Target must be a domain or IP address."
 
 
+def test_create_scan_dispatches_background_runner(client, app) -> None:
+    calls: list[str] = []
+    app.state.scan_runner = calls.append
+
+    response = client.post("/api/v1/scans", json={"target": "example.com"})
+
+    assert response.status_code == 202
+    assert calls == [response.json()["id"]]
+
+
 def test_list_scans_returns_saved_scans(client, db_session) -> None:
     db_session.add(
         Scan(
