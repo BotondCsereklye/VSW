@@ -28,7 +28,7 @@ class ReportSnapshot(Base):
     tls_analysis: Mapped[dict[str, object]] = mapped_column(JSON, default=dict, nullable=False)
     port_results: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list, nullable=False)
     misconfigurations: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list, nullable=False)
-    metadata: Mapped[dict[str, object]] = mapped_column(JSON, default=dict, nullable=False)
+    report_metadata: Mapped[dict[str, object]] = mapped_column("metadata", JSON, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     scan = relationship("Scan", back_populates="snapshot")

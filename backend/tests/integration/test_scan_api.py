@@ -72,7 +72,7 @@ def test_get_scan_details_returns_findings_and_snapshot(client, db_session) -> N
             tls_analysis={"https_reachable": False},
             port_results=[{"port": 443, "state": "closed"}],
             misconfigurations=[{"title": "HTTPS is not reachable"}],
-            metadata={"target": "example.com"},
+            report_metadata={"target": "example.com"},
         )
     )
     db_session.commit()
