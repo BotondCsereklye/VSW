@@ -26,6 +26,10 @@ export function AppShell() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const hasActiveScans = scans.some((scan) => isScanInProgress(scan.status))
+  const shouldPollSelectedScan =
+    scanId !== null &&
+    selectedScan?.id === scanId &&
+    isScanInProgress(selectedScan.status)
 
   useEffect(() => {
     let isActive = true
@@ -128,6 +132,44 @@ export function AppShell() {
       isActive = false
     }
   }, [scanId])
+
+  useEffect(() => {
+    if (!scanId || !shouldPollSelectedScan) {
+      return
+    }
+
+    let isActive = true
+    const activeScanId = scanId
+
+    const intervalId = window.setInterval(() => {
+      void (async () => {
+        try {
+          const [detailResponse, historyResponse] = await Promise.all([
+            getScanDetail(activeScanId),
+            getScanHistory(activeScanId),
+          ])
+          if (!isActive) {
+            return
+          }
+
+          startTransition(() => {
+            setSelectedScan(detailResponse)
+            setScanHistory(historyResponse)
+            setErrorMessage(null)
+          })
+        } catch {
+          if (isActive) {
+            setErrorMessage('Unable to load report details.')
+          }
+        }
+      })()
+    }, ACTIVE_SCAN_POLL_INTERVAL_MS)
+
+    return () => {
+      isActive = false
+      window.clearInterval(intervalId)
+    }
+  }, [scanId, shouldPollSelectedScan])
 
   async function handleCreateScan(target: string) {
     setIsSubmitting(true)
