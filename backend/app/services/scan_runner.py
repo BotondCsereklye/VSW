@@ -52,6 +52,7 @@ def run_scan_for_scan_id(
             findings = detect_misconfigurations(
                 http_observation=http_result.observation,
                 header_analysis=header_analysis,
+                response_headers=http_result.headers,
                 tls_analysis=tls_analysis,
                 port_results=port_results,
             )
@@ -66,7 +67,14 @@ def run_scan_for_scan_id(
                     {"port": result.port, "state": result.state.value} for result in port_results
                 ],
                 misconfigurations=[_serialize_finding(finding) for finding in findings],
-                report_metadata={"target": scan.normalized_target},
+                report_metadata={
+                    "target": scan.normalized_target,
+                    "redirect_target": http_result.observation.redirect_target,
+                    "missing_headers": [
+                        header_name.value for header_name in header_analysis.missing_headers
+                    ],
+                    "observed_security_headers": sorted(http_result.headers.keys()),
+                },
             )
             scan.score = score
             scan.summary = _build_summary(findings)

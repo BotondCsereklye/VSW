@@ -76,6 +76,8 @@ def test_run_scan_for_scan_id_persists_findings_snapshot_and_score() -> None:
         assert len(saved_scan.findings) == 5
         assert saved_scan.snapshot is not None
         assert saved_scan.snapshot.tls_analysis["issuer"] == "Example CA"
+        assert saved_scan.snapshot.report_metadata["redirect_target"] == "https://example.com"
+        assert "x-frame-options" in saved_scan.snapshot.report_metadata["observed_security_headers"]
 
 
 def test_run_scan_for_scan_id_marks_failed_scans() -> None:

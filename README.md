@@ -34,6 +34,7 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - TLS-/Zertifikatsanalyse
 - Sicherer Port-Check auf einer kleinen Standardliste
 - Misconfiguration-Erkennung mit Empfehlungen
+- Erweiterte Read-only Checks fuer unsichere Header-Werte und Cookie-Flags
 - Report-Scoring von 0 bis 100
 - Persistente Reports mit Detailansicht
 - Export von Reports als JSON und CSV
@@ -118,6 +119,8 @@ Beispiele für abgeleitete Findings:
 - HTTPS nicht erreichbar
 - Unsichere HTTP-Redirects
 - Fehlende Security Header
+- Unsichere CSP- oder Referrer-Policy-Werte
+- Fehlende Secure-/HttpOnly-Cookie-Flags
 - Offene Datenbankports
 - Abgelaufenes TLS-Zertifikat
 
@@ -207,6 +210,8 @@ Siehe `.env.example`.
 - `POST /api/v1/scans`
 - `GET /api/v1/scans`
 - `GET /api/v1/scans/{scan_id}`
+
+Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redirect-Ziel und fehlende Header fuer schnellere Evidenzpruefung.
 
 ### Beispiel: Scan anlegen
 
