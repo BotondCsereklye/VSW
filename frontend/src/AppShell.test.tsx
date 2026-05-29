@@ -104,74 +104,31 @@ describe('AppShell', () => {
   })
 
   test('creates a scan and refreshes the dashboard', async () => {
+    const pendingSummary = {
+      id: 'scan-2',
+      target: 'demo.example',
+      normalized_target: 'demo.example',
+      target_type: 'domain' as const,
+      status: 'pending' as const,
+      score: null,
+      summary: null,
+      started_at: null,
+      completed_at: null,
+      created_at: '2026-05-28T08:35:00Z',
+      updated_at: '2026-05-28T08:35:00Z',
+    }
+    const pendingDetail = {
+      ...pendingSummary,
+      findings: [],
+      snapshot: null,
+    }
+
     fetchMock
       .mockImplementationOnce(() => jsonResponse([]))
-      .mockImplementationOnce(() =>
-        jsonResponse({
-          id: 'scan-2',
-          target: 'demo.example',
-          normalized_target: 'demo.example',
-          target_type: 'domain',
-          status: 'pending',
-          score: null,
-          summary: null,
-          started_at: null,
-          completed_at: null,
-          created_at: '2026-05-28T08:35:00Z',
-          updated_at: '2026-05-28T08:35:00Z',
-        }, 202),
-      )
-      .mockImplementationOnce(() =>
-        jsonResponse([
-          {
-            id: 'scan-2',
-            target: 'demo.example',
-            normalized_target: 'demo.example',
-            target_type: 'domain',
-            status: 'pending',
-            score: null,
-            summary: null,
-            started_at: null,
-            completed_at: null,
-            created_at: '2026-05-28T08:35:00Z',
-            updated_at: '2026-05-28T08:35:00Z',
-          },
-        ]),
-      )
-      .mockImplementationOnce(() =>
-        jsonResponse({
-          id: 'scan-2',
-          target: 'demo.example',
-          normalized_target: 'demo.example',
-          target_type: 'domain',
-          status: 'pending',
-          score: null,
-          summary: null,
-          started_at: null,
-          completed_at: null,
-          created_at: '2026-05-28T08:35:00Z',
-          updated_at: '2026-05-28T08:35:00Z',
-          findings: [],
-          snapshot: null,
-        }),
-      )
-      .mockImplementationOnce(() =>
-        jsonResponse([
-          {
-            id: 'scan-2',
-            target: 'demo.example',
-            normalized_target: 'demo.example',
-            target_type: 'domain',
-            status: 'pending',
-            score: null,
-            summary: null,
-            started_at: null,
-            completed_at: null,
-            created_at: '2026-05-28T08:35:00Z',
-            updated_at: '2026-05-28T08:35:00Z',
-          },
-        ]),
-      )
+      .mockImplementationOnce(() => jsonResponse(pendingSummary, 202))
+      .mockImplementationOnce(() => jsonResponse([pendingSummary]))
+      .mockImplementationOnce(() => jsonResponse(pendingDetail))
+      .mockImplementationOnce(() => jsonResponse([pendingSummary]))
 
     const user = userEvent.setup()
     render(
