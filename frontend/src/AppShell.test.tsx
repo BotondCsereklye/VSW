@@ -70,6 +70,23 @@ describe('AppShell', () => {
           },
         }),
       )
+      .mockImplementationOnce(() =>
+        jsonResponse([
+          {
+            id: 'scan-1',
+            target: 'example.com',
+            normalized_target: 'example.com',
+            target_type: 'domain',
+            status: 'completed',
+            score: 82,
+            summary: 'Mostly secure',
+            started_at: null,
+            completed_at: '2026-05-28T08:30:00Z',
+            created_at: '2026-05-28T08:00:00Z',
+            updated_at: '2026-05-28T08:30:00Z',
+          },
+        ]),
+      )
 
     const user = userEvent.setup()
     render(
@@ -136,6 +153,23 @@ describe('AppShell', () => {
           findings: [],
           snapshot: null,
         }),
+      )
+      .mockImplementationOnce(() =>
+        jsonResponse([
+          {
+            id: 'scan-2',
+            target: 'demo.example',
+            normalized_target: 'demo.example',
+            target_type: 'domain',
+            status: 'pending',
+            score: null,
+            summary: null,
+            started_at: null,
+            completed_at: null,
+            created_at: '2026-05-28T08:35:00Z',
+            updated_at: '2026-05-28T08:35:00Z',
+          },
+        ]),
       )
 
     const user = userEvent.setup()

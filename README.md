@@ -36,6 +36,8 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Misconfiguration-Erkennung mit Empfehlungen
 - Report-Scoring von 0 bis 100
 - Persistente Reports mit Detailansicht
+- Export von Reports als JSON und CSV
+- Verlauf pro Target mit einfacher Trendanzeige
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausführung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -214,6 +216,14 @@ curl -X POST http://localhost:8000/api/v1/scans \
   -d '{"target":"example.com"}'
 ```
 
+### Export und Verlauf
+
+- `GET /api/v1/scans/{scan_id}/export?format=json`
+- `GET /api/v1/scans/{scan_id}/export?format=csv`
+- `GET /api/v1/scans/{scan_id}/history`
+
+Im Frontend zeigt die Report-Ansicht passende Export-Buttons sowie die letzten Scans desselben Targets mit einer einfachen Trendbewertung an.
+
 ## Tests
 
 ### Backend
@@ -233,6 +243,12 @@ npm run lint
 npm test
 npm run build
 ```
+
+## Benutzerhinweise
+
+- Export ist aktuell für abgeschlossene Scans gedacht.
+- Die Verlaufsansicht gruppiert Scans über `normalized_target` und zeigt die neuesten Einträge zuerst.
+- Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
 
 ## Grenzen des Scanners
 

@@ -1,11 +1,11 @@
 import { startTransition, useEffect, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router-dom'
 
-import { createScan, getScanDetail, listScans } from './api/client'
+import { createScan, exportScan, getScanDetail, getScanHistory, listScans } from './api/client'
 import { ReportDetail } from './components/ReportDetail'
 import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
-import type { ScanDetail, ScanSummary } from './types/scan'
+import type { ScanDetail, ScanExportFormat, ScanSummary } from './types/scan'
 
 
 export function AppShell() {
@@ -15,6 +15,7 @@ export function AppShell() {
   const scanId = matchedRoute?.params.scanId ?? null
   const [scans, setScans] = useState<ScanSummary[]>([])
   const [selectedScan, setSelectedScan] = useState<ScanDetail | null>(null)
+  const [scanHistory, setScanHistory] = useState<ScanSummary[]>([])
   const [isLoadingScans, setIsLoadingScans] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -61,13 +62,17 @@ export function AppShell() {
 
     async function loadScanDetail() {
       try {
-        const response = await getScanDetail(activeScanId)
+        const [detailResponse, historyResponse] = await Promise.all([
+          getScanDetail(activeScanId),
+          getScanHistory(activeScanId),
+        ])
         if (!isActive) {
           return
         }
 
         startTransition(() => {
-          setSelectedScan(response)
+          setSelectedScan(detailResponse)
+          setScanHistory(historyResponse)
           setErrorMessage(null)
         })
       } catch {
@@ -107,6 +112,26 @@ export function AppShell() {
     navigate(`/scans/${nextScanId}`)
   }
 
+  async function handleExport(format: ScanExportFormat) {
+    if (!scanId) {
+      return
+    }
+
+    try {
+      const { blob, filename } = await exportScan(scanId, format)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      setErrorMessage('Unable to export the selected report.')
+    }
+  }
+
   return (
     <main className="app-shell">
       <header className="app-shell__hero">
@@ -132,7 +157,11 @@ export function AppShell() {
           )}
         </div>
         <div className="app-shell__panel">
-          <ReportDetail scan={scanId ? selectedScan : null} />
+          <ReportDetail
+            scan={scanId ? selectedScan : null}
+            history={scanId ? scanHistory : []}
+            onExport={handleExport}
+          />
         </div>
       </section>
     </main>

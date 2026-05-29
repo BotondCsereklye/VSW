@@ -36,3 +36,14 @@ def get_scan_or_404(session: Session, scan_id: str) -> Scan:
     if scan is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found.")
     return scan
+
+
+def list_history_for_scan(session: Session, scan_id: str, limit: int = 6) -> list[Scan]:
+    scan = get_scan_or_404(session, scan_id)
+    statement = (
+        select(Scan)
+        .where(Scan.normalized_target == scan.normalized_target)
+        .order_by(desc(Scan.created_at))
+        .limit(limit)
+    )
+    return list(session.scalars(statement).all())
