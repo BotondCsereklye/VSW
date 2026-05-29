@@ -122,6 +122,31 @@ describe('AppShell', () => {
       findings: [],
       snapshot: null,
     }
+    const completedSummary = {
+      ...pendingSummary,
+      status: 'completed' as const,
+      score: 82,
+      summary: 'Mostly secure',
+      completed_at: '2026-05-28T08:36:00Z',
+      updated_at: '2026-05-28T08:36:00Z',
+    }
+    const completedDetail = {
+      ...completedSummary,
+      findings: [],
+      snapshot: {
+        id: 'snapshot-2',
+        http_headers: {},
+        tls_analysis: { issuer: 'Example CA' },
+        port_results: [],
+        misconfigurations: [],
+        metadata: { target: 'demo.example' },
+        created_at: '2026-05-28T08:36:00Z',
+      },
+    }
+
+    let listCallCount = 0
+    let detailCallCount = 0
+    let historyCallCount = 0
 
     fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString()
@@ -131,15 +156,22 @@ describe('AppShell', () => {
       }
 
       if (url.endsWith('/scans/scan-2/history')) {
-        return jsonResponse([pendingSummary])
+        historyCallCount += 1
+        return jsonResponse([historyCallCount >= 2 ? completedSummary : pendingSummary])
       }
 
       if (url.endsWith('/scans/scan-2')) {
-        return jsonResponse(pendingDetail)
+        detailCallCount += 1
+        return jsonResponse(detailCallCount >= 2 ? completedDetail : pendingDetail)
       }
 
       if (url.endsWith('/scans')) {
-        return jsonResponse(fetchMock.mock.calls.length > 1 ? [pendingSummary] : [])
+        listCallCount += 1
+        if (listCallCount === 1) {
+          return jsonResponse([])
+        }
+
+        return jsonResponse([listCallCount >= 3 ? completedSummary : pendingSummary])
       }
 
       throw new Error(`Unexpected fetch call: ${url}`)
