@@ -7,6 +7,12 @@ import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
 import type { ScanDetail, ScanExportFormat, ScanSummary } from './types/scan'
 
+const ACTIVE_SCAN_POLL_INTERVAL_MS = 1500
+
+function isScanInProgress(status: ScanSummary['status'] | null | undefined) {
+  return status === 'pending' || status === 'running'
+}
+
 
 export function AppShell() {
   const navigate = useNavigate()
@@ -19,6 +25,11 @@ export function AppShell() {
   const [isLoadingScans, setIsLoadingScans] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const hasActiveScans = scans.some((scan) => isScanInProgress(scan.status))
+  const shouldPollSelectedScan =
+    scanId !== null &&
+    selectedScan?.id === scanId &&
+    isScanInProgress(selectedScan.status)
 
   useEffect(() => {
     let isActive = true
@@ -51,6 +62,39 @@ export function AppShell() {
       isActive = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!hasActiveScans) {
+      return
+    }
+
+    let isActive = true
+
+    const intervalId = window.setInterval(() => {
+      void (async () => {
+        try {
+          const response = await listScans()
+          if (!isActive) {
+            return
+          }
+
+          startTransition(() => {
+            setScans(response)
+            setErrorMessage(null)
+          })
+        } catch {
+          if (isActive) {
+            setErrorMessage('Unable to refresh scans.')
+          }
+        }
+      })()
+    }, ACTIVE_SCAN_POLL_INTERVAL_MS)
+
+    return () => {
+      isActive = false
+      window.clearInterval(intervalId)
+    }
+  }, [hasActiveScans])
 
   useEffect(() => {
     if (!scanId) {
@@ -88,6 +132,44 @@ export function AppShell() {
       isActive = false
     }
   }, [scanId])
+
+  useEffect(() => {
+    if (!scanId || !shouldPollSelectedScan) {
+      return
+    }
+
+    let isActive = true
+    const activeScanId = scanId
+
+    const intervalId = window.setInterval(() => {
+      void (async () => {
+        try {
+          const [detailResponse, historyResponse] = await Promise.all([
+            getScanDetail(activeScanId),
+            getScanHistory(activeScanId),
+          ])
+          if (!isActive) {
+            return
+          }
+
+          startTransition(() => {
+            setSelectedScan(detailResponse)
+            setScanHistory(historyResponse)
+            setErrorMessage(null)
+          })
+        } catch {
+          if (isActive) {
+            setErrorMessage('Unable to load report details.')
+          }
+        }
+      })()
+    }, ACTIVE_SCAN_POLL_INTERVAL_MS)
+
+    return () => {
+      isActive = false
+      window.clearInterval(intervalId)
+    }
+  }, [scanId, shouldPollSelectedScan])
 
   async function handleCreateScan(target: string) {
     setIsSubmitting(true)

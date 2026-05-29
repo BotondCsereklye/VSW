@@ -24,6 +24,7 @@ describe('AppShell', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     fetchMock.mockReset()
+    vi.useRealTimers()
   })
 
   test('loads scans, navigates to a report and renders its detail state', async () => {
@@ -103,74 +104,78 @@ describe('AppShell', () => {
   })
 
   test('creates a scan and refreshes the dashboard', async () => {
-    fetchMock
-      .mockImplementationOnce(() => jsonResponse([]))
-      .mockImplementationOnce(() =>
-        jsonResponse({
-          id: 'scan-2',
-          target: 'demo.example',
-          normalized_target: 'demo.example',
-          target_type: 'domain',
-          status: 'pending',
-          score: null,
-          summary: null,
-          started_at: null,
-          completed_at: null,
-          created_at: '2026-05-28T08:35:00Z',
-          updated_at: '2026-05-28T08:35:00Z',
-        }, 202),
-      )
-      .mockImplementationOnce(() =>
-        jsonResponse([
-          {
-            id: 'scan-2',
-            target: 'demo.example',
-            normalized_target: 'demo.example',
-            target_type: 'domain',
-            status: 'pending',
-            score: null,
-            summary: null,
-            started_at: null,
-            completed_at: null,
-            created_at: '2026-05-28T08:35:00Z',
-            updated_at: '2026-05-28T08:35:00Z',
-          },
-        ]),
-      )
-      .mockImplementationOnce(() =>
-        jsonResponse({
-          id: 'scan-2',
-          target: 'demo.example',
-          normalized_target: 'demo.example',
-          target_type: 'domain',
-          status: 'pending',
-          score: null,
-          summary: null,
-          started_at: null,
-          completed_at: null,
-          created_at: '2026-05-28T08:35:00Z',
-          updated_at: '2026-05-28T08:35:00Z',
-          findings: [],
-          snapshot: null,
-        }),
-      )
-      .mockImplementationOnce(() =>
-        jsonResponse([
-          {
-            id: 'scan-2',
-            target: 'demo.example',
-            normalized_target: 'demo.example',
-            target_type: 'domain',
-            status: 'pending',
-            score: null,
-            summary: null,
-            started_at: null,
-            completed_at: null,
-            created_at: '2026-05-28T08:35:00Z',
-            updated_at: '2026-05-28T08:35:00Z',
-          },
-        ]),
-      )
+    const pendingSummary = {
+      id: 'scan-2',
+      target: 'demo.example',
+      normalized_target: 'demo.example',
+      target_type: 'domain' as const,
+      status: 'pending' as const,
+      score: null,
+      summary: null,
+      started_at: null,
+      completed_at: null,
+      created_at: '2026-05-28T08:35:00Z',
+      updated_at: '2026-05-28T08:35:00Z',
+    }
+    const pendingDetail = {
+      ...pendingSummary,
+      findings: [],
+      snapshot: null,
+    }
+    const completedSummary = {
+      ...pendingSummary,
+      status: 'completed' as const,
+      score: 82,
+      summary: 'Mostly secure',
+      completed_at: '2026-05-28T08:36:00Z',
+      updated_at: '2026-05-28T08:36:00Z',
+    }
+    const completedDetail = {
+      ...completedSummary,
+      findings: [],
+      snapshot: {
+        id: 'snapshot-2',
+        http_headers: {},
+        tls_analysis: { issuer: 'Example CA' },
+        port_results: [],
+        misconfigurations: [],
+        metadata: { target: 'demo.example' },
+        created_at: '2026-05-28T08:36:00Z',
+      },
+    }
+
+    let listCallCount = 0
+    let detailCallCount = 0
+    let historyCallCount = 0
+
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString()
+
+      if (url.endsWith('/scans') && init?.method === 'POST') {
+        return jsonResponse(pendingSummary, 202)
+      }
+
+      if (url.endsWith('/scans/scan-2/history')) {
+        historyCallCount += 1
+        return jsonResponse([historyCallCount >= 2 ? completedSummary : pendingSummary])
+      }
+
+      if (url.endsWith('/scans/scan-2')) {
+        detailCallCount += 1
+        return jsonResponse(detailCallCount >= 2 ? completedDetail : pendingDetail)
+      }
+
+      if (url.endsWith('/scans')) {
+        listCallCount += 1
+        if (listCallCount === 1) {
+          return jsonResponse([])
+        }
+
+        return jsonResponse([listCallCount >= 3 ? completedSummary : pendingSummary])
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    })
 
     const user = userEvent.setup()
     render(
@@ -193,7 +198,15 @@ describe('AppShell', () => {
     })
 
     expect(await screen.findByText(/waiting for scan results/i)).toBeInTheDocument()
-  })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/mostly secure/i)).toBeInTheDocument()
+      },
+      { timeout: 4000 },
+    )
+
+    expect(await screen.findByText(/example ca/i)).toBeInTheDocument()
+  }, 8000)
 
   test('shows an error message when the scan list cannot be loaded', async () => {
     fetchMock.mockImplementationOnce(() => jsonResponse({ detail: 'Boom' }, 500))
