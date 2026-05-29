@@ -204,6 +204,8 @@ describe('AppShell', () => {
       },
       { timeout: 4000 },
     )
+
+    expect(await screen.findByText(/example ca/i)).toBeInTheDocument()
   }, 8000)
 
   test('shows an error message when the scan list cannot be loaded', async () => {
