@@ -198,7 +198,13 @@ describe('AppShell', () => {
     })
 
     expect(await screen.findByText(/waiting for scan results/i)).toBeInTheDocument()
-  })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/mostly secure/i)).toBeInTheDocument()
+      },
+      { timeout: 4000 },
+    )
+  }, 8000)
 
   test('shows an error message when the scan list cannot be loaded', async () => {
     fetchMock.mockImplementationOnce(() => jsonResponse({ detail: 'Boom' }, 500))
