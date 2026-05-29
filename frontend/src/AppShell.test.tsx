@@ -123,12 +123,27 @@ describe('AppShell', () => {
       snapshot: null,
     }
 
-    fetchMock
-      .mockImplementationOnce(() => jsonResponse([]))
-      .mockImplementationOnce(() => jsonResponse(pendingSummary, 202))
-      .mockImplementationOnce(() => jsonResponse([pendingSummary]))
-      .mockImplementationOnce(() => jsonResponse(pendingDetail))
-      .mockImplementationOnce(() => jsonResponse([pendingSummary]))
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString()
+
+      if (url.endsWith('/scans') && init?.method === 'POST') {
+        return jsonResponse(pendingSummary, 202)
+      }
+
+      if (url.endsWith('/scans/scan-2/history')) {
+        return jsonResponse([pendingSummary])
+      }
+
+      if (url.endsWith('/scans/scan-2')) {
+        return jsonResponse(pendingDetail)
+      }
+
+      if (url.endsWith('/scans')) {
+        return jsonResponse(fetchMock.mock.calls.length > 1 ? [pendingSummary] : [])
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    })
 
     const user = userEvent.setup()
     render(
