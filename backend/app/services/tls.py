@@ -5,9 +5,12 @@ import ssl
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import TypeAlias
 
-type CertificateLoader = Callable[[str], tuple[bool, "CertificateDetails | None"]]
-type VersionProbe = Callable[[str], list[str]]
+CertificateLoader: TypeAlias = Callable[
+    [str], tuple[bool, "CertificateDetails | None"]
+]  # noqa: UP040
+VersionProbe: TypeAlias = Callable[[str], list[str]]  # noqa: UP040
 
 
 @dataclass(frozen=True, slots=True)

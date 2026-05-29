@@ -17,6 +17,7 @@ def test_detect_misconfigurations_flags_missing_https_and_open_database_ports() 
             redirect_target="http://example.com/login",
         ),
         header_analysis=HeaderAnalysis(checks=[], missing_headers=[], all_present=True),
+        response_headers={},
         tls_analysis=TlsAnalysis(
             https_reachable=False,
             certificate_valid=False,
@@ -71,6 +72,7 @@ def test_detect_misconfigurations_flags_expired_certificates_and_missing_headers
             ],
             all_present=False,
         ),
+        response_headers={},
         tls_analysis=TlsAnalysis(
             https_reachable=True,
             certificate_valid=False,
@@ -91,3 +93,36 @@ def test_detect_misconfigurations_flags_expired_certificates_and_missing_headers
     assert severities["TLS certificate is expired"] is FindingSeverity.HIGH
     assert severities["Missing header: content-security-policy"] is FindingSeverity.MEDIUM
     assert severities["Missing header: x-frame-options"] is FindingSeverity.LOW
+
+
+def test_detect_misconfigurations_flags_risky_header_values_and_cookie_flags() -> None:
+    findings = detect_misconfigurations(
+        http_observation=HttpObservation(
+            http_reachable=True,
+            https_reachable=True,
+            final_http_url="http://example.com",
+            final_https_url="https://example.com",
+            redirect_target="https://example.com",
+        ),
+        header_analysis=HeaderAnalysis(checks=[], missing_headers=[], all_present=True),
+        response_headers={
+            "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'",
+            "referrer-policy": "unsafe-url",
+            "set-cookie": "sessionid=abc123; Path=/; SameSite=Lax",
+        },
+        tls_analysis=TlsAnalysis(
+            https_reachable=True,
+            certificate_valid=True,
+            certificate_expired=False,
+            issuer="Example CA",
+            expires_at=datetime.now(UTC) + timedelta(days=30),
+            supported_versions=["TLSv1.2", "TLSv1.3"],
+        ),
+        port_results=[],
+    )
+
+    titles = {finding.title for finding in findings}
+
+    assert "Content-Security-Policy allows unsafe inline code" in titles
+    assert "Referrer-Policy leaks full source URLs" in titles
+    assert "Cookie flags are incomplete" in titles

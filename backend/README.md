@@ -9,6 +9,7 @@ FastAPI-Backend fuer die defensive Scan-Anwendung. Dieser Teil des Projekts vali
 - Defensive Header-, TLS- und Port-Pruefungen
 - Score-Berechnung und abgeleitete Misconfiguration-Findings
 - REST-API fuer Listen-, Detail- und Create-Workflows
+- Snapshot-Evidenz mit fehlenden Headern, Redirect-Zielen und beobachteten Security Headern
 
 ## Lokales Setup
 
@@ -55,3 +56,11 @@ ruff check .
 ```
 
 Die Integrationstests laufen mit einer temporaeren SQLite-Datenbank. Damit bleiben sie schnell und unabhaengig von Docker oder einer lokalen PostgreSQL-Instanz.
+
+## Read-only Checks v1
+
+Die erste erweiterte Read-only Check-Stufe deckt neben fehlenden Headern auch riskante Konfigurationen ab:
+
+- `Content-Security-Policy` mit `unsafe-inline`
+- `Referrer-Policy: unsafe-url`
+- Cookies ohne `Secure` und/oder `HttpOnly`

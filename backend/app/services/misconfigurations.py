@@ -42,10 +42,12 @@ def detect_misconfigurations(
     *,
     http_observation: HttpObservation,
     header_analysis: HeaderAnalysis,
+    response_headers: dict[str, str],
     tls_analysis: TlsAnalysis,
     port_results: list[PortResult],
 ) -> list[FindingDraft]:
     findings: list[FindingDraft] = []
+    normalized_headers = {name.lower(): value for name, value in response_headers.items()}
 
     if not http_observation.https_reachable:
         findings.append(
@@ -140,6 +142,76 @@ def detect_misconfigurations(
                         "enforce network-level access controls."
                     ),
                     evidence={"port": port_result.port},
+                )
+            )
+
+    content_security_policy = normalized_headers.get(
+        RequiredHeader.CONTENT_SECURITY_POLICY.value, ""
+    )
+    if "unsafe-inline" in content_security_policy.lower():
+        findings.append(
+            FindingDraft(
+                category=FindingCategory.HEADERS,
+                severity=FindingSeverity.MEDIUM,
+                title="Content-Security-Policy allows unsafe inline code",
+                description=(
+                    "The configured Content-Security-Policy still permits inline code execution, "
+                    "which weakens XSS protection."
+                ),
+                recommendation=(
+                    "Remove `unsafe-inline` from the policy and move scripts or styles to safer, "
+                    "explicitly allowed sources."
+                ),
+                evidence={
+                    "header": RequiredHeader.CONTENT_SECURITY_POLICY.value,
+                    "value": content_security_policy,
+                },
+            )
+        )
+
+    referrer_policy = normalized_headers.get(RequiredHeader.REFERRER_POLICY.value, "")
+    if referrer_policy.lower().strip() == "unsafe-url":
+        findings.append(
+            FindingDraft(
+                category=FindingCategory.HEADERS,
+                severity=FindingSeverity.LOW,
+                title="Referrer-Policy leaks full source URLs",
+                description=(
+                    "The configured Referrer-Policy sends complete source URLs to "
+                    "destination sites, "
+                    "which may expose unnecessary path information."
+                ),
+                recommendation=(
+                    "Prefer a stricter policy such as `strict-origin-when-cross-origin` or "
+                    "`same-origin`."
+                ),
+                evidence={"header": RequiredHeader.REFERRER_POLICY.value, "value": referrer_policy},
+            )
+        )
+
+    set_cookie = normalized_headers.get("set-cookie", "")
+    missing_cookie_flags: list[str] = []
+    if set_cookie:
+        lowered_cookie = set_cookie.lower()
+        if "secure" not in lowered_cookie:
+            missing_cookie_flags.append("Secure")
+        if "httponly" not in lowered_cookie:
+            missing_cookie_flags.append("HttpOnly")
+        if missing_cookie_flags:
+            findings.append(
+                FindingDraft(
+                    category=FindingCategory.MISCONFIGURATION,
+                    severity=FindingSeverity.MEDIUM,
+                    title="Cookie flags are incomplete",
+                    description=(
+                        "Observed cookies are missing standard transport or script "
+                        "access protections."
+                    ),
+                    recommendation=(
+                        "Set at least the `Secure` and `HttpOnly` flags for "
+                        "session-bearing cookies."
+                    ),
+                    evidence={"header": "set-cookie", "missing_flags": missing_cookie_flags},
                 )
             )
 
