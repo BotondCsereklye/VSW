@@ -24,6 +24,7 @@ describe('AppShell', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     fetchMock.mockReset()
+    vi.useRealTimers()
   })
 
   test('loads scans, navigates to a report and renders its detail state', async () => {
