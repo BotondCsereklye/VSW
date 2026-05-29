@@ -2,6 +2,11 @@
 
 Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder IPs. Die Anwendung führt ausschließlich passive oder risikoarme Checks aus, speichert Reports in PostgreSQL und visualisiert Ergebnisse in einem modernen React-Dashboard.
 
+## Dokumentation
+
+- Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
+- Backend-spezifisches Setup und API-Hinweise: [backend/README.md](backend/README.md)
+
 ## Sicherheits-Hinweis
 
 Dieses Projekt ist bewusst defensiv gebaut.
@@ -129,13 +134,11 @@ Jeder Finding-Eintrag enthält:
 - Evidenz
 - konkrete Empfehlung
 
-## Screenshots
+## Doku-Status
 
-Platzhalter für Projektbilder:
-
-- `docs/screenshots/dashboard.png`
-- `docs/screenshots/report-detail.png`
-- `docs/screenshots/create-scan.png`
+- `docs/screenshots/` ist für echte Projekt-Screenshots reserviert.
+- Architektur- und Scope-Notizen liegen in `docs/architecture-plan.md`.
+- Backend-Details zu Setup, Checks und API liegen in `backend/README.md`.
 
 ## Lokales Setup ohne Docker
 
@@ -149,6 +152,8 @@ pip install -e '.[dev]'
 uvicorn app.main:app --reload
 ```
 
+Ohne zusätzliche Umgebungsvariablen nutzt das Backend lokal standardmäßig `sqlite:///./vsw.db`.
+
 Standard-URL: `http://localhost:8000`
 
 ### Frontend
@@ -160,6 +165,8 @@ npm run dev
 ```
 
 Standard-URL: `http://localhost:5173`
+
+Das Frontend erwartet standardmäßig die API unter `http://localhost:8000/api/v1`.
 
 ## Docker Setup
 
@@ -215,13 +222,16 @@ curl -X POST http://localhost:8000/api/v1/scans \
 cd backend
 . .venv/bin/activate
 pytest
+ruff check .
 ```
 
 ### Frontend
 
 ```bash
 cd frontend
+npm run lint
 npm test
+npm run build
 ```
 
 ## Grenzen des Scanners
