@@ -3,7 +3,6 @@ import time
 
 import psycopg
 
-
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 MAX_ATTEMPTS = 30
 SLEEP_SECONDS = 2
