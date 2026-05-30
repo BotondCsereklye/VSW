@@ -1,9 +1,10 @@
+import json
 from csv import DictWriter
 from io import StringIO
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
@@ -80,8 +81,10 @@ def export_scan_endpoint(
     payload = ScanDetailResponse.model_validate(scan).model_dump(mode="json")
 
     if export_format == "json":
-        return JSONResponse(
-            content=payload,
+        pretty_json = json.dumps(payload, indent=2, ensure_ascii=False)
+        return Response(
+            content=pretty_json,
+            media_type="application/json",
             headers={
                 "Content-Disposition": (
                     f'attachment; filename="scan-{scan.normalized_target}-report.json"'
@@ -128,6 +131,8 @@ def export_scan_endpoint(
         content=csv_buffer.getvalue(),
         media_type="text/csv",
         headers={
-            "Content-Disposition": f'attachment; filename="scan-{scan.normalized_target}-report.csv"'
+            "Content-Disposition": (
+                f'attachment; filename="scan-{scan.normalized_target}-report.csv"'
+            )
         },
     )
