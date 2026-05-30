@@ -2,6 +2,11 @@ export type ScanStatus = 'pending' | 'running' | 'completed' | 'failed'
 
 export type FindingSeverity = 'low' | 'medium' | 'high'
 export type ScanExportFormat = 'json' | 'csv'
+export type DiscoveredLinksResponse = {
+  scan_id: string
+  target: string
+  links: string[]
+}
 
 export type ScanFinding = {
   id: string

@@ -8,7 +8,12 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
-from app.schemas.scan import ScanCreateRequest, ScanDetailResponse, ScanListItemResponse
+from app.schemas.scan import (
+    ScanCreateRequest,
+    ScanDetailResponse,
+    ScanLinkDiscoveryResponse,
+    ScanListItemResponse,
+)
 from app.services.scan_service import (
     create_scan,
     get_scan_or_404,
@@ -136,3 +141,16 @@ def export_scan_endpoint(
             )
         },
     )
+
+
+@router.get("/{scan_id}/links", response_model=ScanLinkDiscoveryResponse)
+def discover_scan_links_endpoint(
+    scan_id: str,
+    request: Request,
+    session: DbSession,
+    limit: int = Query(default=12, ge=1, le=50),
+) -> ScanLinkDiscoveryResponse:
+    scan = get_scan_or_404(session, scan_id)
+    discover_links = request.app.state.link_discovery
+    links = discover_links(scan.normalized_target, limit=limit)
+    return ScanLinkDiscoveryResponse(scan_id=scan.id, target=scan.target, links=links)

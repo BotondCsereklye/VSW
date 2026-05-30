@@ -9,6 +9,9 @@ type ReportDetailProps = {
   scan: ScanDetail | null
   history?: ScanSummary[]
   onExport?: (format: ScanExportFormat) => void | Promise<void>
+  discoveredLinks?: string[]
+  checkedLinks?: string[]
+  onInspectLink?: (link: string) => void | Promise<void>
 }
 
 type SnapshotPanel = 'tls' | 'headers'
@@ -29,8 +32,16 @@ function getTrendLabel(history: ScanSummary[]): string {
   return 'Trend stable'
 }
 
-export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps) {
+export function ReportDetail({
+  scan,
+  history = [],
+  onExport,
+  discoveredLinks = [],
+  checkedLinks = [],
+  onInspectLink,
+}: ReportDetailProps) {
   const [activeSnapshotPanel, setActiveSnapshotPanel] = useState<SnapshotPanel | null>(null)
+  const [expandedFindingsForScanId, setExpandedFindingsForScanId] = useState<string | null>(null)
 
   const snapshotTitle = activeSnapshotPanel === 'tls' ? 'TLS details' : 'Header details'
   const snapshotContent = useMemo(() => {
@@ -75,6 +86,9 @@ export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps
   }
 
   const trendLabel = getTrendLabel(history)
+  const showAllFindings = expandedFindingsForScanId === scan.id
+  const visibleFindings = showAllFindings ? scan.findings : scan.findings.slice(0, 3)
+  const hiddenFindings = Math.max(scan.findings.length - visibleFindings.length, 0)
 
   const snapshotModal =
     activeSnapshotPanel !== null && snapshotContent !== null
@@ -159,10 +173,53 @@ export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps
       </div>
 
       <div className="report-detail__findings">
-        {scan.findings.map((finding) => (
+        {visibleFindings.map((finding) => (
           <FindingCard key={finding.id} finding={finding} />
         ))}
+        {scan.findings.length > 3 ? (
+          <button
+            type="button"
+            className="report-detail__findings-toggle"
+            onClick={() =>
+              setExpandedFindingsForScanId((previous) => (previous === scan.id ? null : scan.id))
+            }
+          >
+            {showAllFindings ? 'Weniger anzeigen' : `Mehr anzeigen (${hiddenFindings})`}
+          </button>
+        ) : null}
       </div>
+
+      <section className="report-detail__link-checks">
+        <header className="report-detail__link-checks-header">
+          <h3>Guided link checks</h3>
+          <span>{discoveredLinks.length} links</span>
+        </header>
+        <p>
+          Nur same-origin Links werden angezeigt. Ein Klick startet einen neuen defensiven Host-Scan
+          fuer den Link.
+        </p>
+        {discoveredLinks.length > 0 ? (
+          <ul className="report-detail__link-list">
+            {discoveredLinks.map((link) => (
+              <li key={link} className="report-detail__link-item">
+                <a href={link} target="_blank" rel="noreferrer">
+                  {link}
+                </a>
+                <div className="report-detail__link-actions">
+                  {checkedLinks.includes(link) ? (
+                    <span className="report-detail__link-checked">Checked</span>
+                  ) : null}
+                  <button type="button" onClick={() => void onInspectLink?.(link)}>
+                    Check link host
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No crawlable links discovered for this target yet.</p>
+        )}
+      </section>
 
       {snapshotModal}
     </section>

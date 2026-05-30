@@ -44,6 +44,7 @@ Ohne weitere Konfiguration nutzt das Backend lokal `sqlite:///./vsw.db`. Fuer Do
 - `GET /api/v1/scans`: Liefert vorhandene Scans fuer das Dashboard
 - `GET /api/v1/scans/{scan_id}`: Liefert Findings und Snapshot fuer einen Scan
 - `GET /api/v1/scans/{scan_id}/history`: Liefert die letzten Scans fuer dasselbe Target
+- `GET /api/v1/scans/{scan_id}/links?limit=12`: Liefert same-origin Link-Kandidaten fuer guided link checks
 - `GET /api/v1/scans/{scan_id}/export?format=json`: Export als lesbar formatiertes JSON
 - `GET /api/v1/scans/{scan_id}/export?format=csv`: Export als CSV
 

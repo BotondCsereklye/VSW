@@ -1,7 +1,14 @@
 import { startTransition, useEffect, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router-dom'
 
-import { createScan, exportScan, getScanDetail, getScanHistory, listScans } from './api/client'
+import {
+  createScan,
+  discoverScanLinks,
+  exportScan,
+  getScanDetail,
+  getScanHistory,
+  listScans,
+} from './api/client'
 import { ReportDetail } from './components/ReportDetail'
 import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
@@ -22,6 +29,8 @@ export function AppShell() {
   const [scans, setScans] = useState<ScanSummary[]>([])
   const [selectedScan, setSelectedScan] = useState<ScanDetail | null>(null)
   const [scanHistory, setScanHistory] = useState<ScanSummary[]>([])
+  const [discoveredLinks, setDiscoveredLinks] = useState<string[]>([])
+  const [checkedLinks, setCheckedLinks] = useState<string[]>([])
   const [isLoadingScans, setIsLoadingScans] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -106,9 +115,10 @@ export function AppShell() {
 
     async function loadScanDetail() {
       try {
-        const [detailResponse, historyResponse] = await Promise.all([
+        const [detailResponse, historyResponse, linkResponse] = await Promise.all([
           getScanDetail(activeScanId),
           getScanHistory(activeScanId),
+          discoverScanLinks(activeScanId).catch(() => ({ links: [] })),
         ])
         if (!isActive) {
           return
@@ -117,6 +127,8 @@ export function AppShell() {
         startTransition(() => {
           setSelectedScan(detailResponse)
           setScanHistory(historyResponse)
+          setDiscoveredLinks(linkResponse.links)
+          setCheckedLinks([])
           setErrorMessage(null)
         })
       } catch {
@@ -144,9 +156,10 @@ export function AppShell() {
     const intervalId = window.setInterval(() => {
       void (async () => {
         try {
-          const [detailResponse, historyResponse] = await Promise.all([
+          const [detailResponse, historyResponse, linkResponse] = await Promise.all([
             getScanDetail(activeScanId),
             getScanHistory(activeScanId),
+            discoverScanLinks(activeScanId).catch(() => ({ links: [] })),
           ])
           if (!isActive) {
             return
@@ -155,6 +168,7 @@ export function AppShell() {
           startTransition(() => {
             setSelectedScan(detailResponse)
             setScanHistory(historyResponse)
+            setDiscoveredLinks(linkResponse.links)
             setErrorMessage(null)
           })
         } catch {
@@ -171,7 +185,7 @@ export function AppShell() {
     }
   }, [scanId, shouldPollSelectedScan])
 
-  async function handleCreateScan(target: string) {
+  async function createScanAndNavigate(target: string): Promise<boolean> {
     setIsSubmitting(true)
     setIsLoadingScans(true)
     try {
@@ -182,12 +196,18 @@ export function AppShell() {
         setErrorMessage(null)
       })
       navigate(`/scans/${createdScan.id}`)
+      return true
     } catch {
       setErrorMessage('Unable to create a scan right now.')
+      return false
     } finally {
       setIsLoadingScans(false)
       setIsSubmitting(false)
     }
+  }
+
+  async function handleCreateScan(target: string) {
+    await createScanAndNavigate(target)
   }
 
   function handleSelectScan(nextScanId: string) {
@@ -212,6 +232,25 @@ export function AppShell() {
     } catch {
       setErrorMessage('Unable to export the selected report.')
     }
+  }
+
+  async function handleInspectLink(link: string) {
+    const hostname = extractHostname(link)
+    if (!hostname) {
+      setErrorMessage('Unable to scan this link target.')
+      return
+    }
+
+    const created = await createScanAndNavigate(hostname)
+    if (!created) {
+      return
+    }
+    setCheckedLinks((previous) => {
+      if (previous.includes(link)) {
+        return previous
+      }
+      return [link, ...previous].slice(0, 20)
+    })
   }
 
   return (
@@ -243,9 +282,20 @@ export function AppShell() {
             scan={scanId ? selectedScan : null}
             history={scanId ? scanHistory : []}
             onExport={handleExport}
+            discoveredLinks={scanId ? discoveredLinks : []}
+            checkedLinks={checkedLinks}
+            onInspectLink={handleInspectLink}
           />
         </div>
       </section>
     </main>
   )
+}
+
+function extractHostname(link: string): string | null {
+  try {
+    return new URL(link).hostname || null
+  } catch {
+    return null
+  }
 }

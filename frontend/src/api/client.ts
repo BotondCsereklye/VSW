@@ -1,4 +1,9 @@
-import type { ScanDetail, ScanExportFormat, ScanSummary } from '../types/scan'
+import type {
+  DiscoveredLinksResponse,
+  ScanDetail,
+  ScanExportFormat,
+  ScanSummary,
+} from '../types/scan'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
 
@@ -35,6 +40,10 @@ export function getScanDetail(scanId: string) {
 
 export function getScanHistory(scanId: string) {
   return fetchJson<ScanSummary[]>(`/scans/${scanId}/history`)
+}
+
+export function discoverScanLinks(scanId: string, limit = 12) {
+  return fetchJson<DiscoveredLinksResponse>(`/scans/${scanId}/links?limit=${limit}`)
 }
 
 export async function exportScan(scanId: string, format: ScanExportFormat) {

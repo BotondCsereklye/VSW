@@ -40,6 +40,8 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Persistente Reports mit Detailansicht
 - Export von Reports als JSON und CSV
 - Verlauf pro Target mit einfacher Trendanzeige
+- Erweiterbare Findings-Liste mit Mehr/Weniger-Ansicht
+- Guided link checks fuer same-origin Links mit klickbarer Pruefstrecke
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausfuehrung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -120,6 +122,7 @@ Jeder Finding-Eintrag enthaelt:
 - `GET /api/v1/scans`
 - `GET /api/v1/scans/{scan_id}`
 - `GET /api/v1/scans/{scan_id}/history`
+- `GET /api/v1/scans/{scan_id}/links?limit=12`
 - `GET /api/v1/scans/{scan_id}/export?format=json`
 - `GET /api/v1/scans/{scan_id}/export?format=csv`
 
@@ -131,6 +134,7 @@ Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redire
 - JSON-Export wird lesbar formatiert (pretty-printed) bereitgestellt.
 - Die Verlaufsansicht gruppiert Scans ueber `normalized_target` und zeigt neue Eintraege zuerst.
 - Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
+- Guided link checks bleiben defensiv: nur same-origin Links, keine Auth-Bypass-Logik, keine aggressiven Crawl-Strategien.
 
 ## Grenzen des Scanners
 
@@ -149,6 +153,21 @@ Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redire
 - Groessere OWASP-orientierte Read-only Checklisten ueber die aktuelle v1-Erweiterung hinaus
 
 ## Lokales Setup ohne Docker
+
+### Ein-Kommando-Start (Windows PowerShell)
+
+```powershell
+Set-Location -LiteralPath "<repo-pfad>"
+.\dev.ps1
+```
+
+Optional ohne erneute Dependency-Installation:
+
+```powershell
+.\dev.ps1 -SkipInstall
+```
+
+Damit laufen Backend (`127.0.0.1:8000`) und Frontend (`127.0.0.1:5173`) ueber einen einzigen Startbefehl.
 
 ### Backend
 

@@ -7,6 +7,7 @@ from app.core.config import Settings, get_settings, parse_cors_origins
 from app.core.rate_limit import InMemoryRateLimiter
 from app.db.base import Base
 from app.db.session import create_engine_from_settings, create_session_factory
+from app.services.link_discovery import discover_links_for_target
 from app.services.ports import probe_standard_ports
 from app.services.scan_runner import run_scan_for_scan_id
 from app.services.tls import probe_tls_target
@@ -35,6 +36,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         max_requests=settings.rate_limit_max_requests,
         window_seconds=settings.rate_limit_window_seconds,
     )
+    app.state.link_discovery = discover_links_for_target
     app.state.scan_runner = (
         _build_scan_runner(session_factory) if settings.enable_background_scans else None
     )

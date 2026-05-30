@@ -4,7 +4,18 @@ import { vi } from 'vitest'
 
 import { ReportDetail } from './ReportDetail'
 
-function createScanDetail() {
+function createScanDetail(findingCount = 1) {
+  const findings = Array.from({ length: findingCount }, (_, index) => ({
+    id: `finding-${index + 1}`,
+    category: 'transport',
+    severity: 'high' as const,
+    title: index === 0 ? 'TLS certificate is expired' : `Additional finding ${index + 1}`,
+    description: 'The certificate is past its validity period.',
+    recommendation: 'Renew the certificate.',
+    evidence: { issuer: 'Legacy CA' },
+    created_at: '2026-05-28T08:05:00Z',
+  }))
+
   return {
     id: 'scan-1',
     target: 'example.com',
@@ -17,18 +28,7 @@ function createScanDetail() {
     completed_at: '2026-05-28T08:05:00Z',
     created_at: '2026-05-28T08:00:00Z',
     updated_at: '2026-05-28T08:05:00Z',
-    findings: [
-      {
-        id: 'finding-1',
-        category: 'transport',
-        severity: 'high' as const,
-        title: 'TLS certificate is expired',
-        description: 'The certificate is past its validity period.',
-        recommendation: 'Renew the certificate.',
-        evidence: { issuer: 'Legacy CA' },
-        created_at: '2026-05-28T08:05:00Z',
-      },
-    ],
+    findings,
     snapshot: {
       id: 'snapshot-1',
       http_headers: { 'x-frame-options': 'DENY' },
@@ -173,4 +173,43 @@ test('ReportDetail closes modal via close button', async () => {
 
   await user.click(screen.getByRole('button', { name: /close details/i }))
   expect(screen.queryByRole('dialog', { name: /tls details/i })).not.toBeInTheDocument()
+})
+
+
+test('ReportDetail collapses long finding lists and can expand on demand', async () => {
+  const user = userEvent.setup()
+  render(<ReportDetail scan={createScanDetail(6)} history={createHistory()} />)
+
+  expect(screen.getByText(/additional finding 2/i)).toBeInTheDocument()
+  expect(screen.getByText(/additional finding 3/i)).toBeInTheDocument()
+  expect(screen.queryByText(/additional finding 4/i)).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /mehr anzeigen \(3\)/i })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: /mehr anzeigen \(3\)/i }))
+  expect(screen.getByText(/additional finding 6/i)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /weniger anzeigen/i })).toBeInTheDocument()
+})
+
+
+test('ReportDetail shows discovered links and triggers link checks', async () => {
+  const user = userEvent.setup()
+  const onInspectLink = vi.fn()
+  render(
+    <ReportDetail
+      scan={createScanDetail()}
+      history={createHistory()}
+      discoveredLinks={[
+        'https://example.com/',
+        'https://example.com/security',
+      ]}
+      checkedLinks={['https://example.com/']}
+      onInspectLink={onInspectLink}
+    />,
+  )
+
+  expect(screen.getByRole('heading', { name: /guided link checks/i })).toBeInTheDocument()
+  expect(screen.getByText(/checked/i)).toBeInTheDocument()
+
+  await user.click(screen.getAllByRole('button', { name: /check link host/i })[1])
+  expect(onInspectLink).toHaveBeenCalledWith('https://example.com/security')
 })

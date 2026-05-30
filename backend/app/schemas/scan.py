@@ -53,3 +53,9 @@ class ScanListItemResponse(BaseModel):
 class ScanDetailResponse(ScanListItemResponse):
     findings: list[FindingResponse]
     snapshot: ReportSnapshotResponse | None
+
+
+class ScanLinkDiscoveryResponse(BaseModel):
+    scan_id: str
+    target: str
+    links: list[str]

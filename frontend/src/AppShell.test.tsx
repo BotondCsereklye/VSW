@@ -88,6 +88,13 @@ describe('AppShell', () => {
           },
         ]),
       )
+      .mockImplementationOnce(() =>
+        jsonResponse({
+          scan_id: 'scan-1',
+          target: 'example.com',
+          links: ['https://example.com/', 'https://example.com/security'],
+        }),
+      )
 
     const user = userEvent.setup()
     render(
@@ -147,6 +154,7 @@ describe('AppShell', () => {
     let listCallCount = 0
     let detailCallCount = 0
     let historyCallCount = 0
+    let linksCallCount = 0
 
     fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString()
@@ -158,6 +166,18 @@ describe('AppShell', () => {
       if (url.endsWith('/scans/scan-2/history')) {
         historyCallCount += 1
         return jsonResponse([historyCallCount >= 2 ? completedSummary : pendingSummary])
+      }
+
+      if (url.endsWith('/scans/scan-2/links?limit=12')) {
+        linksCallCount += 1
+        return jsonResponse({
+          scan_id: 'scan-2',
+          target: 'demo.example',
+          links:
+            linksCallCount >= 2
+              ? ['https://demo.example/', 'https://demo.example/security']
+              : ['https://demo.example/'],
+        })
       }
 
       if (url.endsWith('/scans/scan-2')) {

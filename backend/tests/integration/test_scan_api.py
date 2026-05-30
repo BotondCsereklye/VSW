@@ -199,3 +199,40 @@ def test_export_scan_as_csv_returns_rows(client, db_session) -> None:
     assert response.headers["content-type"].startswith("text/csv")
     assert "Database port 5432 is exposed" in response.text
     assert "scan_id,target,status,score" in response.text
+
+
+def test_discover_scan_links_returns_same_target_links(client, db_session, app) -> None:
+    scan = Scan(
+        target="example.com",
+        normalized_target="example.com",
+        target_type=TargetType.DOMAIN,
+        status=ScanStatus.COMPLETED,
+        score=82,
+        summary="Mostly secure",
+    )
+    db_session.add(scan)
+    db_session.commit()
+
+    calls: list[tuple[str, int]] = []
+
+    def fake_link_discovery(target: str, *, limit: int = 12):
+        calls.append((target, limit))
+        return [
+            "https://example.com/",
+            "https://example.com/docs/security",
+        ]
+
+    app.state.link_discovery = fake_link_discovery
+
+    response = client.get(f"/api/v1/scans/{scan.id}/links?limit=8")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "scan_id": scan.id,
+        "target": "example.com",
+        "links": [
+            "https://example.com/",
+            "https://example.com/docs/security",
+        ],
+    }
+    assert calls == [("example.com", 8)]
