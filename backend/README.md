@@ -1,6 +1,6 @@
 # Backend
 
-FastAPI-Backend fuer die defensive Scan-Anwendung. Dieser Teil des Projekts validiert Targets, erstellt Scans, fuehrt die risikoarmen Checks aus und liefert Reports an das Frontend.
+FastAPI-Backend fuer die defensive Scan-Anwendung. Dieser Teil des Projekts validiert Targets, erstellt Scans, fuehrt risikoarme Checks aus und liefert Reports an das Frontend.
 
 ## Verantwortungsbereich
 
@@ -8,7 +8,7 @@ FastAPI-Backend fuer die defensive Scan-Anwendung. Dieser Teil des Projekts vali
 - Persistenz von Scans, Findings und Report-Snapshots
 - Defensive Header-, TLS- und Port-Pruefungen
 - Score-Berechnung und abgeleitete Misconfiguration-Findings
-- REST-API fuer Listen-, Detail- und Create-Workflows
+- REST-API fuer Listen-, Detail-, Verlauf- und Export-Workflows
 - Snapshot-Evidenz mit fehlenden Headern, Redirect-Zielen und beobachteten Security Headern
 
 ## Lokales Setup
@@ -41,8 +41,11 @@ Ohne weitere Konfiguration nutzt das Backend lokal `sqlite:///./vsw.db`. Fuer Do
 
 - `GET /api/v1/health`: Health-Check fuer lokale Entwicklung und Container-Healthchecks
 - `POST /api/v1/scans`: Validiert das Ziel und erstellt einen neuen Scan
-- `GET /api/v1/scans`: Liefert die vorhandenen Scans fuer das Dashboard
+- `GET /api/v1/scans`: Liefert vorhandene Scans fuer das Dashboard
 - `GET /api/v1/scans/{scan_id}`: Liefert Findings und Snapshot fuer einen Scan
+- `GET /api/v1/scans/{scan_id}/history`: Liefert die letzten Scans fuer dasselbe Target
+- `GET /api/v1/scans/{scan_id}/export?format=json`: Export als JSON
+- `GET /api/v1/scans/{scan_id}/export?format=csv`: Export als CSV
 
 ## Qualitaetssicherung
 
