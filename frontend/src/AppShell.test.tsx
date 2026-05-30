@@ -100,7 +100,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: /open report for example.com/i }))
 
-    expect(await screen.findByText(/example ca/i)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /tls ansehen/i })).toBeInTheDocument()
   })
 
   test('creates a scan and refreshes the dashboard', async () => {
