@@ -1,11 +1,11 @@
 # Vulnerability Scanner Web App
 
-Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder IPs. Die Anwendung führt ausschließlich passive oder risikoarme Checks aus, speichert Reports in PostgreSQL und visualisiert Ergebnisse in einem modernen React-Dashboard.
+Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder IPs. Die Anwendung fuehrt ausschliesslich passive oder risikoarme Checks aus, speichert Reports und visualisiert Ergebnisse in einem React-Dashboard.
 
 ## Dokumentation
 
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
-- Backend-spezifisches Setup und API-Hinweise: [backend/README.md](backend/README.md)
+- Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
 
 ## Sicherheits-Hinweis
 
@@ -17,22 +17,22 @@ Dieses Projekt ist bewusst defensiv gebaut.
 - Keine Umgehung von Schutzmechanismen
 - Keine Authentifizierungsversuche
 
-Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
+Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 
 ## Stack
 
-- Backend: FastAPI, SQLAlchemy, PostgreSQL
+- Backend: FastAPI, SQLAlchemy, PostgreSQL (lokal optional SQLite)
 - Frontend: React, TypeScript, Vite
 - Infrastruktur: Docker, Docker Compose
 - Tests: Pytest, Vitest, Testing Library
 
-## Kernfunktionen
+## Aktueller Funktionsumfang (Stand heute)
 
 - Target-Eingabe mit Domain-/IP-Validierung
 - Warnhinweis zur autorisierten Nutzung
 - HTTP Security Header Check
 - TLS-/Zertifikatsanalyse
-- Sicherer Port-Check auf einer kleinen Standardliste
+- Sicherer Port-Check auf kleiner Standardliste
 - Misconfiguration-Erkennung mit Empfehlungen
 - Erweiterte Read-only Checks fuer unsichere Header-Werte und Cookie-Flags
 - Report-Scoring von 0 bis 100
@@ -40,41 +40,14 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Export von Reports als JSON und CSV
 - Verlauf pro Target mit einfacher Trendanzeige
 - Dashboard mit Status, Datum und Score
-- Background-Scan-Ausführung im Backend
+- Background-Scan-Ausfuehrung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
 
-## Projektstruktur
-
-```text
-.
-├── backend
-│   ├── app
-│   │   ├── api
-│   │   ├── core
-│   │   ├── db
-│   │   ├── models
-│   │   ├── schemas
-│   │   └── services
-│   ├── scripts
-│   ├── tests
-│   ├── Dockerfile
-│   └── pyproject.toml
-├── frontend
-│   ├── src
-│   │   ├── api
-│   │   ├── components
-│   │   └── types
-│   └── Dockerfile
-├── docs
-├── docker-compose.yml
-└── README.md
-```
-
-## Was geprüft wird
+## Was geprueft wird
 
 ### 1. HTTP Security Header
 
-Die App prüft auf:
+Die App prueft auf:
 
 - `Strict-Transport-Security`
 - `Content-Security-Policy`
@@ -87,14 +60,14 @@ Die App prüft auf:
 
 - HTTPS erreichbar oder nicht
 - Zertifikat vorhanden
-- Zertifikat gültig oder abgelaufen
+- Zertifikat gueltig oder abgelaufen
 - Ablaufdatum
 - Issuer
-- Sicher prüfbare TLS-Versionen (`TLSv1.2`, `TLSv1.3`)
+- Sicher pruefbare TLS-Versionen (`TLSv1.2`, `TLSv1.3`)
 
 ### 3. Sichere Portliste
 
-Es werden nur diese Ports geprüft:
+Es werden nur diese Ports geprueft:
 
 - `80`
 - `443`
@@ -114,7 +87,7 @@ Ergebnis pro Port:
 
 ### 4. Fehlkonfigurationen
 
-Beispiele für abgeleitete Findings:
+Beispiele fuer abgeleitete Findings:
 
 - HTTPS nicht erreichbar
 - Unsichere HTTP-Redirects
@@ -132,18 +105,46 @@ Beispiele für abgeleitete Findings:
 - Abzug pro `low`: `5`
 - Untergrenze: `0`
 
-Jeder Finding-Eintrag enthält:
+Jeder Finding-Eintrag enthaelt:
 
 - Risikostufe
 - technische Beschreibung
 - Evidenz
 - konkrete Empfehlung
 
-## Doku-Status
+## API-Endpunkte
 
-- `docs/screenshots/` ist für echte Projekt-Screenshots reserviert.
-- Architektur- und Scope-Notizen liegen in `docs/architecture-plan.md`.
-- Backend-Details zu Setup, Checks und API liegen in `backend/README.md`.
+- `GET /api/v1/health`
+- `POST /api/v1/scans`
+- `GET /api/v1/scans`
+- `GET /api/v1/scans/{scan_id}`
+- `GET /api/v1/scans/{scan_id}/history`
+- `GET /api/v1/scans/{scan_id}/export?format=json`
+- `GET /api/v1/scans/{scan_id}/export?format=csv`
+
+Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redirect-Ziel und fehlende Header fuer schnellere Evidenzpruefung.
+
+## Benutzerhinweise
+
+- Export ist aktuell fuer abgeschlossene Scans gedacht.
+- Die Verlaufsansicht gruppiert Scans ueber `normalized_target` und zeigt neue Eintraege zuerst.
+- Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
+
+## Grenzen des Scanners
+
+- Keine CVE-Korrelation aus Service-Bannern
+- Keine tiefen Fingerprinting-Mechanismen
+- Keine Auth- oder Session-Pruefungen
+- Keine Content-Audits der Zielapplikation
+- Keine externen Asset- oder JS-Dependency-Analysen
+- Keine tiefgehende Langzeit-Trendanalyse ueber viele Zeitraeume
+
+## Noch nicht umgesetzt
+
+- PDF-Export fuer Reports
+- Authentifizierung und Team-Workspaces
+- Scheduling fuer regelmaessige Scans
+- Groessere OWASP-orientierte Read-only Checklisten ueber die aktuelle v1-Erweiterung hinaus
 
 ## Lokales Setup ohne Docker
 
@@ -157,7 +158,7 @@ pip install -e '.[dev]'
 uvicorn app.main:app --reload
 ```
 
-Ohne zusätzliche Umgebungsvariablen nutzt das Backend lokal standardmäßig `sqlite:///./vsw.db`.
+Ohne zusaetzliche Umgebungsvariablen nutzt das Backend lokal standardmaessig `sqlite:///./vsw.db`.
 
 Standard-URL: `http://localhost:8000`
 
@@ -171,7 +172,7 @@ npm run dev
 
 Standard-URL: `http://localhost:5173`
 
-Das Frontend erwartet standardmäßig die API unter `http://localhost:8000/api/v1`.
+Das Frontend erwartet standardmaessig die API unter `http://localhost:8000/api/v1`.
 
 ## Docker Setup
 
@@ -204,31 +205,6 @@ Siehe `.env.example`.
 - `ENABLE_BACKGROUND_SCANS`
 - `VITE_API_BASE_URL`
 
-## API-Endpunkte
-
-- `GET /api/v1/health`
-- `POST /api/v1/scans`
-- `GET /api/v1/scans`
-- `GET /api/v1/scans/{scan_id}`
-
-Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redirect-Ziel und fehlende Header fuer schnellere Evidenzpruefung.
-
-### Beispiel: Scan anlegen
-
-```bash
-curl -X POST http://localhost:8000/api/v1/scans \
-  -H "Content-Type: application/json" \
-  -d '{"target":"example.com"}'
-```
-
-### Export und Verlauf
-
-- `GET /api/v1/scans/{scan_id}/export?format=json`
-- `GET /api/v1/scans/{scan_id}/export?format=csv`
-- `GET /api/v1/scans/{scan_id}/history`
-
-Im Frontend zeigt die Report-Ansicht passende Export-Buttons sowie die letzten Scans desselben Targets mit einer einfachen Trendbewertung an.
-
 ## Tests
 
 ### Backend
@@ -249,42 +225,17 @@ npm test
 npm run build
 ```
 
-## Benutzerhinweise
-
-- Export ist aktuell für abgeschlossene Scans gedacht.
-- Die Verlaufsansicht gruppiert Scans über `normalized_target` und zeigt die neuesten Einträge zuerst.
-- Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
-
-## Grenzen des Scanners
-
-- Keine CVE-Korrelation aus Service-Bannern
-- Keine tiefen Fingerprinting-Mechanismen
-- Keine Auth- oder Session-Prüfungen
-- Keine Content-Audits der Zielapplikation
-- Keine externen Asset- oder JS-Dependency-Analysen
-- Keine historischen Trendvergleiche
-
 ## Architekturhinweise
 
-- Scans werden als Datenbankeintrag erstellt und per Background-Runner verarbeitet
-- Findings und Report-Snapshots werden persistiert
-- Das Frontend lädt Listen- und Detaildaten separat
-- CORS ist für lokale Frontend-/Backend-Trennung konfigurierbar
-
-## TDD-Hinweis
-
-Die Umsetzung wurde testgetrieben aufgebaut:
-
-- zuerst Unit- und Integrationstests im Backend
-- danach Implementierung der Services und API
-- anschließend Frontend-Komponenten- und Workflow-Tests
-- danach UI- und Infrastruktur-Ausbau
+- Scans werden als Datenbankeintrag erstellt und per Background-Runner verarbeitet.
+- Findings und Report-Snapshots werden persistiert.
+- Das Frontend laedt Listen- und Detaildaten separat.
+- CORS ist fuer lokale Frontend-/Backend-Trennung konfigurierbar.
 
 ## Zukunftsideen
 
-- PDF-Export für Reports
-- Zeitliche Verlaufsansicht für wiederholte Scans
-- Authentifizierung und Team-Workspaces
-- Export nach JSON/CSV
-- OWASP-orientierte erweiterte Read-only Checklisten
-- Optionales Scheduling für regelmäßige Scans
+- PDF-Export mit Layout fuer Sharing und Audits
+- Erweiterte Trendansicht (Zeitreihen, Vergleich mehrerer Scans)
+- Weitere OWASP-orientierte Read-only Check-Module
+- Optionales, kontrolliertes Scheduling mit klaren Limits
+- Rollen-/Rechtemodell fuer Team-Nutzung
