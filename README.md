@@ -42,6 +42,7 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Verlauf pro Target mit einfacher Trendanzeige
 - Erweiterbare Findings-Liste mit Mehr/Weniger-Ansicht
 - Guided link checks fuer same-origin Links mit klickbarer Pruefstrecke
+- Browser extension MVP fuer Link-Capture zum lokalen Backend
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausfuehrung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -135,6 +136,23 @@ Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redire
 - Die Verlaufsansicht gruppiert Scans ueber `normalized_target` und zeigt neue Eintraege zuerst.
 - Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
 - Guided link checks bleiben defensiv: nur same-origin Links, keine Auth-Bypass-Logik, keine aggressiven Crawl-Strategien.
+- Die Browser extension ist nur ein Trigger fuer Folge-Scans im lokalen VSW-Backend und enthaelt keine eigene Scan-Engine.
+
+## Browser Extension (MVP)
+
+Ordner: `extensions/vsw-link-capture`
+
+MVP-Funktionen:
+
+- Kontextmenue: `Scan link with VSW` bei Link-Rechtsklick
+- Kontextmenue: `Scan current tab with VSW`
+- Popup-Button: `Scan current page`
+- Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
+- Erfolg: VSW-Detailseite fuer den neuen Scan wird geoeffnet
+
+Installationsanleitung und manuelle Test-Checkliste:
+
+- `extensions/vsw-link-capture/README.md`
 
 ## Grenzen des Scanners
 

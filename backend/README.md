@@ -48,6 +48,8 @@ Ohne weitere Konfiguration nutzt das Backend lokal `sqlite:///./vsw.db`. Fuer Do
 - `GET /api/v1/scans/{scan_id}/export?format=json`: Export als lesbar formatiertes JSON
 - `GET /api/v1/scans/{scan_id}/export?format=csv`: Export als CSV
 
+Die Browser-extension MVP nutzt ebenfalls `POST /api/v1/scans` und uebergibt nur den extrahierten Host als Target.
+
 ## Qualitaetssicherung
 
 Tests und statische Checks:
