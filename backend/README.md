@@ -17,6 +17,14 @@ Voraussetzungen:
 
 - Python `3.12`
 
+Empfohlener Windows-Start aus dem Repo-Root:
+
+```powershell
+.\launch_vsw_launcher.ps1
+```
+
+Die Launcher-App startet Backend und Frontend gemeinsam und ist der bevorzugte lokale Demo- und Entwicklungsweg unter Windows.
+
 Installation und Start:
 
 ```bash
