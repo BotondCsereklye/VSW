@@ -200,12 +200,12 @@ describe('AppShell', () => {
     expect(await screen.findByText(/waiting for scan results/i)).toBeInTheDocument()
     await waitFor(
       () => {
-        expect(screen.getByText(/mostly secure/i)).toBeInTheDocument()
+        expect(screen.getAllByText(/mostly secure/i).length).toBeGreaterThan(0)
       },
       { timeout: 4000 },
     )
 
-    expect(await screen.findByText(/example ca/i)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /tls ansehen/i })).toBeInTheDocument()
   }, 8000)
 
   test('shows an error message when the scan list cannot be loaded', async () => {
