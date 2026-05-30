@@ -107,6 +107,24 @@ def detect_misconfigurations(
             )
         )
 
+    if tls_analysis.https_reachable and "TLSv1.3" not in tls_analysis.supported_versions:
+        findings.append(
+            FindingDraft(
+                category=FindingCategory.TRANSPORT,
+                severity=FindingSeverity.MEDIUM,
+                title="TLS 1.3 is not supported",
+                description=(
+                    "The HTTPS endpoint is reachable, but TLS 1.3 was not confirmed during "
+                    "the passive version check."
+                ),
+                recommendation=(
+                    "Enable TLS 1.3 on the server while keeping compatible fallback settings "
+                    "for supported clients."
+                ),
+                evidence={"supported_versions": tls_analysis.supported_versions},
+            )
+        )
+
     for check in header_analysis.checks:
         if check.present:
             continue

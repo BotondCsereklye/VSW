@@ -35,6 +35,7 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Sicherer Port-Check auf kleiner Standardliste
 - Misconfiguration-Erkennung mit Empfehlungen
 - Erweiterte Read-only Checks fuer unsichere Header-Werte und Cookie-Flags
+- Zusätzliche TLS-Read-only Regel bei fehlender TLS 1.3 Unterstuetzung
 - Report-Scoring von 0 bis 100
 - Persistente Reports mit Detailansicht
 - Export von Reports als JSON und CSV
@@ -127,6 +128,7 @@ Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redire
 ## Benutzerhinweise
 
 - Export ist aktuell fuer abgeschlossene Scans gedacht.
+- JSON-Export wird lesbar formatiert (pretty-printed) bereitgestellt.
 - Die Verlaufsansicht gruppiert Scans ueber `normalized_target` und zeigt neue Eintraege zuerst.
 - Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
 

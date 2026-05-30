@@ -44,7 +44,7 @@ Ohne weitere Konfiguration nutzt das Backend lokal `sqlite:///./vsw.db`. Fuer Do
 - `GET /api/v1/scans`: Liefert vorhandene Scans fuer das Dashboard
 - `GET /api/v1/scans/{scan_id}`: Liefert Findings und Snapshot fuer einen Scan
 - `GET /api/v1/scans/{scan_id}/history`: Liefert die letzten Scans fuer dasselbe Target
-- `GET /api/v1/scans/{scan_id}/export?format=json`: Export als JSON
+- `GET /api/v1/scans/{scan_id}/export?format=json`: Export als lesbar formatiertes JSON
 - `GET /api/v1/scans/{scan_id}/export?format=csv`: Export als CSV
 
 ## Qualitaetssicherung
@@ -67,3 +67,4 @@ Die erste erweiterte Read-only Check-Stufe deckt neben fehlenden Headern auch ri
 - `Content-Security-Policy` mit `unsafe-inline`
 - `Referrer-Policy: unsafe-url`
 - Cookies ohne `Secure` und/oder `HttpOnly`
+- HTTPS ohne bestaetigte TLSv1.3-Unterstuetzung

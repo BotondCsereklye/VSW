@@ -126,3 +126,36 @@ def test_detect_misconfigurations_flags_risky_header_values_and_cookie_flags() -
     assert "Content-Security-Policy allows unsafe inline code" in titles
     assert "Referrer-Policy leaks full source URLs" in titles
     assert "Cookie flags are incomplete" in titles
+
+
+def test_detect_misconfigurations_flags_missing_tls13_support() -> None:
+    findings = detect_misconfigurations(
+        http_observation=HttpObservation(
+            http_reachable=True,
+            https_reachable=True,
+            final_http_url="http://example.com",
+            final_https_url="https://example.com",
+            redirect_target="https://example.com",
+        ),
+        header_analysis=HeaderAnalysis(checks=[], missing_headers=[], all_present=True),
+        response_headers={
+            "strict-transport-security": "max-age=31536000",
+        },
+        tls_analysis=TlsAnalysis(
+            https_reachable=True,
+            certificate_valid=True,
+            certificate_expired=False,
+            issuer="Example CA",
+            expires_at=datetime.now(UTC) + timedelta(days=30),
+            supported_versions=["TLSv1.2"],
+        ),
+        port_results=[],
+    )
+
+    finding_map = {finding.title: finding for finding in findings}
+
+    assert "TLS 1.3 is not supported" in finding_map
+    assert finding_map["TLS 1.3 is not supported"].severity is FindingSeverity.MEDIUM
+    assert finding_map["TLS 1.3 is not supported"].evidence == {
+        "supported_versions": ["TLSv1.2"]
+    }

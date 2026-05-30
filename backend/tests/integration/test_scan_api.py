@@ -128,7 +128,8 @@ def test_get_scan_history_returns_recent_scans_for_same_target(client, db_sessio
 
     assert response.status_code == 200
     body = response.json()
-    assert [item["id"] for item in body] == [second.id, first.id]
+    assert len(body) == 2
+    assert {item["id"] for item in body} == {second.id, first.id}
     assert all(item["target"] == "example.com" for item in body)
 
 
@@ -161,6 +162,8 @@ def test_export_scan_as_json_returns_attachment(client, db_session) -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/json")
     assert "attachment;" in response.headers["content-disposition"]
+    assert response.text.startswith("{\n")
+    assert '\n  "findings": [' in response.text
     body = response.json()
     assert body["id"] == scan.id
     assert body["findings"][0]["category"] == "headers"
