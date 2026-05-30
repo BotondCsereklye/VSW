@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import type { ScanDetail, ScanExportFormat, ScanSummary } from '../types/scan'
 import { FindingCard } from './FindingCard'
@@ -75,6 +76,39 @@ export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps
 
   const trendLabel = getTrendLabel(history)
 
+  const snapshotModal =
+    activeSnapshotPanel !== null && snapshotContent !== null
+      ? createPortal(
+          <div
+            className="report-detail__modal-backdrop"
+            onClick={() => setActiveSnapshotPanel(null)}
+            role="presentation"
+          >
+            <section
+              className="report-detail__modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="snapshot-modal-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <header className="report-detail__modal-header">
+                <h3 id="snapshot-modal-title">{snapshotTitle}</h3>
+                <button
+                  type="button"
+                  className="report-detail__modal-close"
+                  aria-label="Close details"
+                  onClick={() => setActiveSnapshotPanel(null)}
+                >
+                  X
+                </button>
+              </header>
+              <pre>{JSON.stringify(snapshotContent, null, 2)}</pre>
+            </section>
+          </div>,
+          document.body,
+        )
+      : null
+
   return (
     <section className="report-detail">
       <header className="report-detail__header">
@@ -130,34 +164,7 @@ export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps
         ))}
       </div>
 
-      {activeSnapshotPanel !== null && snapshotContent !== null && (
-        <div
-          className="report-detail__modal-backdrop"
-          onClick={() => setActiveSnapshotPanel(null)}
-          role="presentation"
-        >
-          <section
-            className="report-detail__modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="snapshot-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header className="report-detail__modal-header">
-              <h3 id="snapshot-modal-title">{snapshotTitle}</h3>
-              <button
-                type="button"
-                className="report-detail__modal-close"
-                aria-label="Close details"
-                onClick={() => setActiveSnapshotPanel(null)}
-              >
-                ×
-              </button>
-            </header>
-            <pre>{JSON.stringify(snapshotContent, null, 2)}</pre>
-          </section>
-        </div>
-      )}
+      {snapshotModal}
     </section>
   )
 }
