@@ -5,7 +5,7 @@ import { vi } from 'vitest'
 import { ScanDashboard } from './ScanDashboard'
 
 
-test('ScanDashboard renders scan rows and notifies when a report is selected', async () => {
+test('ScanDashboard makes the full scan card clickable to open a report', async () => {
   const user = userEvent.setup()
   const onSelectScan = vi.fn()
 

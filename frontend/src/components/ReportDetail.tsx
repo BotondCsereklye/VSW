@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from 'react'
+
 import type { ScanDetail, ScanExportFormat, ScanSummary } from '../types/scan'
 import { FindingCard } from './FindingCard'
 import { ScoreBadge } from './ScoreBadge'
@@ -7,6 +9,8 @@ type ReportDetailProps = {
   history?: ScanSummary[]
   onExport?: (format: ScanExportFormat) => void | Promise<void>
 }
+
+type SnapshotPanel = 'tls' | 'headers'
 
 function getTrendLabel(history: ScanSummary[]): string {
   const completed = history.filter((item) => item.score !== null)
@@ -25,6 +29,41 @@ function getTrendLabel(history: ScanSummary[]): string {
 }
 
 export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps) {
+  const [activeSnapshotPanel, setActiveSnapshotPanel] = useState<SnapshotPanel | null>(null)
+
+  const snapshotTitle = activeSnapshotPanel === 'tls' ? 'TLS details' : 'Header details'
+  const snapshotContent = useMemo(() => {
+    if (scan === null || activeSnapshotPanel === null) {
+      return null
+    }
+
+    if (activeSnapshotPanel === 'tls') {
+      return scan.snapshot?.tls_analysis ?? {}
+    }
+    return scan.snapshot?.http_headers ?? {}
+  }, [activeSnapshotPanel, scan])
+
+  useEffect(() => {
+    if (activeSnapshotPanel === null) {
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setActiveSnapshotPanel(null)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [activeSnapshotPanel])
+
   if (scan === null) {
     return (
       <section className="report-detail report-detail--empty">
@@ -76,15 +115,13 @@ export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps
         )}
       </section>
 
-      <div className="report-detail__snapshot">
-        <article>
-          <h3>TLS</h3>
-          <pre>{JSON.stringify(scan.snapshot?.tls_analysis ?? {}, null, 2)}</pre>
-        </article>
-        <article>
-          <h3>Headers</h3>
-          <pre>{JSON.stringify(scan.snapshot?.http_headers ?? {}, null, 2)}</pre>
-        </article>
+      <div className="report-detail__snapshot-actions">
+        <button type="button" onClick={() => setActiveSnapshotPanel('tls')}>
+          TLS ansehen
+        </button>
+        <button type="button" onClick={() => setActiveSnapshotPanel('headers')}>
+          Headers ansehen
+        </button>
       </div>
 
       <div className="report-detail__findings">
@@ -92,6 +129,35 @@ export function ReportDetail({ scan, history = [], onExport }: ReportDetailProps
           <FindingCard key={finding.id} finding={finding} />
         ))}
       </div>
+
+      {activeSnapshotPanel !== null && snapshotContent !== null && (
+        <div
+          className="report-detail__modal-backdrop"
+          onClick={() => setActiveSnapshotPanel(null)}
+          role="presentation"
+        >
+          <section
+            className="report-detail__modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="snapshot-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="report-detail__modal-header">
+              <h3 id="snapshot-modal-title">{snapshotTitle}</h3>
+              <button
+                type="button"
+                className="report-detail__modal-close"
+                aria-label="Close details"
+                onClick={() => setActiveSnapshotPanel(null)}
+              >
+                ×
+              </button>
+            </header>
+            <pre>{JSON.stringify(snapshotContent, null, 2)}</pre>
+          </section>
+        </div>
+      )}
     </section>
   )
 }

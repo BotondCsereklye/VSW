@@ -4,80 +4,89 @@ import { vi } from 'vitest'
 
 import { ReportDetail } from './ReportDetail'
 
+function createScanDetail() {
+  return {
+    id: 'scan-1',
+    target: 'example.com',
+    normalized_target: 'example.com',
+    target_type: 'domain' as const,
+    status: 'completed' as const,
+    score: 63,
+    summary: 'Needs transport hardening',
+    started_at: '2026-05-28T08:00:00Z',
+    completed_at: '2026-05-28T08:05:00Z',
+    created_at: '2026-05-28T08:00:00Z',
+    updated_at: '2026-05-28T08:05:00Z',
+    findings: [
+      {
+        id: 'finding-1',
+        category: 'transport',
+        severity: 'high' as const,
+        title: 'TLS certificate is expired',
+        description: 'The certificate is past its validity period.',
+        recommendation: 'Renew the certificate.',
+        evidence: { issuer: 'Legacy CA' },
+        created_at: '2026-05-28T08:05:00Z',
+      },
+    ],
+    snapshot: {
+      id: 'snapshot-1',
+      http_headers: { 'x-frame-options': 'DENY' },
+      tls_analysis: { https_reachable: true, issuer: 'Legacy CA' },
+      port_results: [{ port: 443, state: 'open' }],
+      misconfigurations: [{ title: 'TLS certificate is expired' }],
+      metadata: { target: 'example.com' },
+      created_at: '2026-05-28T08:05:00Z',
+    },
+  }
+}
 
-test('ReportDetail renders score, snapshot highlights and findings', () => {
+function createHistory() {
+  return [
+    {
+      id: 'scan-1',
+      target: 'example.com',
+      normalized_target: 'example.com',
+      target_type: 'domain' as const,
+      status: 'completed' as const,
+      score: 63,
+      summary: 'Needs transport hardening',
+      started_at: '2026-05-28T08:00:00Z',
+      completed_at: '2026-05-28T08:05:00Z',
+      created_at: '2026-05-28T08:00:00Z',
+      updated_at: '2026-05-28T08:05:00Z',
+    },
+    {
+      id: 'scan-0',
+      target: 'example.com',
+      normalized_target: 'example.com',
+      target_type: 'domain' as const,
+      status: 'completed' as const,
+      score: 79,
+      summary: 'Stronger baseline',
+      started_at: '2026-05-20T08:00:00Z',
+      completed_at: '2026-05-20T08:05:00Z',
+      created_at: '2026-05-20T08:00:00Z',
+      updated_at: '2026-05-20T08:05:00Z',
+    },
+  ]
+}
+
+
+test('ReportDetail renders score, findings and snapshot action buttons', () => {
   render(
     <ReportDetail
-      scan={{
-        id: 'scan-1',
-        target: 'example.com',
-        normalized_target: 'example.com',
-        target_type: 'domain',
-        status: 'completed',
-        score: 63,
-        summary: 'Needs transport hardening',
-        started_at: '2026-05-28T08:00:00Z',
-        completed_at: '2026-05-28T08:05:00Z',
-        created_at: '2026-05-28T08:00:00Z',
-        updated_at: '2026-05-28T08:05:00Z',
-        findings: [
-          {
-            id: 'finding-1',
-            category: 'transport',
-            severity: 'high',
-            title: 'TLS certificate is expired',
-            description: 'The certificate is past its validity period.',
-            recommendation: 'Renew the certificate.',
-            evidence: { issuer: 'Legacy CA' },
-            created_at: '2026-05-28T08:05:00Z',
-          },
-        ],
-        snapshot: {
-          id: 'snapshot-1',
-          http_headers: { 'x-frame-options': 'DENY' },
-          tls_analysis: { https_reachable: true, issuer: 'Legacy CA' },
-          port_results: [{ port: 443, state: 'open' }],
-          misconfigurations: [{ title: 'TLS certificate is expired' }],
-          metadata: { target: 'example.com' },
-          created_at: '2026-05-28T08:05:00Z',
-        },
-      }}
-      history={[
-        {
-          id: 'scan-1',
-          target: 'example.com',
-          normalized_target: 'example.com',
-          target_type: 'domain',
-          status: 'completed',
-          score: 63,
-          summary: 'Needs transport hardening',
-          started_at: '2026-05-28T08:00:00Z',
-          completed_at: '2026-05-28T08:05:00Z',
-          created_at: '2026-05-28T08:00:00Z',
-          updated_at: '2026-05-28T08:05:00Z',
-        },
-        {
-          id: 'scan-0',
-          target: 'example.com',
-          normalized_target: 'example.com',
-          target_type: 'domain',
-          status: 'completed',
-          score: 79,
-          summary: 'Stronger baseline',
-          started_at: '2026-05-20T08:00:00Z',
-          completed_at: '2026-05-20T08:05:00Z',
-          created_at: '2026-05-20T08:00:00Z',
-          updated_at: '2026-05-20T08:05:00Z',
-        },
-      ]}
+      scan={createScanDetail()}
+      history={createHistory()}
     />,
   )
 
   expect(screen.getByRole('heading', { name: /example.com/i })).toBeInTheDocument()
   expect(screen.getByText(/63\/100/i)).toBeInTheDocument()
-  expect(screen.getAllByText(/legacy ca/i)).toHaveLength(2)
   expect(screen.getByText(/tls certificate is expired/i)).toBeInTheDocument()
   expect(screen.getByText(/trend degraded/i)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /tls ansehen/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /headers ansehen/i })).toBeInTheDocument()
 })
 
 
@@ -119,4 +128,49 @@ test('ReportDetail calls export handlers for available formats', async () => {
 
   expect(onExport).toHaveBeenNthCalledWith(1, 'json')
   expect(onExport).toHaveBeenNthCalledWith(2, 'csv')
+})
+
+
+test('ReportDetail opens TLS details and closes modal with Escape', async () => {
+  const user = userEvent.setup()
+
+  render(<ReportDetail scan={createScanDetail()} history={createHistory()} />)
+
+  await user.click(screen.getByRole('button', { name: /tls ansehen/i }))
+  const dialog = screen.getByRole('dialog', { name: /tls details/i })
+  expect(dialog).toBeInTheDocument()
+  expect(dialog).toHaveTextContent(/legacy ca/i)
+
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: /tls details/i })).not.toBeInTheDocument()
+})
+
+
+test('ReportDetail closes modal when clicking on the backdrop', async () => {
+  const user = userEvent.setup()
+
+  render(<ReportDetail scan={createScanDetail()} history={createHistory()} />)
+
+  await user.click(screen.getByRole('button', { name: /headers ansehen/i }))
+  const dialog = screen.getByRole('dialog', { name: /header details/i })
+  const backdrop = dialog.parentElement
+  if (backdrop === null) {
+    throw new Error('Expected modal backdrop to exist.')
+  }
+
+  await user.click(backdrop)
+  expect(screen.queryByRole('dialog', { name: /header details/i })).not.toBeInTheDocument()
+})
+
+
+test('ReportDetail closes modal via close button', async () => {
+  const user = userEvent.setup()
+
+  render(<ReportDetail scan={createScanDetail()} history={createHistory()} />)
+
+  await user.click(screen.getByRole('button', { name: /tls ansehen/i }))
+  expect(screen.getByRole('dialog', { name: /tls details/i })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: /close details/i }))
+  expect(screen.queryByRole('dialog', { name: /tls details/i })).not.toBeInTheDocument()
 })

@@ -29,8 +29,11 @@ export function ScanDashboard({
       </header>
       <div className="scan-dashboard__list">
         {scans.map((scan) => (
-          <article
+          <button
             key={scan.id}
+            type="button"
+            onClick={() => onSelectScan(scan.id)}
+            aria-label={`Open report for ${scan.target}`}
             className={`scan-row${selectedScanId === scan.id ? ' scan-row--active' : ''}`}
           >
             <div className="scan-row__main">
@@ -40,11 +43,9 @@ export function ScanDashboard({
             <div className="scan-row__meta">
               <ScanStatusBadge status={scan.status} />
               <ScoreBadge score={scan.score} />
-              <button type="button" onClick={() => onSelectScan(scan.id)}>
-                Open report for {scan.target}
-              </button>
+              <span className="scan-row__cta">Open report</span>
             </div>
-          </article>
+          </button>
         ))}
       </div>
     </section>
