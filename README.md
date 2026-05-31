@@ -147,8 +147,10 @@ MVP-Funktionen:
 - Kontextmenue: `Scan link with VSW` bei Link-Rechtsklick
 - Kontextmenue: `Scan current tab with VSW`
 - Popup-Button: `Scan current page`
+- Live-Capture fuer normale in-page Link-Klicks mit Pre-Scan vor Navigation
+- Popup-Toggles fuer `Enable live click capture` und `Block navigation on pre-scan failure`
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
-- Erfolg: VSW-Detailseite fuer den neuen Scan wird geoeffnet
+- Erfolg: VSW-Detailseite fuer den neuen Scan wird bei Popup/Context-Trigger geoeffnet
 
 Installationsanleitung und manuelle Test-Checkliste:
 

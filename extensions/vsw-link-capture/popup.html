@@ -64,12 +64,35 @@
       .status[data-state="error"] {
         color: #b2342d;
       }
+
+      .toggles {
+        display: grid;
+        gap: 8px;
+        font-size: 0.82rem;
+        color: #27486a;
+      }
+
+      .toggles label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>VSW Link Capture</h1>
       <p>Trigger a defensive follow-up scan for the current tab in your local VSW backend.</p>
+      <section class="toggles">
+        <label>
+          <input id="liveCaptureEnabled" type="checkbox" />
+          Enable live click capture
+        </label>
+        <label>
+          <input id="blockOnScanFailure" type="checkbox" />
+          Block navigation on pre-scan failure
+        </label>
+      </section>
       <button id="scanCurrentPageButton" type="button">Scan current page</button>
       <div id="status" class="status" data-state="idle"></div>
     </main>

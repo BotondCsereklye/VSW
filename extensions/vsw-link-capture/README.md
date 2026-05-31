@@ -7,8 +7,10 @@ This extension is a defensive helper for local development. It does not scan on 
 - Adds context menu action `Scan link with VSW` on right-clicked links
 - Adds context menu action `Scan current tab with VSW`
 - Provides popup button `Scan current page`
+- Adds live click capture for normal in-page link clicks (http/https)
+- Runs pre-scan before navigation and then continues navigation
 - Sends `POST http://127.0.0.1:8000/api/v1/scans` with body `{ "target": "<host>" }`
-- Opens local VSW frontend for the new scan detail when a scan is created
+- Opens local VSW frontend for the new scan detail when scan is triggered from context menu or popup
 
 ## Security boundaries
 
@@ -34,7 +36,17 @@ This extension is a defensive helper for local development. It does not scan on 
 2. Right-click a link and choose `Scan link with VSW`, or:
 3. Right-click page and choose `Scan current tab with VSW`, or:
 4. Click extension icon and press `Scan current page`.
-5. VSW opens `http://127.0.0.1:5173/scans/<scan_id>` on success.
+5. Live capture runs automatically on normal in-page link clicks.
+6. VSW opens `http://127.0.0.1:5173/scans/<scan_id>` on success for popup/context-menu triggers.
+
+## Live capture settings
+
+Open the extension popup to configure:
+
+- `Enable live click capture`
+- `Block navigation on pre-scan failure`
+
+If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 
 ## Manual test checklist
 
@@ -43,8 +55,10 @@ This extension is a defensive helper for local development. It does not scan on 
 3. `Scan current tab with VSW` appears on page context menu.
 4. Triggering a scan creates a new scan entry in VSW.
 5. Popup button creates a scan for current tab host.
-6. When backend is offline, popup shows a clear error message.
-7. Non-http(s) URLs are rejected with a clear message.
+6. Live click capture creates pre-scan before following clicked links.
+7. When backend is offline, popup shows a clear error message.
+8. When strict blocking is enabled and backend is offline, navigation is blocked.
+9. Non-http(s) URLs are rejected with a clear message.
 
 ## Troubleshooting
 

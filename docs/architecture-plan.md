@@ -26,6 +26,7 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
 - Manifest V3 extension as link-capture helper
 - Context menu actions for link and current tab
 - Popup trigger for current page
+- Live capture in content script for in-page link clicks with pre-scan gate
 - Sends only host targets to local backend `POST /api/v1/scans`
 - Opens local VSW scan detail page on success
 - Contains no offensive logic and no independent scanning engine

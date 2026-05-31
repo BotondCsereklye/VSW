@@ -2,8 +2,15 @@ const MENU_SCAN_LINK = "vsw-scan-link";
 const MENU_SCAN_TAB = "vsw-scan-current-tab";
 const VSW_API_URL = "http://127.0.0.1:8000/api/v1/scans";
 const VSW_APP_BASE_URL = "http://127.0.0.1:5173";
+const SETTINGS_KEY = "vswLinkCaptureSettings";
+const DEFAULT_SETTINGS = {
+  liveCaptureEnabled: true,
+  blockOnScanFailure: true,
+};
 
 chrome.runtime.onInstalled.addListener(() => {
+  void ensureSettings();
+
   chrome.contextMenus.create({
     id: MENU_SCAN_LINK,
     title: "Scan link with VSW",
@@ -30,15 +37,34 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== "scan-current-tab") {
-    return;
-  }
-
   (async () => {
     try {
-      const tab = await getActiveTab();
-      const result = await createScanFromUrl(tab?.url);
-      sendResponse(result);
+      if (message?.type === "scan-current-tab") {
+        const tab = await getActiveTab();
+        const result = await createScanFromUrl(tab?.url);
+        sendResponse(result);
+        return;
+      }
+
+      if (message?.type === "gate-navigation") {
+        const result = await gateNavigation(message.url);
+        sendResponse(result);
+        return;
+      }
+
+      if (message?.type === "get-settings") {
+        const settings = await getSettings();
+        sendResponse({ ok: true, settings });
+        return;
+      }
+
+      if (message?.type === "set-settings") {
+        const settings = await setSettings(message.settings || {});
+        sendResponse({ ok: true, settings });
+        return;
+      }
+
+      sendResponse({ ok: false, error: "Unknown message type." });
     } catch (error) {
       sendResponse({
         ok: false,
@@ -50,7 +76,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true;
 });
 
-async function createScanFromUrl(rawUrl) {
+async function createScanFromUrl(rawUrl, options = {}) {
+  const openScanView = options.openScanView ?? true;
   const parsed = extractTarget(rawUrl);
   if (!parsed.ok) {
     return parsed;
@@ -75,9 +102,9 @@ async function createScanFromUrl(rawUrl) {
     }
 
     const scanId = body?.id;
-    if (scanId) {
+    if (openScanView && scanId) {
       await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${scanId}` });
-    } else {
+    } else if (openScanView) {
       await chrome.tabs.create({ url: VSW_APP_BASE_URL });
     }
 
@@ -93,6 +120,37 @@ async function createScanFromUrl(rawUrl) {
       details: normalizeError(error),
     };
   }
+}
+
+async function gateNavigation(rawUrl) {
+  const settings = await getSettings();
+  if (!settings.liveCaptureEnabled) {
+    return { ok: true, allowNavigation: true, message: "Live capture disabled." };
+  }
+
+  const result = await createScanFromUrl(rawUrl, { openScanView: false });
+  if (result.ok) {
+    return {
+      ok: true,
+      allowNavigation: true,
+      message: result.message,
+      scanId: result.scanId || null,
+    };
+  }
+
+  if (settings.blockOnScanFailure) {
+    return {
+      ok: true,
+      allowNavigation: false,
+      message: result.error || "Pre-scan failed.",
+    };
+  }
+
+  return {
+    ok: true,
+    allowNavigation: true,
+    warning: result.error || "Pre-scan failed. Navigation continues.",
+  };
 }
 
 function extractTarget(rawUrl) {
@@ -121,6 +179,35 @@ function extractTarget(rawUrl) {
 async function getActiveTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   return tabs[0];
+}
+
+async function getSettings() {
+  const stored = await chrome.storage.local.get(SETTINGS_KEY);
+  return normalizeSettings(stored[SETTINGS_KEY]);
+}
+
+async function setSettings(candidateSettings) {
+  const settings = normalizeSettings(candidateSettings);
+  await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+  return settings;
+}
+
+async function ensureSettings() {
+  const settings = await getSettings();
+  await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+}
+
+function normalizeSettings(candidate) {
+  return {
+    liveCaptureEnabled:
+      candidate?.liveCaptureEnabled === undefined
+        ? DEFAULT_SETTINGS.liveCaptureEnabled
+        : Boolean(candidate.liveCaptureEnabled),
+    blockOnScanFailure:
+      candidate?.blockOnScanFailure === undefined
+        ? DEFAULT_SETTINGS.blockOnScanFailure
+        : Boolean(candidate.blockOnScanFailure),
+  };
 }
 
 async function parseJsonSafe(response) {
