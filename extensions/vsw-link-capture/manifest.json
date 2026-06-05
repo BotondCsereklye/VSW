@@ -10,13 +10,21 @@
     "storage"
   ],
   "host_permissions": [
-    "http://127.0.0.1:8000/*"
+    "http://127.0.0.1:8000/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "http://*/*",
         "https://*/*"
+      ],
+      "exclude_matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*",
+        "https://127.0.0.1/*",
+        "https://localhost/*"
       ],
       "js": [
         "content-script.js"

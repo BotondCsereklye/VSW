@@ -29,6 +29,8 @@ This extension is a defensive helper for local development. It does not scan on 
 2. Enable `Developer mode`
 3. Click `Load unpacked`
 4. Select folder: `extensions/vsw-link-capture`
+5. Open `Details` and set website access to `On all sites`
+6. Reload target pages after changing extension permissions
 
 ## Usage
 
@@ -56,9 +58,10 @@ If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 4. Triggering a scan creates a new scan entry in VSW.
 5. Popup button creates a scan for current tab host.
 6. Live click capture creates pre-scan before following clicked links.
-7. When backend is offline, popup shows a clear error message.
-8. When strict blocking is enabled and backend is offline, navigation is blocked.
-9. Non-http(s) URLs are rejected with a clear message.
+7. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
+8. When backend is offline, popup shows a clear error message.
+9. When strict blocking is enabled and backend is offline, navigation is blocked.
+10. Non-http(s) URLs are rejected with a clear message.
 
 ## Troubleshooting
 
@@ -68,3 +71,7 @@ If strict blocking is enabled, navigation stops when pre-scan cannot be created.
   - Check backend logs for validation or rate-limit responses.
 - Context menu missing:
   - Reload extension in developer mode and refresh current page.
+- Live capture does not trigger:
+  - Confirm website access is set to `On all sites`.
+  - Reload the page with `Ctrl+F5`.
+  - Test on a normal in-page link, not the browser address bar or tab strip.
