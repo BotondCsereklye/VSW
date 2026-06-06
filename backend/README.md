@@ -17,6 +17,14 @@ Voraussetzungen:
 
 - Python `3.12`
 
+Empfohlener Windows-Start aus dem Repo-Root:
+
+```powershell
+.\launch_vsw_launcher.ps1
+```
+
+Die Launcher-App startet Backend und Frontend gemeinsam und ist der bevorzugte lokale Demo- und Entwicklungsweg unter Windows.
+
 Installation und Start:
 
 ```bash
@@ -47,6 +55,8 @@ Ohne weitere Konfiguration nutzt das Backend lokal `sqlite:///./vsw.db`. Fuer Do
 - `GET /api/v1/scans/{scan_id}/links?limit=12`: Liefert same-origin Link-Kandidaten fuer guided link checks
 - `GET /api/v1/scans/{scan_id}/export?format=json`: Export als lesbar formatiertes JSON
 - `GET /api/v1/scans/{scan_id}/export?format=csv`: Export als CSV
+
+Die Browser-extension MVP nutzt ebenfalls `POST /api/v1/scans` und uebergibt nur den extrahierten Host als Target.
 
 ## Qualitaetssicherung
 

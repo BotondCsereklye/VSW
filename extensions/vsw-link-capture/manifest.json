@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "VSW Link Capture",
+  "description": "Send clicked links or the current tab target to local VSW for defensive follow-up scans.",
+  "version": "0.2.0",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "exclude_matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*",
+        "https://127.0.0.1/*",
+        "https://localhost/*"
+      ],
+      "js": [
+        "content-script.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "VSW Link Capture",
+    "default_popup": "popup.html"
+  }
+}

@@ -6,6 +6,8 @@ Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder
 
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
 - Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
+- Windows-Launcher fuer Ein-Klick-Start: [launch_vsw_launcher.ps1](launch_vsw_launcher.ps1)
+- Browser-Extension-MVP: `extensions/vsw-link-capture`
 
 ## Sicherheits-Hinweis
 
@@ -25,8 +27,10 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Frontend: React, TypeScript, Vite
 - Infrastruktur: Docker, Docker Compose
 - Tests: Pytest, Vitest, Testing Library
+- Lokale Bedienung: Windows-Launcher auf Python-Basis
+- Browser-Integration: Manifest-V3-Extension fuer Link-Capture
 
-## Aktueller Funktionsumfang (Stand heute)
+## Aktueller Funktionsumfang
 
 - Target-Eingabe mit Domain-/IP-Validierung
 - Warnhinweis zur autorisierten Nutzung
@@ -35,22 +39,23 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Sicherer Port-Check auf kleiner Standardliste
 - Misconfiguration-Erkennung mit Empfehlungen
 - Erweiterte Read-only Checks fuer unsichere Header-Werte und Cookie-Flags
-- Zusätzliche TLS-Read-only Regel bei fehlender TLS 1.3 Unterstuetzung
+- Zusaetzliche TLS-Read-only Regel bei fehlender TLS 1.3 Unterstuetzung
 - Report-Scoring von 0 bis 100
 - Persistente Reports mit Detailansicht
 - Export von Reports als JSON und CSV
 - Verlauf pro Target mit einfacher Trendanzeige
 - Erweiterbare Findings-Liste mit Mehr/Weniger-Ansicht
 - Guided link checks fuer same-origin Links mit klickbarer Pruefstrecke
+- Windows-Launcher-App fuer Setup, Start, Browser-Open und Service-Stop ohne Terminal-Jonglage
+- Browser-Extension-MVP fuer Link-Capture zum lokalen Backend
+- Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausfuehrung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
 
 ## Was geprueft wird
 
-### 1. HTTP Security Header
-
-Die App prueft auf:
+### HTTP Security Header
 
 - `Strict-Transport-Security`
 - `Content-Security-Policy`
@@ -59,7 +64,7 @@ Die App prueft auf:
 - `Referrer-Policy`
 - `Permissions-Policy`
 
-### 2. SSL/TLS
+### SSL/TLS
 
 - HTTPS erreichbar oder nicht
 - Zertifikat vorhanden
@@ -68,9 +73,7 @@ Die App prueft auf:
 - Issuer
 - Sicher pruefbare TLS-Versionen (`TLSv1.2`, `TLSv1.3`)
 
-### 3. Sichere Portliste
-
-Es werden nur diese Ports geprueft:
+### Sichere Portliste
 
 - `80`
 - `443`
@@ -88,7 +91,7 @@ Ergebnis pro Port:
 - `closed`
 - `timeout`
 
-### 4. Fehlkonfigurationen
+### Fehlkonfigurationen
 
 Beispiele fuer abgeleitete Findings:
 
@@ -130,31 +133,58 @@ Die Snapshot-Metadaten enthalten zusaetzlich beobachtete Security Header, Redire
 
 ## Benutzerhinweise
 
+- Fuer Windows ist die Launcher-App der empfohlene Startweg, weil sie Python 3.12+ erkennt, Setup anstosst und Frontend plus Backend gemeinsam startet.
 - Export ist aktuell fuer abgeschlossene Scans gedacht.
-- JSON-Export wird lesbar formatiert (pretty-printed) bereitgestellt.
+- JSON-Export wird lesbar formatiert bereitgestellt.
 - Die Verlaufsansicht gruppiert Scans ueber `normalized_target` und zeigt neue Eintraege zuerst.
 - Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
 - Guided link checks bleiben defensiv: nur same-origin Links, keine Auth-Bypass-Logik, keine aggressiven Crawl-Strategien.
+- Die Browser-Extension ist nur ein Trigger fuer Folge-Scans im lokalen VSW-Backend und enthaelt keine eigene Scan-Engine.
 
-## Grenzen des Scanners
+## Browser-Extension (MVP)
 
-- Keine CVE-Korrelation aus Service-Bannern
-- Keine tiefen Fingerprinting-Mechanismen
-- Keine Auth- oder Session-Pruefungen
-- Keine Content-Audits der Zielapplikation
-- Keine externen Asset- oder JS-Dependency-Analysen
-- Keine tiefgehende Langzeit-Trendanalyse ueber viele Zeitraeume
+Ordner: `extensions/vsw-link-capture`
 
-## Noch nicht umgesetzt
+Funktionen:
 
-- PDF-Export fuer Reports
-- Authentifizierung und Team-Workspaces
-- Scheduling fuer regelmaessige Scans
-- Groessere OWASP-orientierte Read-only Checklisten ueber die aktuelle v1-Erweiterung hinaus
+- Kontextmenue: `Scan link with VSW` bei Link-Rechtsklick
+- Kontextmenue: `Scan current tab with VSW`
+- Popup-Button: `Scan current page`
+- Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
+- Popup-Toggles fuer `Enable live click capture` und `Block navigation on pre-scan failure`
+- Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
+- Erfolg: VSW-Detailseite fuer den neuen Scan wird bei Popup- oder Kontext-Trigger geoeffnet
 
-## Lokales Setup ohne Docker
+Wichtige Opera-/Chrome-Hinweise:
 
-### Ein-Kommando-Start (Windows PowerShell)
+- Nach dem Laden der Extension `Developer mode` aktiv lassen
+- In `Details` den Website-Zugriff auf `Auf allen Websites` setzen
+- Nach Aenderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
+- Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
+
+Installationsanleitung und manuelle Test-Checkliste:
+
+- `extensions/vsw-link-capture/README.md`
+
+## Empfohlener Windows-Start
+
+### Launcher-App
+
+```powershell
+Set-Location -LiteralPath "<repo-pfad>"
+.\launch_vsw_launcher.ps1
+```
+
+Die Launcher-App ist der bevorzugte Weg fuer lokale Entwicklung und manuelle Demos unter Windows:
+
+- erkennt Python `3.12+` automatisch
+- erstellt bei Bedarf `backend/.venv`
+- installiert fehlende Abhaengigkeiten
+- startet Backend und Frontend ohne zwei offene Terminal-Fenster
+- oeffnet App und API-Doku direkt aus der GUI
+- stoppt beide Services wieder sauber
+
+### PowerShell-Fallback
 
 ```powershell
 Set-Location -LiteralPath "<repo-pfad>"
@@ -167,7 +197,7 @@ Optional ohne erneute Dependency-Installation:
 .\dev.ps1 -SkipInstall
 ```
 
-Damit laufen Backend (`127.0.0.1:8000`) und Frontend (`127.0.0.1:5173`) ueber einen einzigen Startbefehl.
+## Lokales Setup ohne Docker
 
 ### Backend
 
@@ -194,6 +224,23 @@ npm run dev
 Standard-URL: `http://localhost:5173`
 
 Das Frontend erwartet standardmaessig die API unter `http://localhost:8000/api/v1`.
+
+## Grenzen des Scanners
+
+- Keine CVE-Korrelation aus Service-Bannern
+- Keine tiefen Fingerprinting-Mechanismen
+- Keine Auth- oder Session-Pruefungen
+- Keine Content-Audits der Zielapplikation
+- Keine externen Asset- oder JS-Dependency-Analysen
+- Keine tiefgehende Langzeit-Trendanalyse ueber viele Zeitraeume
+- Keine Vollscanner-Extension direkt im Browser, weil die eigentlichen defensiven Checks bewusst im lokalen Backend bleiben
+
+## Noch nicht umgesetzt
+
+- PDF-Export fuer Reports
+- Authentifizierung und Team-Workspaces
+- Scheduling fuer regelmaessige Scans
+- Groessere OWASP-orientierte Read-only Checklisten ueber die aktuelle v1-Erweiterung hinaus
 
 ## Docker Setup
 
@@ -252,6 +299,7 @@ npm run build
 - Findings und Report-Snapshots werden persistiert.
 - Das Frontend laedt Listen- und Detaildaten separat.
 - CORS ist fuer lokale Frontend-/Backend-Trennung konfigurierbar.
+- Der Windows-Launcher ist eine Bedien-Schicht ueber dem bestehenden Backend und Frontend, keine alternative Scanner-Engine.
 
 ## Zukunftsideen
 
@@ -260,3 +308,4 @@ npm run build
 - Weitere OWASP-orientierte Read-only Check-Module
 - Optionales, kontrolliertes Scheduling mit klaren Limits
 - Rollen-/Rechtemodell fuer Team-Nutzung
+- Browser-Extension, die geklickte Links oder aktive Tabs an das lokale Backend fuer defensive Folge-Scans uebergibt

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VSW Link Capture</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        width: 320px;
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: #f5f8fc;
+        color: #132844;
+      }
+
+      main {
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.4;
+        color: #3f5f7f;
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        background: #e48733;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: wait;
+      }
+
+      .status {
+        min-height: 34px;
+        font-size: 0.84rem;
+        line-height: 1.35;
+      }
+
+      .status[data-state="ok"] {
+        color: #1d6b46;
+      }
+
+      .status[data-state="error"] {
+        color: #b2342d;
+      }
+
+      .toggles {
+        display: grid;
+        gap: 8px;
+        font-size: 0.82rem;
+        color: #27486a;
+      }
+
+      .toggles label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>VSW Link Capture</h1>
+      <p>Trigger a defensive follow-up scan for the current tab in your local VSW backend.</p>
+      <section class="toggles">
+        <label>
+          <input id="liveCaptureEnabled" type="checkbox" />
+          Enable live click capture
+        </label>
+        <label>
+          <input id="blockOnScanFailure" type="checkbox" />
+          Block navigation on pre-scan failure
+        </label>
+      </section>
+      <button id="scanCurrentPageButton" type="button">Scan current page</button>
+      <div id="status" class="status" data-state="idle"></div>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
