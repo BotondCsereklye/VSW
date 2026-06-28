@@ -5,15 +5,12 @@ const VSW_APP_BASE_URL = "http://127.0.0.1:5173";
 const SETTINGS_KEY = "vswLinkCaptureSettings";
 const SCAN_POLL_INTERVAL_MS = 1200;
 const SCAN_POLL_TIMEOUT_MS = 20000;
-const VISITED_SCAN_DEBOUNCE_MS = 45000;
 const DEFAULT_SETTINGS = {
   liveCaptureEnabled: true,
   blockOnScanFailure: true,
-  autoScanVisitedPages: true,
   minimumAllowedScore: 50,
   blockBelowMinimumScore: true,
 };
-const recentVisitedScans = new Map();
 
 chrome.runtime.onInstalled.addListener(() => {
   void ensureSettings();
@@ -43,15 +40,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status !== "complete") {
-    return;
-  }
-
-  void handleVisitedPage(tabId, tab?.url || changeInfo.url || null);
-});
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   (async () => {
     try {
       if (message?.type === "scan-target-and-visit") {
@@ -68,7 +57,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       if (message?.type === "gate-navigation") {
-        const result = await gateNavigation(message.url, sender?.tab?.id);
+        const result = await gateNavigation(message.url);
         sendResponse(result);
         return;
       }
@@ -158,7 +147,7 @@ async function createScanFromTarget(target, options = {}) {
   }
 }
 
-async function gateNavigation(rawUrl, tabId) {
+async function gateNavigation(rawUrl) {
   const settings = await getSettings();
   if (!settings.liveCaptureEnabled) {
     return { ok: true, allowNavigation: true, message: "Live capture disabled." };
@@ -169,10 +158,6 @@ async function gateNavigation(rawUrl, tabId) {
     waitForCompletion: true,
   });
   if (result.ok) {
-    if (tabId !== undefined) {
-      rememberVisitedPage(tabId, rawUrl);
-    }
-
     const gateDecision = evaluateGateDecision(result.detail, settings);
     if (!gateDecision.allowNavigation) {
       if (result.scanId) {
@@ -241,7 +226,6 @@ async function scanTargetAndVisit(rawTarget) {
 
   const activeTab = await getActiveTab();
   if (activeTab?.id !== undefined) {
-    rememberVisitedPage(activeTab.id, normalized.visitUrl);
     await chrome.tabs.update(activeTab.id, { url: normalized.visitUrl });
   } else {
     await chrome.tabs.create({ url: normalized.visitUrl });
@@ -253,26 +237,6 @@ async function scanTargetAndVisit(rawTarget) {
     scanId: result.scanId || null,
     detail: result.detail,
   };
-}
-
-async function handleVisitedPage(tabId, rawUrl) {
-  const settings = await getSettings();
-  if (!settings.autoScanVisitedPages) {
-    return;
-  }
-
-  if (!rawUrl || isVswLocalUrl(rawUrl) || shouldSkipVisitedPage(tabId, rawUrl)) {
-    return;
-  }
-
-  const result = await createScanFromUrl(rawUrl, {
-    openScanView: false,
-    waitForCompletion: false,
-  });
-
-  if (result.ok) {
-    rememberVisitedPage(tabId, rawUrl);
-  }
 }
 
 async function waitForScanCompletion(scanId) {
@@ -420,10 +384,6 @@ function normalizeSettings(candidate) {
       candidate?.blockOnScanFailure === undefined
         ? DEFAULT_SETTINGS.blockOnScanFailure
         : Boolean(candidate.blockOnScanFailure),
-    autoScanVisitedPages:
-      candidate?.autoScanVisitedPages === undefined
-        ? DEFAULT_SETTINGS.autoScanVisitedPages
-        : Boolean(candidate.autoScanVisitedPages),
     minimumAllowedScore: normalizeMinimumScore(candidate?.minimumAllowedScore),
     blockBelowMinimumScore:
       candidate?.blockBelowMinimumScore === undefined
@@ -438,32 +398,6 @@ function normalizeMinimumScore(value) {
     return DEFAULT_SETTINGS.minimumAllowedScore;
   }
   return Math.min(100, Math.max(0, candidate));
-}
-
-function isVswLocalUrl(rawUrl) {
-  try {
-    const parsedUrl = new URL(rawUrl);
-    const hostname = parsedUrl.hostname.toLowerCase();
-    return hostname === "127.0.0.1" || hostname === "localhost";
-  } catch (_error) {
-    return false;
-  }
-}
-
-function shouldSkipVisitedPage(tabId, rawUrl) {
-  const previous = recentVisitedScans.get(tabId);
-  if (!previous) {
-    return false;
-  }
-
-  return previous.url === rawUrl && Date.now() - previous.scannedAt < VISITED_SCAN_DEBOUNCE_MS;
-}
-
-function rememberVisitedPage(tabId, rawUrl) {
-  recentVisitedScans.set(tabId, {
-    url: rawUrl,
-    scannedAt: Date.now(),
-  });
 }
 
 function sleep(durationMs) {
