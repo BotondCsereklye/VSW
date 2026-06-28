@@ -1,3 +1,5 @@
+importScripts("score-gate.js");
+
 const MENU_SCAN_LINK = "vsw-scan-link";
 const MENU_SCAN_TAB = "vsw-scan-current-tab";
 const VSW_API_URL = "http://127.0.0.1:8000/api/v1/scans";
@@ -158,7 +160,7 @@ async function gateNavigation(rawUrl) {
     waitForCompletion: true,
   });
   if (result.ok) {
-    const gateDecision = evaluateGateDecision(result.detail, settings);
+    const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, settings);
     if (!gateDecision.allowNavigation) {
       if (result.scanId) {
         await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
@@ -210,7 +212,7 @@ async function scanTargetAndVisit(rawTarget) {
     return result;
   }
 
-  const gateDecision = evaluateGateDecision(result.detail, settings);
+  const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, settings);
   if (result.scanId) {
     await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
   }
@@ -257,50 +259,6 @@ async function waitForScanCompletion(scanId) {
   }
 
   throw new Error("Timed out while waiting for the defensive scan to finish.");
-}
-
-function evaluateGateDecision(detail, settings) {
-  if (!detail) {
-    return {
-      allowNavigation: !settings.blockOnScanFailure,
-      message: settings.blockOnScanFailure
-        ? "Navigation blocked because the scan result was not available."
-        : "Scan result missing. Navigation continues.",
-    };
-  }
-
-  if (detail.status === "failed") {
-    return {
-      allowNavigation: !settings.blockOnScanFailure,
-      message: settings.blockOnScanFailure
-        ? "Navigation blocked because the defensive scan failed."
-        : "Defensive scan failed. Navigation continues.",
-    };
-  }
-
-  const score = typeof detail.score === "number" ? detail.score : null;
-  if (
-    settings.blockBelowMinimumScore &&
-    score !== null &&
-    score < settings.minimumAllowedScore
-  ) {
-    return {
-      allowNavigation: false,
-      message: `Navigation blocked because the score ${score}/100 is below the minimum ${settings.minimumAllowedScore}/100.`,
-    };
-  }
-
-  if (score !== null) {
-    return {
-      allowNavigation: true,
-      message: `Defensive scan passed with score ${score}/100.`,
-    };
-  }
-
-  return {
-    allowNavigation: true,
-    message: "Defensive scan finished without a numeric score.",
-  };
 }
 
 function extractTarget(rawUrl) {
@@ -375,29 +333,7 @@ async function ensureSettings() {
 }
 
 function normalizeSettings(candidate) {
-  return {
-    liveCaptureEnabled:
-      candidate?.liveCaptureEnabled === undefined
-        ? DEFAULT_SETTINGS.liveCaptureEnabled
-        : Boolean(candidate.liveCaptureEnabled),
-    blockOnScanFailure:
-      candidate?.blockOnScanFailure === undefined
-        ? DEFAULT_SETTINGS.blockOnScanFailure
-        : Boolean(candidate.blockOnScanFailure),
-    minimumAllowedScore: normalizeMinimumScore(candidate?.minimumAllowedScore),
-    blockBelowMinimumScore:
-      candidate?.blockBelowMinimumScore === undefined
-        ? DEFAULT_SETTINGS.blockBelowMinimumScore
-        : Boolean(candidate.blockBelowMinimumScore),
-  };
-}
-
-function normalizeMinimumScore(value) {
-  const candidate = Number.parseInt(String(value ?? DEFAULT_SETTINGS.minimumAllowedScore), 10);
-  if (Number.isNaN(candidate)) {
-    return DEFAULT_SETTINGS.minimumAllowedScore;
-  }
-  return Math.min(100, Math.max(0, candidate));
+  return VswScoreGate.normalizeSettings(candidate, DEFAULT_SETTINGS);
 }
 
 function sleep(durationMs) {
