@@ -7,8 +7,10 @@ This extension is a defensive helper for local development. It does not scan on 
 - Adds context menu action `Scan link with VSW` on right-clicked links
 - Adds context menu action `Scan current tab with VSW`
 - Provides popup button `Scan current page`
+- Provides popup field `Scan and visit target` for manual domains such as `youtube.com`
 - Adds live click capture for normal in-page link clicks (http/https)
-- Runs pre-scan before navigation and then continues navigation
+- Runs pre-scan before navigation and then continues navigation when the score passes
+- Auto-scans visited pages after top-level navigation when enabled
 - Sends `POST http://127.0.0.1:8000/api/v1/scans` with body `{ "target": "<host>" }`
 - Opens local VSW frontend for the new scan detail when scan is triggered from context menu or popup
 
@@ -37,9 +39,10 @@ This extension is a defensive helper for local development. It does not scan on 
 1. Start VSW backend and frontend locally.
 2. Right-click a link and choose `Scan link with VSW`, or:
 3. Right-click page and choose `Scan current tab with VSW`, or:
-4. Click extension icon and press `Scan current page`.
-5. Live capture runs automatically on normal in-page link clicks.
-6. VSW opens `http://127.0.0.1:5173/scans/<scan_id>` on success for popup/context-menu triggers.
+4. Click extension icon and press `Scan current page`, or:
+5. Enter a target such as `youtube.com` and press `Scan and visit target`.
+6. Live capture runs automatically on normal in-page link clicks.
+7. VSW opens `http://127.0.0.1:5173/scans/<scan_id>` on success for popup/context-menu triggers.
 
 ## Live capture settings
 
@@ -47,6 +50,9 @@ Open the extension popup to configure:
 
 - `Enable live click capture`
 - `Block navigation on pre-scan failure`
+- `Auto-scan visited pages after navigation`
+- `Minimum allowed score before visit`
+- `Block navigation when the score is below the minimum`
 
 If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 
@@ -57,11 +63,13 @@ If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 3. `Scan current tab with VSW` appears on page context menu.
 4. Triggering a scan creates a new scan entry in VSW.
 5. Popup button creates a scan for current tab host.
-6. Live click capture creates pre-scan before following clicked links.
-7. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
-8. When backend is offline, popup shows a clear error message.
-9. When strict blocking is enabled and backend is offline, navigation is blocked.
-10. Non-http(s) URLs are rejected with a clear message.
+6. Popup target field scans `youtube.com` first and only opens it when the score passes the minimum.
+7. Live click capture creates pre-scan before following clicked links.
+8. Auto page scan registers direct visits or JavaScript-driven navigations such as Moodle pages.
+9. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
+10. When backend is offline, popup shows a clear error message.
+11. When strict blocking is enabled and backend is offline, navigation is blocked.
+12. Non-http(s) URLs are rejected with a clear message.
 
 ## Troubleshooting
 
@@ -75,3 +83,8 @@ If strict blocking is enabled, navigation stops when pre-scan cannot be created.
   - Confirm website access is set to `On all sites`.
   - Reload the page with `Ctrl+F5`.
   - Test on a normal in-page link, not the browser address bar or tab strip.
+- Directly typed pages such as Moodle still need tracking:
+  - Keep `Auto-scan visited pages after navigation` enabled.
+  - This mode registers the visited page after the browser completes navigation.
+- You want true scan-before-visit for a manually entered domain:
+  - Use the popup field `Scan and visit target` instead of the browser address bar.

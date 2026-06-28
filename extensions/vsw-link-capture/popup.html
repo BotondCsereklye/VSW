@@ -35,6 +35,32 @@
         color: #3f5f7f;
       }
 
+      .panel {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #eef3f9;
+      }
+
+      .panel label {
+        display: grid;
+        gap: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #27486a;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        border: 1px solid #c9d7e7;
+        border-radius: 10px;
+        padding: 9px 10px;
+        font: inherit;
+        color: #132844;
+        background: #fff;
+      }
+
       button {
         border: 0;
         border-radius: 10px;
@@ -82,7 +108,17 @@
   <body>
     <main>
       <h1>VSW Link Capture</h1>
-      <p>Trigger a defensive follow-up scan for the current tab in your local VSW backend.</p>
+      <p>Trigger defensive scans in your local VSW backend before or while you browse.</p>
+      <section class="panel">
+        <label for="manualTargetInput">Scan and visit target</label>
+        <input
+          id="manualTargetInput"
+          type="text"
+          placeholder="youtube.com or https://example.com"
+          autocomplete="off"
+        />
+        <button id="scanTargetButton" type="button">Scan and visit target</button>
+      </section>
       <section class="toggles">
         <label>
           <input id="liveCaptureEnabled" type="checkbox" />
@@ -91,6 +127,18 @@
         <label>
           <input id="blockOnScanFailure" type="checkbox" />
           Block navigation on pre-scan failure
+        </label>
+        <label>
+          <input id="autoScanVisitedPages" type="checkbox" />
+          Auto-scan visited pages after navigation
+        </label>
+        <label>
+          Minimum allowed score before visit
+          <input id="minimumAllowedScore" type="number" min="0" max="100" step="1" />
+        </label>
+        <label>
+          <input id="blockBelowMinimumScore" type="checkbox" />
+          Block navigation when the score is below the minimum
         </label>
       </section>
       <button id="scanCurrentPageButton" type="button">Scan current page</button>

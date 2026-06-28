@@ -3,10 +3,17 @@ const MENU_SCAN_TAB = "vsw-scan-current-tab";
 const VSW_API_URL = "http://127.0.0.1:8000/api/v1/scans";
 const VSW_APP_BASE_URL = "http://127.0.0.1:5173";
 const SETTINGS_KEY = "vswLinkCaptureSettings";
+const SCAN_POLL_INTERVAL_MS = 1200;
+const SCAN_POLL_TIMEOUT_MS = 20000;
+const VISITED_SCAN_DEBOUNCE_MS = 45000;
 const DEFAULT_SETTINGS = {
   liveCaptureEnabled: true,
   blockOnScanFailure: true,
+  autoScanVisitedPages: true,
+  minimumAllowedScore: 50,
+  blockBelowMinimumScore: true,
 };
+const recentVisitedScans = new Map();
 
 chrome.runtime.onInstalled.addListener(() => {
   void ensureSettings();
@@ -36,9 +43,23 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status !== "complete") {
+    return;
+  }
+
+  void handleVisitedPage(tabId, tab?.url || changeInfo.url || null);
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
+      if (message?.type === "scan-target-and-visit") {
+        const result = await scanTargetAndVisit(message.target);
+        sendResponse(result);
+        return;
+      }
+
       if (message?.type === "scan-current-tab") {
         const tab = await getActiveTab();
         const result = await createScanFromUrl(tab?.url);
@@ -47,7 +68,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       }
 
       if (message?.type === "gate-navigation") {
-        const result = await gateNavigation(message.url);
+        const result = await gateNavigation(message.url, sender?.tab?.id);
         sendResponse(result);
         return;
       }
@@ -77,11 +98,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function createScanFromUrl(rawUrl, options = {}) {
-  const openScanView = options.openScanView ?? true;
   const parsed = extractTarget(rawUrl);
   if (!parsed.ok) {
     return parsed;
   }
+
+  return createScanFromTarget(parsed.target, {
+    ...options,
+    visitUrl: rawUrl,
+  });
+}
+
+async function createScanFromTarget(target, options = {}) {
+  const openScanView = options.openScanView ?? true;
+  const waitForCompletion = options.waitForCompletion ?? false;
 
   try {
     const response = await fetch(VSW_API_URL, {
@@ -89,7 +119,7 @@ async function createScanFromUrl(rawUrl, options = {}) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ target: parsed.target }),
+      body: JSON.stringify({ target }),
     });
 
     const body = await parseJsonSafe(response);
@@ -102,6 +132,11 @@ async function createScanFromUrl(rawUrl, options = {}) {
     }
 
     const scanId = body?.id;
+    let detail = null;
+    if (waitForCompletion && scanId) {
+      detail = await waitForScanCompletion(scanId);
+    }
+
     if (openScanView && scanId) {
       await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${scanId}` });
     } else if (openScanView) {
@@ -110,8 +145,9 @@ async function createScanFromUrl(rawUrl, options = {}) {
 
     return {
       ok: true,
-      message: `Scan created for ${parsed.target}.`,
+      message: `Scan created for ${target}.`,
       scanId: scanId || null,
+      detail,
     };
   } catch (error) {
     return {
@@ -122,18 +158,38 @@ async function createScanFromUrl(rawUrl, options = {}) {
   }
 }
 
-async function gateNavigation(rawUrl) {
+async function gateNavigation(rawUrl, tabId) {
   const settings = await getSettings();
   if (!settings.liveCaptureEnabled) {
     return { ok: true, allowNavigation: true, message: "Live capture disabled." };
   }
 
-  const result = await createScanFromUrl(rawUrl, { openScanView: false });
+  const result = await createScanFromUrl(rawUrl, {
+    openScanView: false,
+    waitForCompletion: true,
+  });
   if (result.ok) {
+    if (tabId !== undefined) {
+      rememberVisitedPage(tabId, rawUrl);
+    }
+
+    const gateDecision = evaluateGateDecision(result.detail, settings);
+    if (!gateDecision.allowNavigation) {
+      if (result.scanId) {
+        await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
+      }
+      return {
+        ok: true,
+        allowNavigation: false,
+        message: gateDecision.message,
+        scanId: result.scanId || null,
+      };
+    }
+
     return {
       ok: true,
       allowNavigation: true,
-      message: result.message,
+      message: gateDecision.message || result.message,
       scanId: result.scanId || null,
     };
   }
@@ -150,6 +206,136 @@ async function gateNavigation(rawUrl) {
     ok: true,
     allowNavigation: true,
     warning: result.error || "Pre-scan failed. Navigation continues.",
+  };
+}
+
+async function scanTargetAndVisit(rawTarget) {
+  const normalized = normalizeTargetInput(rawTarget);
+  if (!normalized.ok) {
+    return normalized;
+  }
+
+  const settings = await getSettings();
+  const result = await createScanFromTarget(normalized.target, {
+    openScanView: false,
+    waitForCompletion: true,
+  });
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const gateDecision = evaluateGateDecision(result.detail, settings);
+  if (result.scanId) {
+    await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
+  }
+
+  if (!gateDecision.allowNavigation) {
+    return {
+      ok: false,
+      error: gateDecision.message,
+      scanId: result.scanId || null,
+      detail: result.detail,
+    };
+  }
+
+  const activeTab = await getActiveTab();
+  if (activeTab?.id !== undefined) {
+    rememberVisitedPage(activeTab.id, normalized.visitUrl);
+    await chrome.tabs.update(activeTab.id, { url: normalized.visitUrl });
+  } else {
+    await chrome.tabs.create({ url: normalized.visitUrl });
+  }
+
+  return {
+    ok: true,
+    message: gateDecision.message,
+    scanId: result.scanId || null,
+    detail: result.detail,
+  };
+}
+
+async function handleVisitedPage(tabId, rawUrl) {
+  const settings = await getSettings();
+  if (!settings.autoScanVisitedPages) {
+    return;
+  }
+
+  if (!rawUrl || isVswLocalUrl(rawUrl) || shouldSkipVisitedPage(tabId, rawUrl)) {
+    return;
+  }
+
+  const result = await createScanFromUrl(rawUrl, {
+    openScanView: false,
+    waitForCompletion: false,
+  });
+
+  if (result.ok) {
+    rememberVisitedPage(tabId, rawUrl);
+  }
+}
+
+async function waitForScanCompletion(scanId) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < SCAN_POLL_TIMEOUT_MS) {
+    const response = await fetch(`${VSW_API_URL}/${scanId}`);
+    if (!response.ok) {
+      throw new Error(`Could not poll scan ${scanId} (status ${response.status}).`);
+    }
+
+    const detail = await parseJsonSafe(response);
+    if (detail?.status === "completed" || detail?.status === "failed") {
+      return detail;
+    }
+
+    await sleep(SCAN_POLL_INTERVAL_MS);
+  }
+
+  throw new Error("Timed out while waiting for the defensive scan to finish.");
+}
+
+function evaluateGateDecision(detail, settings) {
+  if (!detail) {
+    return {
+      allowNavigation: !settings.blockOnScanFailure,
+      message: settings.blockOnScanFailure
+        ? "Navigation blocked because the scan result was not available."
+        : "Scan result missing. Navigation continues.",
+    };
+  }
+
+  if (detail.status === "failed") {
+    return {
+      allowNavigation: !settings.blockOnScanFailure,
+      message: settings.blockOnScanFailure
+        ? "Navigation blocked because the defensive scan failed."
+        : "Defensive scan failed. Navigation continues.",
+    };
+  }
+
+  const score = typeof detail.score === "number" ? detail.score : null;
+  if (
+    settings.blockBelowMinimumScore &&
+    score !== null &&
+    score < settings.minimumAllowedScore
+  ) {
+    return {
+      allowNavigation: false,
+      message: `Navigation blocked because the score ${score}/100 is below the minimum ${settings.minimumAllowedScore}/100.`,
+    };
+  }
+
+  if (score !== null) {
+    return {
+      allowNavigation: true,
+      message: `Defensive scan passed with score ${score}/100.`,
+    };
+  }
+
+  return {
+    allowNavigation: true,
+    message: "Defensive scan finished without a numeric score.",
   };
 }
 
@@ -174,6 +360,33 @@ function extractTarget(rawUrl) {
   }
 
   return { ok: true, target: parsedUrl.hostname };
+}
+
+function normalizeTargetInput(rawTarget) {
+  const trimmed = String(rawTarget || "").trim();
+  if (!trimmed) {
+    return { ok: false, error: "Please enter a target." };
+  }
+
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsedUrl = new URL(candidate);
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      return { ok: false, error: "Only http and https targets are supported." };
+    }
+
+    if (!parsedUrl.hostname) {
+      return { ok: false, error: "Could not extract host from target." };
+    }
+
+    return {
+      ok: true,
+      target: parsedUrl.hostname,
+      visitUrl: parsedUrl.toString(),
+    };
+  } catch (_error) {
+    return { ok: false, error: "Please enter a valid domain or URL." };
+  }
 }
 
 async function getActiveTab() {
@@ -207,7 +420,56 @@ function normalizeSettings(candidate) {
       candidate?.blockOnScanFailure === undefined
         ? DEFAULT_SETTINGS.blockOnScanFailure
         : Boolean(candidate.blockOnScanFailure),
+    autoScanVisitedPages:
+      candidate?.autoScanVisitedPages === undefined
+        ? DEFAULT_SETTINGS.autoScanVisitedPages
+        : Boolean(candidate.autoScanVisitedPages),
+    minimumAllowedScore: normalizeMinimumScore(candidate?.minimumAllowedScore),
+    blockBelowMinimumScore:
+      candidate?.blockBelowMinimumScore === undefined
+        ? DEFAULT_SETTINGS.blockBelowMinimumScore
+        : Boolean(candidate.blockBelowMinimumScore),
   };
+}
+
+function normalizeMinimumScore(value) {
+  const candidate = Number.parseInt(String(value ?? DEFAULT_SETTINGS.minimumAllowedScore), 10);
+  if (Number.isNaN(candidate)) {
+    return DEFAULT_SETTINGS.minimumAllowedScore;
+  }
+  return Math.min(100, Math.max(0, candidate));
+}
+
+function isVswLocalUrl(rawUrl) {
+  try {
+    const parsedUrl = new URL(rawUrl);
+    const hostname = parsedUrl.hostname.toLowerCase();
+    return hostname === "127.0.0.1" || hostname === "localhost";
+  } catch (_error) {
+    return false;
+  }
+}
+
+function shouldSkipVisitedPage(tabId, rawUrl) {
+  const previous = recentVisitedScans.get(tabId);
+  if (!previous) {
+    return false;
+  }
+
+  return previous.url === rawUrl && Date.now() - previous.scannedAt < VISITED_SCAN_DEBOUNCE_MS;
+}
+
+function rememberVisitedPage(tabId, rawUrl) {
+  recentVisitedScans.set(tabId, {
+    url: rawUrl,
+    scannedAt: Date.now(),
+  });
+}
+
+function sleep(durationMs) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, durationMs);
+  });
 }
 
 async function parseJsonSafe(response) {

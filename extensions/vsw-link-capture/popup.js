@@ -1,7 +1,12 @@
 const button = document.getElementById("scanCurrentPageButton");
+const scanTargetButton = document.getElementById("scanTargetButton");
 const statusElement = document.getElementById("status");
 const liveCaptureToggle = document.getElementById("liveCaptureEnabled");
 const blockOnFailureToggle = document.getElementById("blockOnScanFailure");
+const autoScanVisitedPagesToggle = document.getElementById("autoScanVisitedPages");
+const minimumAllowedScoreInput = document.getElementById("minimumAllowedScore");
+const blockBelowMinimumScoreToggle = document.getElementById("blockBelowMinimumScore");
+const manualTargetInput = document.getElementById("manualTargetInput");
 
 init().catch((error) => {
   setStatus(`Failed to initialize popup: ${normalizeError(error)}`, "error");
@@ -28,11 +33,54 @@ button.addEventListener("click", async () => {
   }
 });
 
+scanTargetButton.addEventListener("click", async () => {
+  setBusyState(true);
+  setStatus("Running scan before visit...", "idle");
+
+  try {
+    const result = await chrome.runtime.sendMessage({
+      type: "scan-target-and-visit",
+      target: manualTargetInput.value,
+    });
+    if (!result?.ok) {
+      const message = result?.error || "Unknown error while scanning the target.";
+      setStatus(message, "error");
+      return;
+    }
+
+    const score = typeof result.detail?.score === "number" ? ` Score ${result.detail.score}/100.` : "";
+    setStatus(`Target cleared for visit.${score}`, "ok");
+  } catch (error) {
+    setStatus(`Failed to contact extension background: ${normalizeError(error)}`, "error");
+  } finally {
+    setBusyState(false);
+  }
+});
+
+manualTargetInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    scanTargetButton.click();
+  }
+});
+
 liveCaptureToggle.addEventListener("change", () => {
   void persistSettings();
 });
 
 blockOnFailureToggle.addEventListener("change", () => {
+  void persistSettings();
+});
+
+autoScanVisitedPagesToggle.addEventListener("change", () => {
+  void persistSettings();
+});
+
+minimumAllowedScoreInput.addEventListener("change", () => {
+  void persistSettings();
+});
+
+blockBelowMinimumScoreToggle.addEventListener("change", () => {
   void persistSettings();
 });
 
@@ -44,6 +92,9 @@ async function init() {
 
   liveCaptureToggle.checked = Boolean(result.settings.liveCaptureEnabled);
   blockOnFailureToggle.checked = Boolean(result.settings.blockOnScanFailure);
+  autoScanVisitedPagesToggle.checked = Boolean(result.settings.autoScanVisitedPages);
+  minimumAllowedScoreInput.value = String(result.settings.minimumAllowedScore ?? 50);
+  blockBelowMinimumScoreToggle.checked = Boolean(result.settings.blockBelowMinimumScore);
   setStatus("Ready.", "ok");
 }
 
@@ -51,6 +102,9 @@ async function persistSettings() {
   const settings = {
     liveCaptureEnabled: liveCaptureToggle.checked,
     blockOnScanFailure: blockOnFailureToggle.checked,
+    autoScanVisitedPages: autoScanVisitedPagesToggle.checked,
+    minimumAllowedScore: Number.parseInt(minimumAllowedScoreInput.value || "50", 10),
+    blockBelowMinimumScore: blockBelowMinimumScoreToggle.checked,
   };
 
   const result = await chrome.runtime.sendMessage({
@@ -73,7 +127,11 @@ function setStatus(message, state) {
 
 function setBusyState(isBusy) {
   button.disabled = isBusy;
+  scanTargetButton.disabled = isBusy;
+  manualTargetInput.disabled = isBusy;
+  minimumAllowedScoreInput.disabled = isBusy;
   button.textContent = isBusy ? "Starting..." : "Scan current page";
+  scanTargetButton.textContent = isBusy ? "Scanning..." : "Scan and visit target";
 }
 
 function normalizeError(error) {
