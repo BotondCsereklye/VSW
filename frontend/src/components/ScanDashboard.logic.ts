@@ -1,0 +1,63 @@
+import type { ScanSummary } from '../types/scan'
+
+export type ScanScoreBand = {
+  id: string
+  label: string
+  description: string
+  scans: ScanSummary[]
+}
+
+const SCORE_BANDS = [
+  {
+    id: 'score-75',
+    label: '75+',
+    description: 'Stable',
+    matches: (scan: ScanSummary) => scan.score !== null && scan.score >= 75,
+  },
+  {
+    id: 'score-50',
+    label: '50+',
+    description: 'Watch',
+    matches: (scan: ScanSummary) => scan.score !== null && scan.score >= 50 && scan.score < 75,
+  },
+  {
+    id: 'score-25',
+    label: '25+',
+    description: 'Weak',
+    matches: (scan: ScanSummary) => scan.score !== null && scan.score >= 25 && scan.score < 50,
+  },
+  {
+    id: 'score-0',
+    label: '0+',
+    description: 'Critical',
+    matches: (scan: ScanSummary) => scan.score !== null && scan.score < 25,
+  },
+] as const
+
+export function groupScansByScoreBand(scans: ScanSummary[]): ScanScoreBand[] {
+  const inProgress = scans.filter((scan) => scan.score === null)
+  const groups: ScanScoreBand[] = []
+
+  if (inProgress.length > 0) {
+    groups.push({
+      id: 'in-progress',
+      label: 'Pending',
+      description: 'Running or waiting',
+      scans: inProgress,
+    })
+  }
+
+  for (const band of SCORE_BANDS) {
+    const bandScans = scans.filter((scan) => band.matches(scan))
+    if (bandScans.length > 0) {
+      groups.push({
+        id: band.id,
+        label: band.label,
+        description: band.description,
+        scans: bandScans,
+      })
+    }
+  }
+
+  return groups
+}
