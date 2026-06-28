@@ -3,7 +3,6 @@ const scanTargetButton = document.getElementById("scanTargetButton");
 const statusElement = document.getElementById("status");
 const liveCaptureToggle = document.getElementById("liveCaptureEnabled");
 const blockOnFailureToggle = document.getElementById("blockOnScanFailure");
-const autoScanVisitedPagesToggle = document.getElementById("autoScanVisitedPages");
 const minimumAllowedScoreInput = document.getElementById("minimumAllowedScore");
 const blockBelowMinimumScoreToggle = document.getElementById("blockBelowMinimumScore");
 const manualTargetInput = document.getElementById("manualTargetInput");
@@ -72,10 +71,6 @@ blockOnFailureToggle.addEventListener("change", () => {
   void persistSettings();
 });
 
-autoScanVisitedPagesToggle.addEventListener("change", () => {
-  void persistSettings();
-});
-
 minimumAllowedScoreInput.addEventListener("change", () => {
   void persistSettings();
 });
@@ -92,7 +87,6 @@ async function init() {
 
   liveCaptureToggle.checked = Boolean(result.settings.liveCaptureEnabled);
   blockOnFailureToggle.checked = Boolean(result.settings.blockOnScanFailure);
-  autoScanVisitedPagesToggle.checked = Boolean(result.settings.autoScanVisitedPages);
   minimumAllowedScoreInput.value = String(result.settings.minimumAllowedScore ?? 50);
   blockBelowMinimumScoreToggle.checked = Boolean(result.settings.blockBelowMinimumScore);
   setStatus("Ready.", "ok");
@@ -102,7 +96,6 @@ async function persistSettings() {
   const settings = {
     liveCaptureEnabled: liveCaptureToggle.checked,
     blockOnScanFailure: blockOnFailureToggle.checked,
-    autoScanVisitedPages: autoScanVisitedPagesToggle.checked,
     minimumAllowedScore: Number.parseInt(minimumAllowedScoreInput.value || "50", 10),
     blockBelowMinimumScore: blockBelowMinimumScoreToggle.checked,
   };
