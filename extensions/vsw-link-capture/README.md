@@ -54,6 +54,17 @@ Open the extension popup to configure:
 - `Block navigation when the score is below the minimum`
 
 If strict blocking is enabled, navigation stops when pre-scan cannot be created.
+If score blocking is enabled, navigation stops when the completed VSW report is
+below the configured minimum score. The default minimum score is `50`.
+
+## Developer checks
+
+```bash
+node --check extensions/vsw-link-capture/background.js
+node --check extensions/vsw-link-capture/content-script.js
+node --check extensions/vsw-link-capture/popup.js
+node --test extensions/vsw-link-capture/score-gate.test.cjs
+```
 
 ## Manual test checklist
 

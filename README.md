@@ -42,6 +42,7 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Zusaetzliche TLS-Read-only Regel bei fehlender TLS 1.3 Unterstuetzung
 - Report-Scoring von 0 bis 100
 - Persistente Reports mit Detailansicht
+- Dashboard-Gruppierung nach Score-Klassen: `75+`, `50+`, `25+`, `0+`
 - Export von Reports als JSON und CSV
 - Verlauf pro Target mit einfacher Trendanzeige
 - Erweiterbare Findings-Liste mit Mehr/Weniger-Ansicht
@@ -150,8 +151,10 @@ Funktionen:
 - Kontextmenue: `Scan link with VSW` bei Link-Rechtsklick
 - Kontextmenue: `Scan current tab with VSW`
 - Popup-Button: `Scan current page`
+- Popup-Feld: `Scan and visit target`
+- Konfigurierbarer Mindestscore vor Weiterleitung
 - Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
-- Popup-Toggles fuer `Enable live click capture` und `Block navigation on pre-scan failure`
+- Popup-Toggles fuer `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite fuer den neuen Scan wird bei Popup- oder Kontext-Trigger geoeffnet
 
@@ -161,6 +164,15 @@ Wichtige Opera-/Chrome-Hinweise:
 - In `Details` den Website-Zugriff auf `Auf allen Websites` setzen
 - Nach Aenderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
+- Fuer echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
+
+Score-Gruppen im Dashboard:
+
+- `75+`: gute Reports
+- `50+`: mittlere Reports
+- `25+`: schwache Reports
+- `0+`: kritische Reports
+- `Pending`: laufende oder wartende Scans
 
 Installationsanleitung und manuelle Test-Checkliste:
 
@@ -291,6 +303,15 @@ cd frontend
 npm run lint
 npm test
 npm run build
+```
+
+### Browser-Extension
+
+```bash
+node --check extensions/vsw-link-capture/background.js
+node --check extensions/vsw-link-capture/content-script.js
+node --check extensions/vsw-link-capture/popup.js
+node --test extensions/vsw-link-capture/score-gate.test.cjs
 ```
 
 ## Architekturhinweise
