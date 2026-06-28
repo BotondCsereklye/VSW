@@ -179,9 +179,13 @@ def module_imports_cleanly(python_path: Path, *modules: str) -> bool:
 def wait_for_port(host: str, port: int, timeout_seconds: float) -> bool:
     deadline = timeout_seconds + time.monotonic()
     while time.monotonic() < deadline:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
-            connection.settimeout(0.5)
-            if connection.connect_ex((host, port)) == 0:
-                return True
+        if is_port_open(host, port):
+            return True
         time.sleep(0.25)
     return False
+
+
+def is_port_open(host: str, port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+        connection.settimeout(0.5)
+        return connection.connect_ex((host, port)) == 0
