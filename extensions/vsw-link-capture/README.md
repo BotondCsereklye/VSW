@@ -10,6 +10,7 @@ This extension is a defensive helper for local development. It does not scan on 
 - Provides popup field `Scan and visit target` for manual domains such as `youtube.com`
 - Adds live click capture for normal in-page link clicks (http/https)
 - Runs pre-scan before navigation and then continues navigation when the score passes
+- Falls back to normal navigation when an already injected content script loses its extension runtime
 - Sends `POST http://127.0.0.1:8000/api/v1/scans` with body `{ "target": "<host>" }`
 - Opens local VSW frontend for the new scan detail when scan is triggered from context menu or popup
 
@@ -57,13 +58,25 @@ If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 If score blocking is enabled, navigation stops when the completed VSW report is
 below the configured minimum score. The default minimum score is `50`.
 
+## Runtime fallback
+
+Browser extensions cannot always remove already injected content scripts from open
+tabs immediately after the extension is disabled, removed, or reloaded. The content
+script therefore uses a short runtime timeout.
+
+If `chrome.runtime.sendMessage` fails or times out, the extension shows a short
+message and continues normal navigation. This avoids tabs that feel permanently
+broken after changing extension state.
+
 ## Developer checks
 
 ```bash
 node --check extensions/vsw-link-capture/background.js
 node --check extensions/vsw-link-capture/content-script.js
 node --check extensions/vsw-link-capture/popup.js
+node --check extensions/vsw-link-capture/runtime-fallback.js
 node --test extensions/vsw-link-capture/score-gate.test.cjs
+node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 ```
 
 ## Manual test checklist
@@ -79,6 +92,7 @@ node --test extensions/vsw-link-capture/score-gate.test.cjs
 9. When backend is offline, popup shows a clear error message.
 10. When strict blocking is enabled and backend is offline, navigation is blocked.
 11. Non-http(s) URLs are rejected with a clear message.
+12. If the extension is reloaded while a tab is open, the next intercepted click continues after runtime fallback instead of staying stuck.
 
 ## Troubleshooting
 
@@ -92,6 +106,10 @@ node --test extensions/vsw-link-capture/score-gate.test.cjs
   - Confirm website access is set to `On all sites`.
   - Reload the page with `Ctrl+F5`.
   - Test on a normal in-page link, not the browser address bar or tab strip.
+- A tab behaved strangely after disabling or reloading the extension:
+  - Browser engines may keep old content scripts in open tabs until reload.
+  - The fallback now lets navigation continue after a short timeout.
+  - Reload the page once if the browser still keeps stale script state.
 - You want true scan-before-visit for a manually entered domain:
   - Use the popup field `Scan and visit target` instead of the browser address bar.
 - Opera or Chrome marks an older local build as unsafe:

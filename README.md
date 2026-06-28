@@ -7,6 +7,7 @@ Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
 - Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
 - Windows-Launcher fuer Ein-Klick-Start: [launch_vsw_launcher.ps1](launch_vsw_launcher.ps1)
+- Windows-Shortcut-Installer: [install_vsw_launcher.ps1](install_vsw_launcher.ps1)
 - Browser-Extension-MVP: `extensions/vsw-link-capture`
 
 ## Sicherheits-Hinweis
@@ -157,6 +158,7 @@ Funktionen:
 - Popup-Toggles fuer `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite fuer den neuen Scan wird bei Popup- oder Kontext-Trigger geoeffnet
+- Runtime-Fallback: Falls die Extension in einem bereits offenen Tab deaktiviert, neu geladen oder entfernt wurde, bleibt die Seite nicht dauerhaft haengen. Nach kurzer Fehlertoleranz wird die Navigation normal fortgesetzt.
 
 Wichtige Opera-/Chrome-Hinweise:
 
@@ -193,8 +195,25 @@ Die Launcher-App ist der bevorzugte Weg fuer lokale Entwicklung und manuelle Dem
 - erstellt bei Bedarf `backend/.venv`
 - installiert fehlende Abhaengigkeiten
 - startet Backend und Frontend ohne zwei offene Terminal-Fenster
+- erkennt bereits belegte Ports `8000` und `5173` und meldet klar, dass ein vorhandener Dienst wiederverwendet wird
 - oeffnet App und API-Doku direkt aus der GUI
+- kann eine Desktop-Verknuepfung fuer den App-Start anlegen
 - stoppt beide Services wieder sauber
+
+### Desktop-Verknuepfung installieren
+
+```powershell
+Set-Location -LiteralPath "<repo-pfad>"
+.\install_vsw_launcher.ps1
+```
+
+Optional mit Startmenue-Eintrag:
+
+```powershell
+.\install_vsw_launcher.ps1 -StartMenu
+```
+
+Die Verknuepfung startet die Launcher-App. Der Launcher richtet bei Bedarf Backend und Frontend ein, zeigt Logs an und stoppt nur die Dienste, die er selbst gestartet hat.
 
 ### PowerShell-Fallback
 
@@ -246,6 +265,7 @@ Das Frontend erwartet standardmaessig die API unter `http://localhost:8000/api/v
 - Keine externen Asset- oder JS-Dependency-Analysen
 - Keine tiefgehende Langzeit-Trendanalyse ueber viele Zeitraeume
 - Keine Vollscanner-Extension direkt im Browser, weil die eigentlichen defensiven Checks bewusst im lokalen Backend bleiben
+- Browser-Limitation: Bereits injizierte Content Scripts koennen in offenen Tabs bis zum Reload verbleiben. Der Extension-Fallback verhindert dauerhaft kaputte Tabs, indem er bei Runtime-Verlust nach kurzer Wartezeit weiterleitet.
 
 ## Noch nicht umgesetzt
 
@@ -311,7 +331,9 @@ npm run build
 node --check extensions/vsw-link-capture/background.js
 node --check extensions/vsw-link-capture/content-script.js
 node --check extensions/vsw-link-capture/popup.js
+node --check extensions/vsw-link-capture/runtime-fallback.js
 node --test extensions/vsw-link-capture/score-gate.test.cjs
+node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 ```
 
 ## Architekturhinweise
@@ -329,4 +351,4 @@ node --test extensions/vsw-link-capture/score-gate.test.cjs
 - Weitere OWASP-orientierte Read-only Check-Module
 - Optionales, kontrolliertes Scheduling mit klaren Limits
 - Rollen-/Rechtemodell fuer Team-Nutzung
-- Browser-Extension, die geklickte Links oder aktive Tabs an das lokale Backend fuer defensive Folge-Scans uebergibt
+- Browser-Extension-Ausbau mit klarerem Statusbild fuer aktive Pre-Scans und bekannte Browser-Limitationen

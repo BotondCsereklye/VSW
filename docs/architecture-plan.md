@@ -31,6 +31,8 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
 - Live-Capture im Content Script fuer normale In-Page-Link-Klicks mit Pre-Scan-Gate
 - Sendet nur Host-Ziele an das lokale Backend `POST /api/v1/scans`
 - Oeffnet die lokale VSW-Scan-Detailseite bei Kontext- oder Popup-Trigger
+- Runtime-Fallback verhindert dauerhaft haengende Tabs, wenn eine bereits injizierte Extension-Runtime deaktiviert, entfernt oder neu geladen wurde
+- Nutzt bewusst minimale Berechtigungen und keine Browserhistorie-Berechtigung
 - Enthält keine offensive Logik und keine eigenstaendige Scan-Engine
 
 ### Infrastruktur
@@ -45,6 +47,8 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
 - Nutzt die bestehende Backend- und Frontend-Architektur, statt eine zweite Scanner-Engine einzufuehren
 - Ermittelt Python `3.12+`, erstellt bei Bedarf `backend/.venv`, installiert fehlende Abhaengigkeiten und startet beide Services gemeinsam
 - Oeffnet App und API-Doku direkt aus der GUI
+- Erkennt bereits belegte lokale Ports und nutzt vorhandene Dienste wieder, statt weitere Prozesse zu starten
+- Kann per `install_vsw_launcher.ps1` eine Desktop- oder Startmenue-Verknuepfung erzeugen
 
 ## Warum Launcher und Extension zusammen sinnvoll sind
 
@@ -179,6 +183,7 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
   - Popup-Trigger
   - Mindestscore-Speicherung und Score-Gate-Entscheidungen
   - Live-Capture fuer normale In-Page-Links
+  - Runtime-Fallback bei verlorener Extension-Runtime
   - klares Fehlerverhalten bei offline Backend
 
 ### Launcher
@@ -187,6 +192,8 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
   - Python `3.12+` wird erkannt
   - Setup funktioniert ohne manuelle Terminal-Schritte
   - Backend und Frontend starten gemeinsam
+  - bereits belegte Ports werden klar gemeldet
+  - Desktop-Verknuepfung kann erstellt werden
   - App und API-Doku lassen sich oeffnen
   - Stop beendet beide Prozesse sauber
 
