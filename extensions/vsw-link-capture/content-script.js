@@ -1,4 +1,5 @@
 const LIVE_CAPTURE_TOAST_ID = "vsw-live-capture-toast";
+const RUNTIME_RESPONSE_TIMEOUT_MS = 4500;
 
 document.addEventListener(
   "click",
@@ -53,12 +54,16 @@ async function handleClick(event) {
 
   let result;
   try {
-    result = await chrome.runtime.sendMessage({
+    result = await sendRuntimeMessageWithTimeout({
       type: "gate-navigation",
       url: href,
     });
   } catch (error) {
-    showToast(`Extension error: ${normalizeError(error)}`, true);
+    const fallback = VswRuntimeFallback.createRuntimeFallbackDecision(normalizeError(error));
+    showToast(fallback.message, true);
+    if (fallback.continueNavigation) {
+      continueNavigation(href, openInNewTab);
+    }
     return;
   }
 
@@ -78,6 +83,33 @@ async function handleClick(event) {
     showToast("Pre-scan created. Continuing navigation.");
   }
 
+  continueNavigation(href, openInNewTab);
+}
+
+function sendRuntimeMessageWithTimeout(message) {
+  return new Promise((resolve, reject) => {
+    if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
+      reject(new Error("Extension runtime is not available."));
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      reject(new Error("Pre-scan response timed out."));
+    }, RUNTIME_RESPONSE_TIMEOUT_MS);
+
+    chrome.runtime.sendMessage(message, (response) => {
+      window.clearTimeout(timeoutId);
+      const runtimeError = chrome.runtime.lastError;
+      if (runtimeError) {
+        reject(new Error(runtimeError.message));
+        return;
+      }
+      resolve(response);
+    });
+  });
+}
+
+function continueNavigation(href, openInNewTab) {
   if (openInNewTab) {
     window.open(href, "_blank", "noopener");
     return;
