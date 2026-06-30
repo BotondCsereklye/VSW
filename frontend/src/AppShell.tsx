@@ -9,6 +9,7 @@ import {
   getScanHistory,
   listScans,
 } from './api/client'
+import { ExtensionSettingsPanel } from './components/ExtensionSettingsPanel'
 import { ReportDetail } from './components/ReportDetail'
 import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
@@ -264,6 +265,8 @@ export function AppShell() {
       </header>
 
       {errorMessage ? <p className="app-shell__error">{errorMessage}</p> : null}
+
+      <ExtensionSettingsPanel />
 
       <section className="app-shell__content">
         <div className="app-shell__panel">

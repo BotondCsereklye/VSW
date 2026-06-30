@@ -51,6 +51,7 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Windows-Launcher-App fuer Setup, Start, Browser-Open und Service-Stop ohne Terminal-Jonglage
 - Browser-Extension-MVP fuer Link-Capture zum lokalen Backend
 - Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
+- Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore fuer Besuchsfreigabe
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausfuehrung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -167,6 +168,7 @@ Wichtige Opera-/Chrome-Hinweise:
 - Nach Aenderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
 - Fuer echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
+- Der Mindestscore kann direkt in der VSW-App unter `Visit gate settings` angepasst werden, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
 
 Score-Gruppen im Dashboard:
 

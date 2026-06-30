@@ -6,6 +6,12 @@ const blockOnFailureToggle = document.getElementById("blockOnScanFailure");
 const minimumAllowedScoreInput = document.getElementById("minimumAllowedScore");
 const blockBelowMinimumScoreToggle = document.getElementById("blockBelowMinimumScore");
 const manualTargetInput = document.getElementById("manualTargetInput");
+const DEFAULT_SETTINGS = {
+  liveCaptureEnabled: true,
+  blockOnScanFailure: true,
+  minimumAllowedScore: 50,
+  blockBelowMinimumScore: true,
+};
 
 init().catch((error) => {
   setStatus(`Failed to initialize popup: ${normalizeError(error)}`, "error");
@@ -85,10 +91,11 @@ async function init() {
     throw new Error(result?.error || "Could not load extension settings.");
   }
 
-  liveCaptureToggle.checked = Boolean(result.settings.liveCaptureEnabled);
-  blockOnFailureToggle.checked = Boolean(result.settings.blockOnScanFailure);
-  minimumAllowedScoreInput.value = String(result.settings.minimumAllowedScore ?? 50);
-  blockBelowMinimumScoreToggle.checked = Boolean(result.settings.blockBelowMinimumScore);
+  const settings = normalizeSettings(result.settings);
+  liveCaptureToggle.checked = settings.liveCaptureEnabled;
+  blockOnFailureToggle.checked = settings.blockOnScanFailure;
+  minimumAllowedScoreInput.value = String(settings.minimumAllowedScore);
+  blockBelowMinimumScoreToggle.checked = settings.blockBelowMinimumScore;
   setStatus("Ready.", "ok");
 }
 
@@ -96,7 +103,7 @@ async function persistSettings() {
   const settings = {
     liveCaptureEnabled: liveCaptureToggle.checked,
     blockOnScanFailure: blockOnFailureToggle.checked,
-    minimumAllowedScore: Number.parseInt(minimumAllowedScoreInput.value || "50", 10),
+    minimumAllowedScore: normalizeMinimumScore(minimumAllowedScoreInput.value),
     blockBelowMinimumScore: blockBelowMinimumScoreToggle.checked,
   };
 
@@ -132,4 +139,30 @@ function normalizeError(error) {
     return error.message;
   }
   return String(error);
+}
+
+function normalizeSettings(candidate) {
+  return {
+    liveCaptureEnabled:
+      candidate?.liveCaptureEnabled === undefined
+        ? DEFAULT_SETTINGS.liveCaptureEnabled
+        : Boolean(candidate.liveCaptureEnabled),
+    blockOnScanFailure:
+      candidate?.blockOnScanFailure === undefined
+        ? DEFAULT_SETTINGS.blockOnScanFailure
+        : Boolean(candidate.blockOnScanFailure),
+    minimumAllowedScore: normalizeMinimumScore(candidate?.minimumAllowedScore),
+    blockBelowMinimumScore:
+      candidate?.blockBelowMinimumScore === undefined
+        ? DEFAULT_SETTINGS.blockBelowMinimumScore
+        : Boolean(candidate.blockBelowMinimumScore),
+  };
+}
+
+function normalizeMinimumScore(value) {
+  const parsed = Number.parseInt(String(value ?? DEFAULT_SETTINGS.minimumAllowedScore), 10);
+  if (Number.isNaN(parsed)) {
+    return DEFAULT_SETTINGS.minimumAllowedScore;
+  }
+  return Math.min(100, Math.max(0, parsed));
 }

@@ -68,6 +68,97 @@
   gap: 20px;
 }
 
+.extension-settings {
+  display: grid;
+  gap: 18px;
+  margin: 0 0 20px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(236, 247, 250, 0.72)),
+    var(--bg-panel);
+  box-shadow: var(--shadow);
+}
+
+.extension-settings h2,
+.extension-settings p {
+  margin: 0;
+}
+
+.extension-settings h2 {
+  font-size: 1.3rem;
+}
+
+.extension-settings p {
+  color: var(--ink-soft);
+}
+
+.extension-settings__eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent-deep);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.extension-settings__controls {
+  display: grid;
+  gap: 12px;
+}
+
+.extension-settings__toggle,
+.extension-settings__score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(16, 36, 59, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 12px 14px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.extension-settings__toggle {
+  justify-content: flex-start;
+}
+
+.extension-settings__toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+.extension-settings__score input {
+  width: 92px;
+  min-height: 44px;
+  border: 1px solid rgba(16, 36, 59, 0.16);
+  border-radius: 14px;
+  padding: 0 12px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  text-align: center;
+}
+
+.extension-settings__status {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(16, 36, 59, 0.07);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.extension-settings__status[data-state='ok'] {
+  color: var(--success);
+}
+
+.extension-settings__status[data-state='warning'] {
+  color: var(--warning);
+}
+
 .app-shell__panel {
   padding: 24px;
 }
@@ -565,6 +656,15 @@
 
   .app-shell__content {
     grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
+  }
+
+  .extension-settings {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr);
+    align-items: start;
+  }
+
+  .extension-settings__status {
+    grid-column: 1 / -1;
   }
 
   .scan-row {

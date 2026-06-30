@@ -8,6 +8,7 @@ This extension is a defensive helper for local development. It does not scan on 
 - Adds context menu action `Scan current tab with VSW`
 - Provides popup button `Scan current page`
 - Provides popup field `Scan and visit target` for manual domains such as `youtube.com`
+- Exposes the same visit-gate settings inside the local VSW app on `localhost:5173`
 - Adds live click capture for normal in-page link clicks (http/https)
 - Runs pre-scan before navigation and then continues navigation when the score passes
 - Falls back to normal navigation when an already injected content script loses its extension runtime
@@ -53,6 +54,9 @@ Open the extension popup to configure:
 - `Block navigation on pre-scan failure`
 - `Minimum allowed score before visit`
 - `Block navigation when the score is below the minimum`
+
+The same settings are also available inside the VSW app in the `Visit gate settings`
+card. This is the recommended place to change the minimum score during normal use.
 
 If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 If score blocking is enabled, navigation stops when the completed VSW report is
