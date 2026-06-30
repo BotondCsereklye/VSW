@@ -8,9 +8,10 @@ This extension is a defensive helper for local development. It does not scan on 
 - Adds context menu action `Scan current tab with VSW`
 - Provides popup button `Scan current page`
 - Provides popup field `Scan and visit target` for manual domains such as `youtube.com`
+- Exposes the same visit-gate settings inside the local VSW app on `localhost:5173`
 - Adds live click capture for normal in-page link clicks (http/https)
 - Runs pre-scan before navigation and then continues navigation when the score passes
-- Auto-scans visited pages after top-level navigation when enabled
+- Falls back to normal navigation when an already injected content script loses its extension runtime
 - Sends `POST http://127.0.0.1:8000/api/v1/scans` with body `{ "target": "<host>" }`
 - Opens local VSW frontend for the new scan detail when scan is triggered from context menu or popup
 
@@ -21,6 +22,7 @@ This extension is a defensive helper for local development. It does not scan on 
 - No port scan logic inside the extension
 - No crawling logic
 - No data collection beyond the selected URL host for the scan trigger
+- No browser history permission
 
 ## Install in Chrome, Edge, or Opera (Developer mode)
 
@@ -50,11 +52,36 @@ Open the extension popup to configure:
 
 - `Enable live click capture`
 - `Block navigation on pre-scan failure`
-- `Auto-scan visited pages after navigation`
 - `Minimum allowed score before visit`
 - `Block navigation when the score is below the minimum`
 
+The same settings are also available inside the VSW app in the `Visit gate settings`
+card. This is the recommended place to change the minimum score during normal use.
+
 If strict blocking is enabled, navigation stops when pre-scan cannot be created.
+If score blocking is enabled, navigation stops when the completed VSW report is
+below the configured minimum score. The default minimum score is `50`.
+
+## Runtime fallback
+
+Browser extensions cannot always remove already injected content scripts from open
+tabs immediately after the extension is disabled, removed, or reloaded. The content
+script therefore uses a short runtime timeout.
+
+If `chrome.runtime.sendMessage` fails or times out, the extension shows a short
+message and continues normal navigation. This avoids tabs that feel permanently
+broken after changing extension state.
+
+## Developer checks
+
+```bash
+node --check extensions/vsw-link-capture/background.js
+node --check extensions/vsw-link-capture/content-script.js
+node --check extensions/vsw-link-capture/popup.js
+node --check extensions/vsw-link-capture/runtime-fallback.js
+node --test extensions/vsw-link-capture/score-gate.test.cjs
+node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
+```
 
 ## Manual test checklist
 
@@ -65,11 +92,11 @@ If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 5. Popup button creates a scan for current tab host.
 6. Popup target field scans `youtube.com` first and only opens it when the score passes the minimum.
 7. Live click capture creates pre-scan before following clicked links.
-8. Auto page scan registers direct visits or JavaScript-driven navigations such as Moodle pages.
-9. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
-10. When backend is offline, popup shows a clear error message.
-11. When strict blocking is enabled and backend is offline, navigation is blocked.
-12. Non-http(s) URLs are rejected with a clear message.
+8. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
+9. When backend is offline, popup shows a clear error message.
+10. When strict blocking is enabled and backend is offline, navigation is blocked.
+11. Non-http(s) URLs are rejected with a clear message.
+12. If the extension is reloaded while a tab is open, the next intercepted click continues after runtime fallback instead of staying stuck.
 
 ## Troubleshooting
 
@@ -83,8 +110,13 @@ If strict blocking is enabled, navigation stops when pre-scan cannot be created.
   - Confirm website access is set to `On all sites`.
   - Reload the page with `Ctrl+F5`.
   - Test on a normal in-page link, not the browser address bar or tab strip.
-- Directly typed pages such as Moodle still need tracking:
-  - Keep `Auto-scan visited pages after navigation` enabled.
-  - This mode registers the visited page after the browser completes navigation.
+- A tab behaved strangely after disabling or reloading the extension:
+  - Browser engines may keep old content scripts in open tabs until reload.
+  - The fallback now lets navigation continue after a short timeout.
+  - Reload the page once if the browser still keeps stale script state.
 - You want true scan-before-visit for a manually entered domain:
   - Use the popup field `Scan and visit target` instead of the browser address bar.
+- Opera or Chrome marks an older local build as unsafe:
+  - Remove the old extension entry.
+  - Load the unpacked folder again after pulling the latest code.
+  - Confirm the permissions no longer include browser history.

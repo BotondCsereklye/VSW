@@ -7,6 +7,7 @@ Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
 - Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
 - Windows-Launcher fuer Ein-Klick-Start: [launch_vsw_launcher.ps1](launch_vsw_launcher.ps1)
+- Windows-Shortcut-Installer: [install_vsw_launcher.ps1](install_vsw_launcher.ps1)
 - Browser-Extension-MVP: `extensions/vsw-link-capture`
 
 ## Sicherheits-Hinweis
@@ -42,6 +43,7 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Zusaetzliche TLS-Read-only Regel bei fehlender TLS 1.3 Unterstuetzung
 - Report-Scoring von 0 bis 100
 - Persistente Reports mit Detailansicht
+- Dashboard-Gruppierung nach Score-Klassen: `75+`, `50+`, `25+`, `0+`
 - Export von Reports als JSON und CSV
 - Verlauf pro Target mit einfacher Trendanzeige
 - Erweiterbare Findings-Liste mit Mehr/Weniger-Ansicht
@@ -49,6 +51,7 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Windows-Launcher-App fuer Setup, Start, Browser-Open und Service-Stop ohne Terminal-Jonglage
 - Browser-Extension-MVP fuer Link-Capture zum lokalen Backend
 - Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
+- Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore fuer Besuchsfreigabe
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausfuehrung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -150,10 +153,13 @@ Funktionen:
 - Kontextmenue: `Scan link with VSW` bei Link-Rechtsklick
 - Kontextmenue: `Scan current tab with VSW`
 - Popup-Button: `Scan current page`
+- Popup-Feld: `Scan and visit target`
+- Konfigurierbarer Mindestscore vor Weiterleitung
 - Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
-- Popup-Toggles fuer `Enable live click capture` und `Block navigation on pre-scan failure`
+- Popup-Toggles fuer `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite fuer den neuen Scan wird bei Popup- oder Kontext-Trigger geoeffnet
+- Runtime-Fallback: Falls die Extension in einem bereits offenen Tab deaktiviert, neu geladen oder entfernt wurde, bleibt die Seite nicht dauerhaft haengen. Nach kurzer Fehlertoleranz wird die Navigation normal fortgesetzt.
 
 Wichtige Opera-/Chrome-Hinweise:
 
@@ -161,6 +167,16 @@ Wichtige Opera-/Chrome-Hinweise:
 - In `Details` den Website-Zugriff auf `Auf allen Websites` setzen
 - Nach Aenderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
+- Fuer echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
+- Der Mindestscore kann direkt in der VSW-App unter `Visit gate settings` angepasst werden, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
+
+Score-Gruppen im Dashboard:
+
+- `75+`: gute Reports
+- `50+`: mittlere Reports
+- `25+`: schwache Reports
+- `0+`: kritische Reports
+- `Pending`: laufende oder wartende Scans
 
 Installationsanleitung und manuelle Test-Checkliste:
 
@@ -181,8 +197,25 @@ Die Launcher-App ist der bevorzugte Weg fuer lokale Entwicklung und manuelle Dem
 - erstellt bei Bedarf `backend/.venv`
 - installiert fehlende Abhaengigkeiten
 - startet Backend und Frontend ohne zwei offene Terminal-Fenster
+- erkennt bereits belegte Ports `8000` und `5173` und meldet klar, dass ein vorhandener Dienst wiederverwendet wird
 - oeffnet App und API-Doku direkt aus der GUI
+- kann eine Desktop-Verknuepfung fuer den App-Start anlegen
 - stoppt beide Services wieder sauber
+
+### Desktop-Verknuepfung installieren
+
+```powershell
+Set-Location -LiteralPath "<repo-pfad>"
+.\install_vsw_launcher.ps1
+```
+
+Optional mit Startmenue-Eintrag:
+
+```powershell
+.\install_vsw_launcher.ps1 -StartMenu
+```
+
+Die Verknuepfung startet die Launcher-App. Der Launcher richtet bei Bedarf Backend und Frontend ein, zeigt Logs an und stoppt nur die Dienste, die er selbst gestartet hat.
 
 ### PowerShell-Fallback
 
@@ -234,6 +267,7 @@ Das Frontend erwartet standardmaessig die API unter `http://localhost:8000/api/v
 - Keine externen Asset- oder JS-Dependency-Analysen
 - Keine tiefgehende Langzeit-Trendanalyse ueber viele Zeitraeume
 - Keine Vollscanner-Extension direkt im Browser, weil die eigentlichen defensiven Checks bewusst im lokalen Backend bleiben
+- Browser-Limitation: Bereits injizierte Content Scripts koennen in offenen Tabs bis zum Reload verbleiben. Der Extension-Fallback verhindert dauerhaft kaputte Tabs, indem er bei Runtime-Verlust nach kurzer Wartezeit weiterleitet.
 
 ## Noch nicht umgesetzt
 
@@ -293,6 +327,17 @@ npm test
 npm run build
 ```
 
+### Browser-Extension
+
+```bash
+node --check extensions/vsw-link-capture/background.js
+node --check extensions/vsw-link-capture/content-script.js
+node --check extensions/vsw-link-capture/popup.js
+node --check extensions/vsw-link-capture/runtime-fallback.js
+node --test extensions/vsw-link-capture/score-gate.test.cjs
+node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
+```
+
 ## Architekturhinweise
 
 - Scans werden als Datenbankeintrag erstellt und per Background-Runner verarbeitet.
@@ -308,4 +353,4 @@ npm run build
 - Weitere OWASP-orientierte Read-only Check-Module
 - Optionales, kontrolliertes Scheduling mit klaren Limits
 - Rollen-/Rechtemodell fuer Team-Nutzung
-- Browser-Extension, die geklickte Links oder aktive Tabs an das lokale Backend fuer defensive Folge-Scans uebergibt
+- Browser-Extension-Ausbau mit klarerem Statusbild fuer aktive Pre-Scans und bekannte Browser-Limitationen

@@ -16,6 +16,7 @@ from vsw_launcher_support import (
     ensure_backend_venv,
     find_runtime_paths,
     frontend_dependencies_ready,
+    is_port_open,
     wait_for_port,
 )
 
@@ -89,6 +90,7 @@ class LauncherApp(tk.Tk):
         ttk.Button(button_row, text="Start VSW", command=lambda: self.run_in_background(self.start_services), style="Primary.TButton").pack(side="left", padx=(0, 10))
         ttk.Button(button_row, text="Open app", command=lambda: webbrowser.open(FRONTEND_URL)).pack(side="left", padx=(0, 10))
         ttk.Button(button_row, text="Open API docs", command=lambda: webbrowser.open(f"{BACKEND_URL}/docs")).pack(side="left", padx=(0, 10))
+        ttk.Button(button_row, text="Install shortcut", command=self.install_shortcut).pack(side="left", padx=(0, 10))
         ttk.Button(button_row, text="Stop services", command=self.stop_services).pack(side="left")
 
         status_grid = ttk.Frame(outer, padding=(0, 16, 0, 0), style="Card.TFrame")
@@ -217,6 +219,9 @@ class LauncherApp(tk.Tk):
 
         if self.backend_process and self.backend_process.process.poll() is None:
             self.queue_log("backend", "Backend is already running.")
+        elif is_port_open("127.0.0.1", 8000):
+            self.queue_status("backend", "Port 8000 already in use")
+            self.queue_log("backend", "Port 8000 is already reachable. Reusing the existing service instead of starting another backend.")
         else:
             self.queue_status("backend", "Starting...")
             self.backend_process = self._start_process(
@@ -242,6 +247,9 @@ class LauncherApp(tk.Tk):
 
         if self.frontend_process and self.frontend_process.process.poll() is None:
             self.queue_log("frontend", "Frontend is already running.")
+        elif is_port_open("127.0.0.1", 5173):
+            self.queue_status("frontend", "Port 5173 already in use")
+            self.queue_log("frontend", "Port 5173 is already reachable. Reusing the existing service instead of starting another frontend.")
         else:
             self.queue_status("frontend", "Starting...")
             self.frontend_process = self._start_process(
@@ -256,6 +264,44 @@ class LauncherApp(tk.Tk):
         self.queue_status("frontend", "Running on 127.0.0.1:5173")
         self.queue_status("note", "VSW is running. Opening the app in your browser.")
         webbrowser.open(FRONTEND_URL)
+
+    def install_shortcut(self) -> None:
+        script_path = self.project_root / "install_vsw_launcher.ps1"
+        if not script_path.exists():
+            messagebox.showerror("Shortcut setup", f"Shortcut installer not found: {script_path}")
+            return
+
+        powershell = Path("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
+        command = [
+            str(powershell),
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(script_path),
+        ]
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+            )
+        except OSError as exc:
+            messagebox.showerror("Shortcut setup", f"Could not start PowerShell: {exc}")
+            return
+
+        if completed.returncode != 0:
+            self.queue_log("system", completed.stdout)
+            self.queue_log("system", completed.stderr)
+            messagebox.showerror("Shortcut setup", "Desktop shortcut could not be created. See launcher output.")
+            return
+
+        self.queue_log("system", completed.stdout.strip())
+        self.queue_status("note", "Desktop shortcut created. You can start VSW from the desktop now.")
 
     def _start_process(self, name: str, command: list[str], cwd: Path) -> ManagedProcess:
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)

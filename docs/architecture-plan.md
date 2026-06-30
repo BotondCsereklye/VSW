@@ -18,6 +18,7 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
 
 - React + TypeScript + Vite
 - Komponentenbasierte UI mit Dashboard, Detailansicht und klarer Risikovisualisierung
+- Dashboard-Gruppierung nach Score-Klassen `75+`, `50+`, `25+`, `0+` und separater Pending-Gruppe
 - Polling fuer Status-Updates laufender Scans
 - Responsive Layout mit klarer Typografie und professioneller Informationshierarchie
 
@@ -26,9 +27,12 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
 - Manifest-V3-Extension als Link-Capture-Helfer
 - Kontextmenue-Aktionen fuer Link und aktuellen Tab
 - Popup-Trigger fuer die aktuelle Seite
+- Popup-Flow fuer `Scan and visit target` mit konfigurierbarem Mindestscore
 - Live-Capture im Content Script fuer normale In-Page-Link-Klicks mit Pre-Scan-Gate
 - Sendet nur Host-Ziele an das lokale Backend `POST /api/v1/scans`
 - Oeffnet die lokale VSW-Scan-Detailseite bei Kontext- oder Popup-Trigger
+- Runtime-Fallback verhindert dauerhaft haengende Tabs, wenn eine bereits injizierte Extension-Runtime deaktiviert, entfernt oder neu geladen wurde
+- Nutzt bewusst minimale Berechtigungen und keine Browserhistorie-Berechtigung
 - Enthält keine offensive Logik und keine eigenstaendige Scan-Engine
 
 ### Infrastruktur
@@ -43,6 +47,8 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
 - Nutzt die bestehende Backend- und Frontend-Architektur, statt eine zweite Scanner-Engine einzufuehren
 - Ermittelt Python `3.12+`, erstellt bei Bedarf `backend/.venv`, installiert fehlende Abhaengigkeiten und startet beide Services gemeinsam
 - Oeffnet App und API-Doku direkt aus der GUI
+- Erkennt bereits belegte lokale Ports und nutzt vorhandene Dienste wieder, statt weitere Prozesse zu starten
+- Kann per `install_vsw_launcher.ps1` eine Desktop- oder Startmenue-Verknuepfung erzeugen
 
 ## Warum Launcher und Extension zusammen sinnvoll sind
 
@@ -163,6 +169,7 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
   - `ScoreBadge`
   - `FindingCard`
   - `ScanDashboard`
+  - Score-Klassifizierung der Scan-Liste
   - `ReportDetail`
 - API-nahe UI-Tests mit Mock-Responses fuer Lade- und Fehlerzustaende
 
@@ -174,7 +181,9 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
   - Link-Kontextmenue-Trigger
   - Current-Tab-Kontextmenue-Trigger
   - Popup-Trigger
+  - Mindestscore-Speicherung und Score-Gate-Entscheidungen
   - Live-Capture fuer normale In-Page-Links
+  - Runtime-Fallback bei verlorener Extension-Runtime
   - klares Fehlerverhalten bei offline Backend
 
 ### Launcher
@@ -183,6 +192,8 @@ Defensive Fullstack-Web-App fuer sichere, passive oder risikoarme Infrastruktur-
   - Python `3.12+` wird erkannt
   - Setup funktioniert ohne manuelle Terminal-Schritte
   - Backend und Frontend starten gemeinsam
+  - bereits belegte Ports werden klar gemeldet
+  - Desktop-Verknuepfung kann erstellt werden
   - App und API-Doku lassen sich oeffnen
   - Stop beendet beide Prozesse sauber
 
