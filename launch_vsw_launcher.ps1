@@ -3,6 +3,7 @@ $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $launcherPath = Join-Path $projectRoot "tools\vsw_launcher.pyw"
+$logPath = Join-Path $env:TEMP "vsw-launcher-start.log"
 
 function Test-CompatiblePython {
   param(
@@ -57,4 +58,11 @@ function Find-CompatiblePython {
 }
 
 $pythonPath = Find-CompatiblePython
-Start-Process -FilePath $pythonPath -ArgumentList @($launcherPath) -WorkingDirectory $projectRoot
+$quotedLauncherPath = '"' + $launcherPath + '"'
+
+"$(Get-Date -Format o) Starting VSW launcher" | Out-File -FilePath $logPath -Encoding utf8
+"Project root: $projectRoot" | Out-File -FilePath $logPath -Encoding utf8 -Append
+"Python: $pythonPath" | Out-File -FilePath $logPath -Encoding utf8 -Append
+"Launcher: $launcherPath" | Out-File -FilePath $logPath -Encoding utf8 -Append
+
+Start-Process -FilePath $pythonPath -ArgumentList @($quotedLauncherPath) -WorkingDirectory $projectRoot
