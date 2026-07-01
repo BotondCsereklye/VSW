@@ -318,11 +318,11 @@ async function getActiveTab() {
 
 async function getSettings() {
   const stored = await chrome.storage.local.get(SETTINGS_KEY);
-  return normalizeSettings(stored[SETTINGS_KEY]);
+  return normalizeStoredSettings(stored[SETTINGS_KEY]);
 }
 
 async function setSettings(candidateSettings) {
-  const settings = normalizeSettings(candidateSettings);
+  const settings = normalizeStoredSettings(candidateSettings);
   await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
   return settings;
 }
@@ -332,7 +332,7 @@ async function ensureSettings() {
   await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
 }
 
-function normalizeSettings(candidate) {
+function normalizeStoredSettings(candidate) {
   return VswScoreGate.normalizeSettings(candidate, DEFAULT_SETTINGS);
 }
 
