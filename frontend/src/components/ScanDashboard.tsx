@@ -33,14 +33,14 @@ export function ScanDashboard({
       </header>
       <div className="scan-dashboard__list">
         {groups.map((group) => (
-          <section key={group.id} className={`scan-dashboard__group scan-dashboard__group--${group.id}`}>
-            <header className="scan-dashboard__group-header">
+          <details key={group.id} className={`scan-dashboard__group scan-dashboard__group--${group.id}`}>
+            <summary className="scan-dashboard__group-header">
               <div>
                 <h3>{group.label}</h3>
                 <p>{group.description}</p>
               </div>
               <span>{group.scans.length}</span>
-            </header>
+            </summary>
             <div className="scan-dashboard__group-list">
               {group.scans.map((scan) => (
                 <button
@@ -62,7 +62,7 @@ export function ScanDashboard({
                 </button>
               ))}
             </div>
-          </section>
+          </details>
         ))}
       </div>
     </section>

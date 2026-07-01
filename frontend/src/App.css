@@ -251,8 +251,6 @@
 }
 
 .scan-dashboard__group {
-  display: grid;
-  gap: 10px;
   border-radius: 18px;
   border: 1px solid rgba(16, 36, 59, 0.08);
   background: rgba(255, 255, 255, 0.48);
@@ -264,6 +262,29 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scan-dashboard__group-header::-webkit-details-marker {
+  display: none;
+}
+
+.scan-dashboard__group-header::before {
+  content: '+';
+  display: inline-flex;
+  min-width: 26px;
+  min-height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(16, 36, 59, 0.08);
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.scan-dashboard__group[open] .scan-dashboard__group-header::before {
+  content: '-';
 }
 
 .scan-dashboard__group-header h3 {
@@ -309,6 +330,7 @@
 .scan-dashboard__group-list {
   display: grid;
   gap: 10px;
+  margin-top: 10px;
 }
 
 .report-detail__header-actions,

@@ -129,9 +129,9 @@ async function createScanFromTarget(target, options = {}) {
     }
 
     if (openScanView && scanId) {
-      await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${scanId}` });
+      await openOrFocusScanView(scanId);
     } else if (openScanView) {
-      await chrome.tabs.create({ url: VSW_APP_BASE_URL });
+      await openOrFocusVswApp(VSW_APP_BASE_URL);
     }
 
     return {
@@ -163,7 +163,7 @@ async function gateNavigation(rawUrl) {
     const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, settings);
     if (!gateDecision.allowNavigation) {
       if (result.scanId) {
-        await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
+        await openOrFocusScanView(result.scanId);
       }
       return {
         ok: true,
@@ -214,7 +214,7 @@ async function scanTargetAndVisit(rawTarget) {
 
   const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, settings);
   if (result.scanId) {
-    await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
+    await openOrFocusScanView(result.scanId);
   }
 
   if (!gateDecision.allowNavigation) {
@@ -314,6 +314,30 @@ function normalizeTargetInput(rawTarget) {
 async function getActiveTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   return tabs[0];
+}
+
+async function openOrFocusScanView(scanId) {
+  return openOrFocusVswApp(`${VSW_APP_BASE_URL}/scans/${scanId}`);
+}
+
+async function openOrFocusVswApp(url) {
+  const tabs = await chrome.tabs.query({
+    url: [
+      `${VSW_APP_BASE_URL}/*`,
+      "http://localhost:5173/*",
+    ],
+  });
+  const existingTab = tabs[0];
+
+  if (existingTab?.id !== undefined) {
+    await chrome.tabs.update(existingTab.id, { active: true, url });
+    if (existingTab.windowId !== undefined) {
+      await chrome.windows.update(existingTab.windowId, { focused: true });
+    }
+    return;
+  }
+
+  await chrome.tabs.create({ url });
 }
 
 async function getSettings() {

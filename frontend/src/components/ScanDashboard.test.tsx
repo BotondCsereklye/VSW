@@ -76,7 +76,8 @@ test('groupScansByScoreBand groups scans into score classes and keeps pending sc
 })
 
 
-test('ScanDashboard renders score classification sections', () => {
+test('ScanDashboard renders score classification sections as collapsed groups', async () => {
+  const user = userEvent.setup()
   render(
     <ScanDashboard
       scans={[
@@ -94,6 +95,15 @@ test('ScanDashboard renders score classification sections', () => {
   expect(screen.getByRole('heading', { name: '75+' })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: '50+' })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: '0+' })).toBeInTheDocument()
+
+  const criticalGroup = screen
+    .getByRole('heading', { name: '0+' })
+    .closest('.scan-dashboard__group')
+  expect(criticalGroup).not.toHaveAttribute('open')
+
+  await user.click(screen.getByText('0+'))
+
+  expect(criticalGroup).toHaveAttribute('open')
   expect(screen.getByRole('button', { name: /open report for critical.example/i })).toHaveClass(
     'scan-row--active',
   )

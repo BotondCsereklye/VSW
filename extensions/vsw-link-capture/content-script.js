@@ -73,7 +73,13 @@ async function handleClick(event) {
   }
 
   if (!result.allowNavigation) {
-    showToast(result.message || "Navigation blocked: pre-scan failed.", true);
+    showToast(
+      result.message
+        ? `Visit blocked by VSW. ${result.message}`
+        : "Visit blocked by VSW because the defensive pre-scan did not pass.",
+      true,
+      7000,
+    );
     return;
   }
 
@@ -140,7 +146,7 @@ function isSameDocumentLink(targetUrl) {
   );
 }
 
-function showToast(message, isError = false) {
+function showToast(message, isError = false, durationMs = 2800) {
   let toast = document.getElementById(LIVE_CAPTURE_TOAST_ID);
   if (!toast) {
     toast = document.createElement("div");
@@ -169,7 +175,7 @@ function showToast(message, isError = false) {
     if (toast) {
       toast.remove();
     }
-  }, 2800);
+  }, durationMs);
 }
 
 showToast.hideTimer = 0;
