@@ -8,6 +8,8 @@ import {
   type ExtensionSettings,
 } from '../extensionSettings'
 
+const EXTENSION_RETRY_INTERVAL_MS = 2000
+
 export function ExtensionSettingsPanel() {
   const [settings, setSettings] = useState<ExtensionSettings>(() =>
     normalizeExtensionSettings(null),
@@ -18,6 +20,7 @@ export function ExtensionSettingsPanel() {
 
   useEffect(() => {
     let isActive = true
+    let retryId: number | null = null
 
     async function loadSettings() {
       try {
@@ -33,7 +36,8 @@ export function ExtensionSettingsPanel() {
           return
         }
         setIsAvailable(false)
-        setStatus('Extension not connected. Reload the VSW app after loading the extension.')
+        setStatus('Extension not connected yet. Reload the extension or wait for reconnect.')
+        retryId = window.setTimeout(loadSettings, EXTENSION_RETRY_INTERVAL_MS)
       }
     }
 
@@ -41,6 +45,9 @@ export function ExtensionSettingsPanel() {
 
     return () => {
       isActive = false
+      if (retryId !== null) {
+        window.clearTimeout(retryId)
+      }
     }
   }, [])
 
