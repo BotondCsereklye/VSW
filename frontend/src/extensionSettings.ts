@@ -79,7 +79,7 @@ function sendExtensionBridgeMessage<TResponse>(
 
     function handleMessage(event: MessageEvent) {
       if (
-        event.source !== window ||
+        event.origin !== window.location.origin ||
         event.data?.source !== 'vsw-link-capture' ||
         event.data?.requestId !== requestId
       ) {

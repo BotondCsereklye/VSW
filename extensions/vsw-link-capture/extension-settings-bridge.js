@@ -1,7 +1,15 @@
 const VSW_EXTENSION_BRIDGE_SOURCE = "vsw-link-capture";
 
+window.postMessage(
+  {
+    source: VSW_EXTENSION_BRIDGE_SOURCE,
+    type: "vsw:bridge-ready",
+  },
+  window.location.origin,
+);
+
 window.addEventListener("message", (event) => {
-  if (event.source !== window || event.data?.source !== "vsw-app") {
+  if (event.origin !== window.location.origin || event.data?.source !== "vsw-app") {
     return;
   }
 
