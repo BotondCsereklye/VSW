@@ -12,6 +12,8 @@ const DEFAULT_SETTINGS = {
   blockOnScanFailure: true,
   minimumAllowedScore: 50,
   blockBelowMinimumScore: true,
+  trustedHosts: [],
+  scoreGateIgnoredHosts: [],
 };
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -61,6 +63,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message?.type === "gate-navigation") {
         const result = await gateNavigation(message.url);
         sendResponse(result);
+        return;
+      }
+
+      if (message?.type === "open-scan-report") {
+        await openOrFocusScanView(message.scanId, message.notice || {});
+        sendResponse({ ok: true });
         return;
       }
 
@@ -129,9 +137,9 @@ async function createScanFromTarget(target, options = {}) {
     }
 
     if (openScanView && scanId) {
-      await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${scanId}` });
+      await openOrFocusScanView(scanId);
     } else if (openScanView) {
-      await chrome.tabs.create({ url: VSW_APP_BASE_URL });
+      await openOrFocusVswApp(VSW_APP_BASE_URL);
     }
 
     return {
@@ -139,6 +147,7 @@ async function createScanFromTarget(target, options = {}) {
       message: `Scan created for ${target}.`,
       scanId: scanId || null,
       detail,
+      target,
     };
   } catch (error) {
     return {
@@ -155,29 +164,47 @@ async function gateNavigation(rawUrl) {
     return { ok: true, allowNavigation: true, message: "Live capture disabled." };
   }
 
+  const parsedTarget = extractTarget(rawUrl);
+  if (parsedTarget.ok && isConfiguredHost(parsedTarget.target, settings.trustedHosts)) {
+    return {
+      ok: true,
+      allowNavigation: true,
+      message: `${parsedTarget.target} is trusted in VSW. Navigation continues without blocking.`,
+      target: parsedTarget.target,
+    };
+  }
+
   const result = await createScanFromUrl(rawUrl, {
     openScanView: false,
     waitForCompletion: true,
   });
   if (result.ok) {
-    const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, settings);
+    const ignoresMinimumScore = isConfiguredHost(result.target, settings.scoreGateIgnoredHosts);
+    const gateSettings = ignoresMinimumScore
+      ? { ...settings, blockBelowMinimumScore: false }
+      : settings;
+    const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, gateSettings);
     if (!gateDecision.allowNavigation) {
-      if (result.scanId) {
-        await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
-      }
       return {
         ok: true,
         allowNavigation: false,
         message: gateDecision.message,
         scanId: result.scanId || null,
+        target: result.target || null,
+        score: typeof result.detail?.score === "number" ? result.detail.score : null,
+        minimumAllowedScore: settings.minimumAllowedScore,
+        redirectDelayMs: 3000,
       };
     }
 
     return {
       ok: true,
       allowNavigation: true,
-      message: gateDecision.message || result.message,
+      message: ignoresMinimumScore
+        ? `${result.target} ignores the minimum score gate. ${gateDecision.message || result.message}`
+        : gateDecision.message || result.message,
       scanId: result.scanId || null,
+      target: result.target || null,
     };
   }
 
@@ -203,6 +230,16 @@ async function scanTargetAndVisit(rawTarget) {
   }
 
   const settings = await getSettings();
+  if (isConfiguredHost(normalized.target, settings.trustedHosts)) {
+    await openVisitUrl(normalized.visitUrl);
+    return {
+      ok: true,
+      message: `${normalized.target} is trusted in VSW. Navigation continues without blocking.`,
+      scanId: null,
+      detail: null,
+    };
+  }
+
   const result = await createScanFromTarget(normalized.target, {
     openScanView: false,
     waitForCompletion: true,
@@ -212,9 +249,13 @@ async function scanTargetAndVisit(rawTarget) {
     return result;
   }
 
-  const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, settings);
+  const ignoresMinimumScore = isConfiguredHost(result.target, settings.scoreGateIgnoredHosts);
+  const gateDecision = VswScoreGate.evaluateGateDecision(
+    result.detail,
+    ignoresMinimumScore ? { ...settings, blockBelowMinimumScore: false } : settings,
+  );
   if (result.scanId) {
-    await chrome.tabs.create({ url: `${VSW_APP_BASE_URL}/scans/${result.scanId}` });
+    await openOrFocusScanView(result.scanId);
   }
 
   if (!gateDecision.allowNavigation) {
@@ -226,12 +267,7 @@ async function scanTargetAndVisit(rawTarget) {
     };
   }
 
-  const activeTab = await getActiveTab();
-  if (activeTab?.id !== undefined) {
-    await chrome.tabs.update(activeTab.id, { url: normalized.visitUrl });
-  } else {
-    await chrome.tabs.create({ url: normalized.visitUrl });
-  }
+  await openVisitUrl(normalized.visitUrl);
 
   return {
     ok: true,
@@ -316,13 +352,68 @@ async function getActiveTab() {
   return tabs[0];
 }
 
+async function openVisitUrl(url) {
+  const activeTab = await getActiveTab();
+  if (activeTab?.id !== undefined) {
+    await chrome.tabs.update(activeTab.id, { url });
+    return;
+  }
+
+  await chrome.tabs.create({ url });
+}
+
+async function openOrFocusScanView(scanId, notice = {}) {
+  return openOrFocusVswApp(buildScanViewUrl(scanId, notice));
+}
+
+async function openOrFocusVswApp(url) {
+  const tabs = await chrome.tabs.query({
+    url: [
+      `${VSW_APP_BASE_URL}/*`,
+      "http://localhost:5173/*",
+    ],
+  });
+  const existingTab = tabs[0];
+
+  if (existingTab?.id !== undefined) {
+    await chrome.tabs.update(existingTab.id, { active: true, url });
+    if (existingTab.windowId !== undefined) {
+      await chrome.windows.update(existingTab.windowId, { focused: true });
+    }
+    return;
+  }
+
+  await chrome.tabs.create({ url });
+}
+
+function buildScanViewUrl(scanId, notice = {}) {
+  const url = new URL(`${VSW_APP_BASE_URL}/scans/${scanId}`);
+  if (notice.type) {
+    url.searchParams.set("notice", notice.type);
+  }
+  if (notice.message) {
+    url.searchParams.set("message", notice.message);
+  }
+  if (notice.target) {
+    url.searchParams.set("target", notice.target);
+  }
+  if (notice.score !== undefined && notice.score !== null) {
+    url.searchParams.set("score", String(notice.score));
+  }
+  if (notice.minimumAllowedScore !== undefined && notice.minimumAllowedScore !== null) {
+    url.searchParams.set("minimum", String(notice.minimumAllowedScore));
+  }
+  url.searchParams.set("ts", String(Date.now()));
+  return url.toString();
+}
+
 async function getSettings() {
   const stored = await chrome.storage.local.get(SETTINGS_KEY);
-  return normalizeSettings(stored[SETTINGS_KEY]);
+  return normalizeStoredSettings(stored[SETTINGS_KEY]);
 }
 
 async function setSettings(candidateSettings) {
-  const settings = normalizeSettings(candidateSettings);
+  const settings = normalizeStoredSettings(candidateSettings);
   await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
   return settings;
 }
@@ -332,8 +423,13 @@ async function ensureSettings() {
   await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
 }
 
-function normalizeSettings(candidate) {
+function normalizeStoredSettings(candidate) {
   return VswScoreGate.normalizeSettings(candidate, DEFAULT_SETTINGS);
+}
+
+function isConfiguredHost(host, hostList) {
+  const normalizedHost = String(host || "").trim().toLowerCase();
+  return Array.isArray(hostList) && hostList.includes(normalizedHost);
 }
 
 function sleep(durationMs) {

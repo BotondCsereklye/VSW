@@ -73,7 +73,33 @@ async function handleClick(event) {
   }
 
   if (!result.allowNavigation) {
-    showToast(result.message || "Navigation blocked: pre-scan failed.", true);
+    const delayMs = result.redirectDelayMs ?? 3000;
+    const hasScoreGateDetails =
+      typeof result.score === "number" && typeof result.minimumAllowedScore === "number";
+    showToast(
+      hasScoreGateDetails
+        ? `Website not safe. Score ${result.score}/100 is below your minimum ${result.minimumAllowedScore}/100. Opening the VSW report...`
+        : result.message
+          ? `Website not safe. ${result.message} Opening the VSW report...`
+          : "Website not safe. Opening the VSW report...",
+      true,
+      delayMs,
+    );
+    if (result.scanId) {
+      window.setTimeout(() => {
+        void sendRuntimeMessageWithTimeout({
+          type: "open-scan-report",
+          scanId: result.scanId,
+          notice: {
+            type: "blocked",
+            message: result.message || "Website blocked by VSW.",
+            target: result.target,
+            score: result.score,
+            minimumAllowedScore: result.minimumAllowedScore,
+          },
+        }).catch(() => undefined);
+      }, delayMs);
+    }
     return;
   }
 
@@ -140,7 +166,7 @@ function isSameDocumentLink(targetUrl) {
   );
 }
 
-function showToast(message, isError = false) {
+function showToast(message, isError = false, durationMs = 2800) {
   let toast = document.getElementById(LIVE_CAPTURE_TOAST_ID);
   if (!toast) {
     toast = document.createElement("div");
@@ -169,7 +195,7 @@ function showToast(message, isError = false) {
     if (toast) {
       toast.remove();
     }
-  }, 2800);
+  }, durationMs);
 }
 
 showToast.hideTimer = 0;
