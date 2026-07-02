@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { ScanDetail, ScanExportFormat, ScanSummary } from '../types/scan'
@@ -196,7 +196,7 @@ export function ReportDetail({
         </header>
         <p>
           Nur same-origin Links werden angezeigt. Ein Klick startet einen neuen defensiven Host-Scan
-          fuer den Link.
+          für den Link.
         </p>
         {discoveredLinks.length > 0 ? (
           <ul className="report-detail__link-list">
