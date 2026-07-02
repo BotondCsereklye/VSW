@@ -1,6 +1,9 @@
 (function registerScoreGate(root) {
   const api = {
     evaluateGateDecision,
+    getHostRule,
+    matchesConfiguredHost,
+    normalizeHostList,
     normalizeMinimumScore,
     normalizeSettings,
   };
@@ -74,6 +77,8 @@ function normalizeSettings(candidate, defaultSettings) {
       candidate?.blockBelowMinimumScore === undefined
         ? defaultSettings.blockBelowMinimumScore
         : Boolean(candidate.blockBelowMinimumScore),
+    trustedHosts: normalizeHostList(candidate?.trustedHosts),
+    scoreGateIgnoredHosts: normalizeHostList(candidate?.scoreGateIgnoredHosts),
   };
 }
 
@@ -83,4 +88,45 @@ function normalizeMinimumScore(value, defaultScore = 50) {
     return defaultScore;
   }
   return Math.min(100, Math.max(0, candidate));
+}
+
+function normalizeHostList(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .map((item) => String(item || "").trim().toLowerCase())
+        .filter((item) => item.length > 0),
+    ),
+  ).slice(0, 50);
+}
+
+function getHostRule(host, settings) {
+  if (matchesConfiguredHost(host, settings.trustedHosts)) {
+    return "trusted";
+  }
+
+  if (matchesConfiguredHost(host, settings.scoreGateIgnoredHosts)) {
+    return "ignore-minimum-score";
+  }
+
+  return "default";
+}
+
+function matchesConfiguredHost(host, hostList) {
+  const normalizedHost = String(host || "").trim().toLowerCase();
+  if (!normalizedHost || !Array.isArray(hostList)) {
+    return false;
+  }
+
+  return hostList.some((configuredHost) => {
+    const normalizedConfiguredHost = String(configuredHost || "").trim().toLowerCase();
+    return (
+      normalizedHost === normalizedConfiguredHost ||
+      normalizedHost.endsWith(`.${normalizedConfiguredHost}`)
+    );
+  });
 }

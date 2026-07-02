@@ -9,6 +9,20 @@ describe('extension settings helpers', () => {
       blockOnScanFailure: true,
       minimumAllowedScore: 50,
       blockBelowMinimumScore: true,
+      trustedHosts: [],
+      scoreGateIgnoredHosts: [],
+    })
+  })
+
+  test('normalizes host rule lists', () => {
+    expect(
+      normalizeExtensionSettings({
+        trustedHosts: [' GitHub.com ', 'github.com', ''],
+        scoreGateIgnoredHosts: ['YouTube.com'],
+      }),
+    ).toMatchObject({
+      trustedHosts: ['github.com'],
+      scoreGateIgnoredHosts: ['youtube.com'],
     })
   })
 

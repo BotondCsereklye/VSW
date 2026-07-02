@@ -85,8 +85,8 @@ test('ReportDetail renders score, findings and snapshot action buttons', () => {
   expect(screen.getByText(/63\/100/i)).toBeInTheDocument()
   expect(screen.getByText(/tls certificate is expired/i)).toBeInTheDocument()
   expect(screen.getByText(/trend degraded/i)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /tls ansehen/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /headers ansehen/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /view tls/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /view headers/i })).toBeInTheDocument()
 })
 
 
@@ -136,7 +136,7 @@ test('ReportDetail opens TLS details and closes modal with Escape', async () => 
 
   render(<ReportDetail scan={createScanDetail()} history={createHistory()} />)
 
-  await user.click(screen.getByRole('button', { name: /tls ansehen/i }))
+  await user.click(screen.getByRole('button', { name: /view tls/i }))
   const dialog = screen.getByRole('dialog', { name: /tls details/i })
   expect(dialog).toBeInTheDocument()
   expect(dialog).toHaveTextContent(/legacy ca/i)
@@ -151,7 +151,7 @@ test('ReportDetail closes modal when clicking on the backdrop', async () => {
 
   render(<ReportDetail scan={createScanDetail()} history={createHistory()} />)
 
-  await user.click(screen.getByRole('button', { name: /headers ansehen/i }))
+  await user.click(screen.getByRole('button', { name: /view headers/i }))
   const dialog = screen.getByRole('dialog', { name: /header details/i })
   const backdrop = dialog.parentElement
   if (backdrop === null) {
@@ -168,7 +168,7 @@ test('ReportDetail closes modal via close button', async () => {
 
   render(<ReportDetail scan={createScanDetail()} history={createHistory()} />)
 
-  await user.click(screen.getByRole('button', { name: /tls ansehen/i }))
+  await user.click(screen.getByRole('button', { name: /view tls/i }))
   expect(screen.getByRole('dialog', { name: /tls details/i })).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: /close details/i }))
@@ -183,11 +183,11 @@ test('ReportDetail collapses long finding lists and can expand on demand', async
   expect(screen.getByText(/additional finding 2/i)).toBeInTheDocument()
   expect(screen.getByText(/additional finding 3/i)).toBeInTheDocument()
   expect(screen.queryByText(/additional finding 4/i)).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /mehr anzeigen \(3\)/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /show more \(3\)/i })).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: /mehr anzeigen \(3\)/i }))
+  await user.click(screen.getByRole('button', { name: /show more \(3\)/i }))
   expect(screen.getByText(/additional finding 6/i)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /weniger anzeigen/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /show less/i })).toBeInTheDocument()
 })
 
 

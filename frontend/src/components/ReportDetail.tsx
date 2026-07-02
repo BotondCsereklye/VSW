@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { useTranslation } from '../i18n/useTranslation'
+import type { TranslationKey } from '../i18n/translations'
 import type { ScanDetail, ScanExportFormat, ScanSummary } from '../types/scan'
 import { FindingCard } from './FindingCard'
 import { ScoreBadge } from './ScoreBadge'
@@ -16,20 +18,20 @@ type ReportDetailProps = {
 
 type SnapshotPanel = 'tls' | 'headers'
 
-function getTrendLabel(history: ScanSummary[]): string {
+function getTrendKey(history: ScanSummary[]): TranslationKey {
   const completed = history.filter((item) => item.score !== null)
   if (completed.length < 2) {
-    return 'Trend unavailable'
+    return 'trend.unavailable'
   }
 
   const [latest, previous] = completed
   if ((latest.score ?? 0) > (previous.score ?? 0)) {
-    return 'Trend improving'
+    return 'trend.improving'
   }
   if ((latest.score ?? 0) < (previous.score ?? 0)) {
-    return 'Trend degraded'
+    return 'trend.degraded'
   }
-  return 'Trend stable'
+  return 'trend.stable'
 }
 
 export function ReportDetail({
@@ -40,10 +42,11 @@ export function ReportDetail({
   checkedLinks = [],
   onInspectLink,
 }: ReportDetailProps) {
+  const { t } = useTranslation()
   const [activeSnapshotPanel, setActiveSnapshotPanel] = useState<SnapshotPanel | null>(null)
   const [expandedFindingsForScanId, setExpandedFindingsForScanId] = useState<string | null>(null)
 
-  const snapshotTitle = activeSnapshotPanel === 'tls' ? 'TLS details' : 'Header details'
+  const snapshotTitle = activeSnapshotPanel === 'tls' ? t('report.tls') : t('report.headers')
   const snapshotContent = useMemo(() => {
     if (scan === null || activeSnapshotPanel === null) {
       return null
@@ -79,13 +82,13 @@ export function ReportDetail({
   if (scan === null) {
     return (
       <section className="report-detail report-detail--empty">
-        <h2>Report detail</h2>
-        <p>Select a scan to inspect its findings.</p>
+        <h2>{t('report.emptyTitle')}</h2>
+        <p>{t('report.emptyText')}</p>
       </section>
     )
   }
 
-  const trendLabel = getTrendLabel(history)
+  const trendLabel = t(getTrendKey(history))
   const showAllFindings = expandedFindingsForScanId === scan.id
   const visibleFindings = showAllFindings ? scan.findings : scan.findings.slice(0, 3)
   const hiddenFindings = Math.max(scan.findings.length - visibleFindings.length, 0)
@@ -110,7 +113,7 @@ export function ReportDetail({
                 <button
                   type="button"
                   className="report-detail__modal-close"
-                  aria-label="Close details"
+                  aria-label={t('report.closeDetails')}
                   onClick={() => setActiveSnapshotPanel(null)}
                 >
                   X
@@ -128,16 +131,16 @@ export function ReportDetail({
       <header className="report-detail__header">
         <div>
           <h2>{scan.target}</h2>
-          <p>{scan.summary ?? 'No report summary available.'}</p>
+          <p>{scan.summary ?? t('report.noSummary')}</p>
         </div>
         <div className="report-detail__header-actions">
           <ScoreBadge score={scan.score} />
           <div className="report-detail__exports">
             <button type="button" onClick={() => void onExport?.('json')}>
-              Export JSON
+              {t('report.exportJson')}
             </button>
             <button type="button" onClick={() => void onExport?.('csv')}>
-              Export CSV
+              {t('report.exportCsv')}
             </button>
           </div>
         </div>
@@ -145,7 +148,7 @@ export function ReportDetail({
 
       <section className="report-detail__history">
         <div className="report-detail__history-header">
-          <h3>Recent history</h3>
+          <h3>{t('report.history')}</h3>
           <span className="report-detail__trend">{trendLabel}</span>
         </div>
         {history.length > 0 ? (
@@ -154,21 +157,21 @@ export function ReportDetail({
               <article key={item.id} className="report-detail__history-item">
                 <strong>{item.created_at.slice(0, 10)}</strong>
                 <span>{item.status}</span>
-                <span>{item.score ?? 'pending'}</span>
+                <span>{item.score ?? t('report.pending')}</span>
               </article>
             ))}
           </div>
         ) : (
-          <p>No previous scans available for this target.</p>
+          <p>{t('report.noHistory')}</p>
         )}
       </section>
 
       <div className="report-detail__snapshot-actions">
         <button type="button" onClick={() => setActiveSnapshotPanel('tls')}>
-          TLS ansehen
+          {t('report.tlsButton')}
         </button>
         <button type="button" onClick={() => setActiveSnapshotPanel('headers')}>
-          Headers ansehen
+          {t('report.headersButton')}
         </button>
       </div>
 
@@ -184,20 +187,19 @@ export function ReportDetail({
               setExpandedFindingsForScanId((previous) => (previous === scan.id ? null : scan.id))
             }
           >
-            {showAllFindings ? 'Weniger anzeigen' : `Mehr anzeigen (${hiddenFindings})`}
+            {showAllFindings
+              ? t('report.showLess')
+              : t('report.showMore', { count: hiddenFindings })}
           </button>
         ) : null}
       </div>
 
       <section className="report-detail__link-checks">
         <header className="report-detail__link-checks-header">
-          <h3>Guided link checks</h3>
-          <span>{discoveredLinks.length} links</span>
+          <h3>{t('report.linkChecks')}</h3>
+          <span>{t('report.links', { count: discoveredLinks.length })}</span>
         </header>
-        <p>
-          Nur same-origin Links werden angezeigt. Ein Klick startet einen neuen defensiven Host-Scan
-          für den Link.
-        </p>
+        <p>{t('report.linkHelp')}</p>
         {discoveredLinks.length > 0 ? (
           <ul className="report-detail__link-list">
             {discoveredLinks.map((link) => (
@@ -207,17 +209,17 @@ export function ReportDetail({
                 </a>
                 <div className="report-detail__link-actions">
                   {checkedLinks.includes(link) ? (
-                    <span className="report-detail__link-checked">Checked</span>
+                    <span className="report-detail__link-checked">{t('report.checked')}</span>
                   ) : null}
                   <button type="button" onClick={() => void onInspectLink?.(link)}>
-                    Check link host
+                    {t('report.checkLink')}
                   </button>
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p>No crawlable links discovered for this target yet.</p>
+          <p>{t('report.noLinks')}</p>
         )}
       </section>
 

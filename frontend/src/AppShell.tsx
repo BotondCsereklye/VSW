@@ -10,12 +10,23 @@ import {
   listScans,
 } from './api/client'
 import { ExtensionSettingsPanel } from './components/ExtensionSettingsPanel'
+import { LanguageSelector } from './components/LanguageSelector'
 import { ReportDetail } from './components/ReportDetail'
+import { SafetyMessagesPanel } from './components/SafetyMessagesPanel'
 import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
+import { useTranslation } from './i18n/useTranslation'
+import {
+  addSafetyMessage,
+  getSafetyMessageRetentionMinutes,
+  loadSafetyMessages,
+  setSafetyMessageRetentionMinutes,
+  type SafetyMessage,
+} from './safetyMessages'
 import type { ScanDetail, ScanExportFormat, ScanSummary } from './types/scan'
 
 const ACTIVE_SCAN_POLL_INTERVAL_MS = 1500
+const SAFETY_MESSAGE_PRUNE_INTERVAL_MS = 30_000
 
 function isScanInProgress(status: ScanSummary['status'] | null | undefined) {
   return status === 'pending' || status === 'running'
@@ -25,6 +36,7 @@ function isScanInProgress(status: ScanSummary['status'] | null | undefined) {
 export function AppShell() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const matchedRoute = matchPath('/scans/:scanId', location.pathname)
   const scanId = matchedRoute?.params.scanId ?? null
   const [scans, setScans] = useState<ScanSummary[]>([])
@@ -35,11 +47,52 @@ export function AppShell() {
   const [isLoadingScans, setIsLoadingScans] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [safetyMessages, setSafetyMessages] = useState<SafetyMessage[]>(() =>
+    loadSafetyMessages(),
+  )
+  const [safetyRetentionMinutes, setSafetyRetentionMinutes] = useState(() =>
+    getSafetyMessageRetentionMinutes(),
+  )
   const hasActiveScans = scans.some((scan) => isScanInProgress(scan.status))
   const shouldPollSelectedScan =
     scanId !== null &&
     selectedScan?.id === scanId &&
     isScanInProgress(selectedScan.status)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('notice') !== 'blocked') {
+      return
+    }
+
+    const createdAt = Number.parseInt(params.get('ts') ?? '', 10) || Date.now()
+    const nextMessage: SafetyMessage = {
+      id: `${params.get('target') ?? 'unknown'}-${createdAt}`,
+      type: 'blocked',
+      target: params.get('target') ?? 'unknown target',
+      message: params.get('message') ?? 'Website blocked by VSW.',
+      score: parseNullableNumber(params.get('score')),
+      minimumAllowedScore: parseNullableNumber(params.get('minimum')),
+      createdAt,
+    }
+    const timeoutId = window.setTimeout(() => {
+      setSafetyMessages(addSafetyMessage(nextMessage))
+      navigate(location.pathname, { replace: true })
+    }, 0)
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [location.pathname, location.search, navigate])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setSafetyMessages(loadSafetyMessages())
+    }, SAFETY_MESSAGE_PRUNE_INTERVAL_MS)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [])
 
   useEffect(() => {
     let isActive = true
@@ -57,7 +110,7 @@ export function AppShell() {
         })
       } catch {
         if (isActive) {
-          setErrorMessage('Unable to load scans.')
+          setErrorMessage(t('error.loadScans'))
         }
       } finally {
         if (isActive) {
@@ -71,7 +124,7 @@ export function AppShell() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!hasActiveScans) {
@@ -94,7 +147,7 @@ export function AppShell() {
           })
         } catch {
           if (isActive) {
-            setErrorMessage('Unable to refresh scans.')
+            setErrorMessage(t('error.refreshScans'))
           }
         }
       })()
@@ -104,7 +157,7 @@ export function AppShell() {
       isActive = false
       window.clearInterval(intervalId)
     }
-  }, [hasActiveScans])
+  }, [hasActiveScans, t])
 
   useEffect(() => {
     if (!scanId) {
@@ -134,7 +187,7 @@ export function AppShell() {
         })
       } catch {
         if (isActive) {
-          setErrorMessage('Unable to load report details.')
+          setErrorMessage(t('error.loadDetails'))
         }
       }
     }
@@ -144,7 +197,7 @@ export function AppShell() {
     return () => {
       isActive = false
     }
-  }, [scanId])
+  }, [scanId, t])
 
   useEffect(() => {
     if (!scanId || !shouldPollSelectedScan) {
@@ -174,7 +227,7 @@ export function AppShell() {
           })
         } catch {
           if (isActive) {
-            setErrorMessage('Unable to load report details.')
+              setErrorMessage(t('error.loadDetails'))
           }
         }
       })()
@@ -184,7 +237,7 @@ export function AppShell() {
       isActive = false
       window.clearInterval(intervalId)
     }
-  }, [scanId, shouldPollSelectedScan])
+  }, [scanId, shouldPollSelectedScan, t])
 
   async function createScanAndNavigate(target: string): Promise<boolean> {
     setIsSubmitting(true)
@@ -199,7 +252,7 @@ export function AppShell() {
       navigate(`/scans/${createdScan.id}`)
       return true
     } catch {
-      setErrorMessage('Unable to create a scan right now.')
+      setErrorMessage(t('error.createScan'))
       return false
     } finally {
       setIsLoadingScans(false)
@@ -213,6 +266,12 @@ export function AppShell() {
 
   function handleSelectScan(nextScanId: string) {
     navigate(`/scans/${nextScanId}`)
+  }
+
+  function handleSafetyRetentionChange(minutes: number) {
+    const normalizedMinutes = setSafetyMessageRetentionMinutes(minutes)
+    setSafetyRetentionMinutes(normalizedMinutes)
+    setSafetyMessages(loadSafetyMessages())
   }
 
   async function handleExport(format: ScanExportFormat) {
@@ -231,14 +290,14 @@ export function AppShell() {
       link.remove()
       window.URL.revokeObjectURL(url)
     } catch {
-      setErrorMessage('Unable to export the selected report.')
+      setErrorMessage(t('error.export'))
     }
   }
 
   async function handleInspectLink(link: string) {
     const hostname = extractHostname(link)
     if (!hostname) {
-      setErrorMessage('Unable to scan this link target.')
+      setErrorMessage(t('error.linkTarget'))
       return
     }
 
@@ -258,20 +317,28 @@ export function AppShell() {
     <main className="app-shell">
       <header className="app-shell__hero">
         <div>
-          <p className="eyebrow">Defensive Vulnerability Scanner</p>
-          <h1>Risk-focused visibility for the systems you are authorized to assess.</h1>
+          <div className="app-shell__topline">
+            <p className="eyebrow">{t('hero.eyebrow')}</p>
+            <LanguageSelector />
+          </div>
+          <h1>{t('hero.title')}</h1>
         </div>
         <TargetInput isSubmitting={isSubmitting} onSubmit={handleCreateScan} />
       </header>
 
       {errorMessage ? <p className="app-shell__error">{errorMessage}</p> : null}
 
-      <ExtensionSettingsPanel />
+      <ExtensionSettingsPanel scans={scans} />
 
       <section className="app-shell__content">
         <div className="app-shell__panel">
+          <SafetyMessagesPanel
+            messages={safetyMessages}
+            retentionMinutes={safetyRetentionMinutes}
+            onRetentionChange={handleSafetyRetentionChange}
+          />
           {isLoadingScans ? (
-            <p>Loading scans…</p>
+            <p>{t('loading.scans')}</p>
           ) : (
             <ScanDashboard
               scans={scans}
@@ -301,4 +368,13 @@ function extractHostname(link: string): string | null {
   } catch {
     return null
   }
+}
+
+function parseNullableNumber(value: string | null): number | null {
+  if (value === null || value.trim() === '') {
+    return null
+  }
+
+  const parsed = Number.parseInt(value, 10)
+  return Number.isNaN(parsed) ? null : parsed
 }

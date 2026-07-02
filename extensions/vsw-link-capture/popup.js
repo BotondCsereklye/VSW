@@ -11,7 +11,10 @@ const DEFAULT_SETTINGS = {
   blockOnScanFailure: true,
   minimumAllowedScore: 50,
   blockBelowMinimumScore: true,
+  trustedHosts: [],
+  scoreGateIgnoredHosts: [],
 };
+let currentSettings = { ...DEFAULT_SETTINGS };
 
 init().catch((error) => {
   setStatus(`Failed to initialize popup: ${normalizeError(error)}`, "error");
@@ -92,6 +95,7 @@ async function init() {
   }
 
   const settings = normalizeSettings(result.settings);
+  currentSettings = settings;
   liveCaptureToggle.checked = settings.liveCaptureEnabled;
   blockOnFailureToggle.checked = settings.blockOnScanFailure;
   minimumAllowedScoreInput.value = String(settings.minimumAllowedScore);
@@ -105,6 +109,8 @@ async function persistSettings() {
     blockOnScanFailure: blockOnFailureToggle.checked,
     minimumAllowedScore: normalizeMinimumScore(minimumAllowedScoreInput.value),
     blockBelowMinimumScore: blockBelowMinimumScoreToggle.checked,
+    trustedHosts: currentSettings.trustedHosts,
+    scoreGateIgnoredHosts: currentSettings.scoreGateIgnoredHosts,
   };
 
   const result = await chrome.runtime.sendMessage({
@@ -117,6 +123,7 @@ async function persistSettings() {
     return;
   }
 
+  currentSettings = normalizeSettings(result.settings);
   setStatus("Settings updated.", "ok");
 }
 
@@ -156,6 +163,8 @@ function normalizeSettings(candidate) {
       candidate?.blockBelowMinimumScore === undefined
         ? DEFAULT_SETTINGS.blockBelowMinimumScore
         : Boolean(candidate.blockBelowMinimumScore),
+    trustedHosts: normalizeHostList(candidate?.trustedHosts),
+    scoreGateIgnoredHosts: normalizeHostList(candidate?.scoreGateIgnoredHosts),
   };
 }
 
@@ -165,4 +174,18 @@ function normalizeMinimumScore(value) {
     return DEFAULT_SETTINGS.minimumAllowedScore;
   }
   return Math.min(100, Math.max(0, parsed));
+}
+
+function normalizeHostList(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .map((item) => String(item || "").trim().toLowerCase())
+        .filter((item) => item.length > 0),
+    ),
+  ).slice(0, 50);
 }

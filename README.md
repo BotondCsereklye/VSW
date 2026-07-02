@@ -6,6 +6,7 @@ Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder
 
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
 - Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
+- Mehrsprachige Benutzeranleitungen: [EN](docs/i18n/README.en.md), [DE](docs/i18n/README.de.md), [HU](docs/i18n/README.hu.md), [SR](docs/i18n/README.sr.md), [RU](docs/i18n/README.ru.md)
 - Windows-Launcher für Ein-Klick-Start: [launch_vsw_launcher.ps1](launch_vsw_launcher.ps1)
 - Windows-Shortcut-Installer: [install_vsw_launcher.ps1](install_vsw_launcher.ps1)
 - Browser-Extension-MVP: `extensions/vsw-link-capture`
@@ -30,6 +31,7 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Tests: Pytest, Vitest, Testing Library
 - Lokale Bedienung: Windows-Launcher auf Python-Basis
 - Browser-Integration: Manifest-V3-Extension für Link-Capture
+- Frontend-Sprachen: Englisch, Deutsch, Ungarisch, Serbisch, Russisch
 
 ## Aktueller Funktionsumfang
 
@@ -53,6 +55,8 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Browser-Extension-MVP für Link-Capture zum lokalen Backend
 - Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
 - Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore für Besuchsfreigabe
+- Host-Regeln für regelmässig geprüfte Websites: Minimum-Score ignorieren oder Host vertrauen
+- Sprachumschalter mit Speicherung in `localStorage`
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausführung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -161,7 +165,9 @@ Funktionen:
 - Popup-Feld: `Scan and visit target`
 - Konfigurierbarer Mindestscore vor Weiterleitung
 - Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
+- Passive Navigationserfassung über `webNavigation` für Adresszeile, Bookmarks und angeheftete Browser-Links
 - Popup-Toggles für `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
+- Host-Regeln in der lokalen VSW-App für häufig genutzte Websites
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite für den neuen Scan wird bei Popup- oder Kontext-Trigger geöffnet
 - Runtime-Fallback: Falls die Extension in einem bereits offenen Tab deaktiviert, neu geladen oder entfernt wurde, bleibt die Seite nicht dauerhaft hängen. Nach kurzer Fehlertoleranz wird die Navigation normal fortgesetzt.
@@ -172,8 +178,10 @@ Wichtige Opera-/Chrome-Hinweise:
 - In `Details` den Website-Zugriff auf `Auf allen Websites` setzen
 - Nach Änderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
+- Adresszeile, Bookmarks und angeheftete Browser-Links können durch Manifest V3 nicht zuverlässig vor dem Besuch blockiert werden. VSW erfasst sie nach dem Laden passiv und erstellt daraus einen Report.
 - Für echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
 - Der Mindestscore kann direkt in der VSW-App unter `Visit gate settings` angepasst werden, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
+- Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.
 
 Score-Gruppen im Dashboard:
 
@@ -221,6 +229,10 @@ Optional mit Startmenü-Eintrag:
 ```
 
 Die Verknüpfung startet die Launcher-App. Der Launcher richtet bei Bedarf Backend und Frontend ein, zeigt Logs an und stoppt nur die Dienste, die er selbst gestartet hat.
+
+### Einfache Bedienung für Nicht-Entwickler
+
+Aktuell ist der Windows-Launcher der empfohlene lokale Weg, weil er die vorhandene Backend-/Frontend-Struktur nutzt und keine zweite Scanner-Engine einführt. Für eine spätere Abgabe an Nutzer ohne Python ist Docker Desktop der realistische nächste Schritt. Eine native Desktop-App mit Tauri oder Electron bleibt sinnvoll, ist aber grösser und sollte erst umgesetzt werden, wenn der lokale Scanner-Workflow stabil bleibt.
 
 ### PowerShell-Fallback
 

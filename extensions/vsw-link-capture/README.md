@@ -9,7 +9,10 @@ This extension is a defensive helper for local development. It does not scan on 
 - Provides popup button `Scan current page`
 - Provides popup field `Scan and visit target` for manual domains such as `youtube.com`
 - Exposes the same visit-gate settings inside the local VSW app on `localhost:5173`
+- Supports host rules inside the local VSW app for regularly scanned websites
 - Adds live click capture for normal in-page link clicks (http/https)
+- Records completed browser navigations with `webNavigation` so address-bar,
+  bookmark-bar, and pinned-link visits still create passive VSW reports
 - Runs pre-scan before navigation and then continues navigation when the score passes
 - Falls back to normal navigation when an already injected content script loses its extension runtime
 - Sends `POST http://127.0.0.1:8000/api/v1/scans` with body `{ "target": "<host>" }`
@@ -58,9 +61,39 @@ Open the extension popup to configure:
 The same settings are also available inside the VSW app in the `Visit gate settings`
 card. This is the recommended place to change the minimum score during normal use.
 
+The VSW app also shows `Website rules` for hosts that already have scans:
+
+- `Ignore minimum score`: VSW still creates a scan and report, but the extension does not block only because the score is below the global minimum.
+- `Trust site`: VSW allows the host without blocking. Use this only for systems you intentionally trust.
+
 If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 If score blocking is enabled, navigation stops when the completed VSW report is
 below the configured minimum score. The default minimum score is `50`.
+
+## Browser navigation limits
+
+Manifest V3 content scripts can intercept normal links that are clicked inside a
+website. That is the only mode where VSW can reliably scan before the browser
+continues to the destination.
+
+Browser UI actions are different:
+
+- address-bar entries
+- bookmark-bar clicks
+- pinned browser shortcuts
+- tab-strip actions
+
+Those actions are controlled by the browser UI, not by the page content script.
+The extension therefore cannot promise a reliable scan-before-visit block for
+them. VSW uses `webNavigation` to record these visits after the page load and
+create a passive defensive report instead.
+
+Host rules behave as follows:
+
+- `Trust site`: skip VSW scan and blocking for the configured host and its
+  subdomains.
+- `Ignore minimum score`: still create VSW reports, but do not block only
+  because the score is below the global threshold.
 
 ## Runtime fallback
 
@@ -92,11 +125,14 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 5. Popup button creates a scan for current tab host.
 6. Popup target field scans `youtube.com` first and only opens it when the score passes the minimum.
 7. Live click capture creates pre-scan before following clicked links.
-8. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
-9. When backend is offline, popup shows a clear error message.
-10. When strict blocking is enabled and backend is offline, navigation is blocked.
-11. Non-http(s) URLs are rejected with a clear message.
-12. If the extension is reloaded while a tab is open, the next intercepted click continues after runtime fallback instead of staying stuck.
+8. VSW app shows scanned hosts under `Website rules`.
+9. `Ignore minimum score` allows a low-score host while still creating reports.
+10. `Trust site` allows the configured host without blocking.
+11. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
+12. When backend is offline, popup shows a clear error message.
+13. When strict blocking is enabled and backend is offline, navigation is blocked.
+14. Non-http(s) URLs are rejected with a clear message.
+15. If the extension is reloaded while a tab is open, the next intercepted click continues after runtime fallback instead of staying stuck.
 
 ## Troubleshooting
 
@@ -110,6 +146,9 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
   - Confirm website access is set to `On all sites`.
   - Reload the page with `Ctrl+F5`.
   - Test on a normal in-page link, not the browser address bar or tab strip.
+- Address-bar or bookmark visits do not block before loading:
+  - This is a browser limitation.
+  - VSW should still create a passive report shortly after the visit.
 - A tab behaved strangely after disabling or reloading the extension:
   - Browser engines may keep old content scripts in open tabs until reload.
   - The fallback now lets navigation continue after a short timeout.
