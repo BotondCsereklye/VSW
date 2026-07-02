@@ -2,11 +2,12 @@
   "manifest_version": 3,
   "name": "VSW Link Capture",
   "description": "Send clicked links or the current tab target to local VSW for defensive follow-up scans.",
-  "version": "0.3.8",
+  "version": "0.4.0",
   "permissions": [
     "contextMenus",
     "activeTab",
-    "storage"
+    "storage",
+    "webNavigation"
   ],
   "host_permissions": [
     "http://127.0.0.1:8000/*",

@@ -48,12 +48,12 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Export von Reports als JSON und CSV
 - Verlauf pro Target mit einfacher Trendanzeige
 - Erweiterbare Findings-Liste mit Mehr/Weniger-Ansicht
-- Guided link checks f?r same-origin Links mit klickbarer Pr?fstrecke
-- Windows-Launcher-App f?r Setup, Start, Browser-Open und Service-Stop ohne Terminal-Jonglage
-- Browser-Extension-MVP f?r Link-Capture zum lokalen Backend
-- Live-Capture f?r normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
-- Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore f?r Besuchsfreigabe
-- Host-Regeln f?r regelm?ssig gepr?fte Websites: Minimum-Score ignorieren oder Host vertrauen
+- Guided link checks für same-origin Links mit klickbarer Prüfstrecke
+- Windows-Launcher-App für Setup, Start, Browser-Open und Service-Stop ohne Terminal-Jonglage
+- Browser-Extension-MVP für Link-Capture zum lokalen Backend
+- Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
+- Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore für Besuchsfreigabe
+- Host-Regeln für regelmässig geprüfte Websites: Minimum-Score ignorieren oder Host vertrauen
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausführung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -161,9 +161,10 @@ Funktionen:
 - Popup-Button: `Scan current page`
 - Popup-Feld: `Scan and visit target`
 - Konfigurierbarer Mindestscore vor Weiterleitung
-- Live-Capture f?r normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
-- Popup-Toggles f?r `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
-- Host-Regeln in der lokalen VSW-App f?r h?ufig genutzte Websites
+- Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
+- Passive Navigationserfassung über `webNavigation` für Adresszeile, Bookmarks und angeheftete Browser-Links
+- Popup-Toggles für `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
+- Host-Regeln in der lokalen VSW-App für häufig genutzte Websites
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite für den neuen Scan wird bei Popup- oder Kontext-Trigger geöffnet
 - Runtime-Fallback: Falls die Extension in einem bereits offenen Tab deaktiviert, neu geladen oder entfernt wurde, bleibt die Seite nicht dauerhaft hängen. Nach kurzer Fehlertoleranz wird die Navigation normal fortgesetzt.
@@ -174,6 +175,7 @@ Wichtige Opera-/Chrome-Hinweise:
 - In `Details` den Website-Zugriff auf `Auf allen Websites` setzen
 - Nach Änderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
+- Adresszeile, Bookmarks und angeheftete Browser-Links können durch Manifest V3 nicht zuverlässig vor dem Besuch blockiert werden. VSW erfasst sie nach dem Laden passiv und erstellt daraus einen Report.
 - Für echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
 - Der Mindestscore kann direkt in der VSW-App unter `Visit gate settings` angepasst werden, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
 - Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.

@@ -3,6 +3,8 @@ const test = require("node:test");
 
 const {
   evaluateGateDecision,
+  getHostRule,
+  matchesConfiguredHost,
   normalizeHostList,
   normalizeMinimumScore,
   normalizeSettings,
@@ -49,6 +51,31 @@ test("normalizeHostList deduplicates and lowercases host rules", () => {
   assert.deepEqual(normalizeHostList([" GitHub.com ", "github.com", "", null]), [
     "github.com",
   ]);
+});
+
+test("matchesConfiguredHost supports exact hosts and subdomains", () => {
+  assert.equal(matchesConfiguredHost("github.com", ["github.com"]), true);
+  assert.equal(matchesConfiguredHost("www.github.com", ["github.com"]), true);
+  assert.equal(matchesConfiguredHost("badgithub.com", ["github.com"]), false);
+});
+
+test("getHostRule prioritizes trusted hosts before score-ignore hosts", () => {
+  assert.equal(
+    getHostRule("www.youtube.com", {
+      ...defaults,
+      trustedHosts: ["youtube.com"],
+      scoreGateIgnoredHosts: ["youtube.com"],
+    }),
+    "trusted",
+  );
+
+  assert.equal(
+    getHostRule("github.com", {
+      ...defaults,
+      scoreGateIgnoredHosts: ["github.com"],
+    }),
+    "ignore-minimum-score",
+  );
 });
 
 test("evaluateGateDecision blocks navigation below the configured threshold", () => {

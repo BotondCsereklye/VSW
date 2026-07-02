@@ -7,6 +7,7 @@ const VSW_APP_BASE_URL = "http://127.0.0.1:5173";
 const SETTINGS_KEY = "vswLinkCaptureSettings";
 const SCAN_POLL_INTERVAL_MS = 1200;
 const SCAN_POLL_TIMEOUT_MS = 20000;
+const RECENT_SCAN_TTL_MS = 8000;
 const DEFAULT_SETTINGS = {
   liveCaptureEnabled: true,
   blockOnScanFailure: true,
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS = {
   trustedHosts: [],
   scoreGateIgnoredHosts: [],
 };
+const recentlyScannedHosts = new Map();
 
 chrome.runtime.onInstalled.addListener(() => {
   void ensureSettings();
@@ -43,6 +45,16 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     await createScanFromUrl(candidateUrl);
   }
 });
+
+if (chrome.webNavigation?.onCompleted) {
+  chrome.webNavigation.onCompleted.addListener((details) => {
+    if (details.frameId !== 0 || !details.url) {
+      return;
+    }
+
+    void createPassiveNavigationScan(details.url);
+  });
+}
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   (async () => {
@@ -142,6 +154,8 @@ async function createScanFromTarget(target, options = {}) {
       await openOrFocusVswApp(VSW_APP_BASE_URL);
     }
 
+    rememberScannedHost(target);
+
     return {
       ok: true,
       message: `Scan created for ${target}.`,
@@ -158,6 +172,28 @@ async function createScanFromTarget(target, options = {}) {
   }
 }
 
+async function createPassiveNavigationScan(rawUrl) {
+  const parsed = extractTarget(rawUrl);
+  if (!parsed.ok || isLocalVswUrl(rawUrl)) {
+    return;
+  }
+
+  const settings = await getSettings();
+  if (!settings.liveCaptureEnabled) {
+    return;
+  }
+
+  const hostRule = VswScoreGate.getHostRule(parsed.target, settings);
+  if (hostRule === "trusted" || wasRecentlyScanned(parsed.target)) {
+    return;
+  }
+
+  await createScanFromTarget(parsed.target, {
+    openScanView: false,
+    waitForCompletion: false,
+  });
+}
+
 async function gateNavigation(rawUrl) {
   const settings = await getSettings();
   if (!settings.liveCaptureEnabled) {
@@ -165,7 +201,7 @@ async function gateNavigation(rawUrl) {
   }
 
   const parsedTarget = extractTarget(rawUrl);
-  if (parsedTarget.ok && isConfiguredHost(parsedTarget.target, settings.trustedHosts)) {
+  if (parsedTarget.ok && VswScoreGate.getHostRule(parsedTarget.target, settings) === "trusted") {
     return {
       ok: true,
       allowNavigation: true,
@@ -179,7 +215,9 @@ async function gateNavigation(rawUrl) {
     waitForCompletion: true,
   });
   if (result.ok) {
-    const ignoresMinimumScore = isConfiguredHost(result.target, settings.scoreGateIgnoredHosts);
+    rememberScannedHost(result.target);
+    const ignoresMinimumScore =
+      VswScoreGate.getHostRule(result.target, settings) === "ignore-minimum-score";
     const gateSettings = ignoresMinimumScore
       ? { ...settings, blockBelowMinimumScore: false }
       : settings;
@@ -230,7 +268,7 @@ async function scanTargetAndVisit(rawTarget) {
   }
 
   const settings = await getSettings();
-  if (isConfiguredHost(normalized.target, settings.trustedHosts)) {
+  if (VswScoreGate.getHostRule(normalized.target, settings) === "trusted") {
     await openVisitUrl(normalized.visitUrl);
     return {
       ok: true,
@@ -249,7 +287,9 @@ async function scanTargetAndVisit(rawTarget) {
     return result;
   }
 
-  const ignoresMinimumScore = isConfiguredHost(result.target, settings.scoreGateIgnoredHosts);
+  rememberScannedHost(result.target);
+  const ignoresMinimumScore =
+    VswScoreGate.getHostRule(result.target, settings) === "ignore-minimum-score";
   const gateDecision = VswScoreGate.evaluateGateDecision(
     result.detail,
     ignoresMinimumScore ? { ...settings, blockBelowMinimumScore: false } : settings,
@@ -427,9 +467,38 @@ function normalizeStoredSettings(candidate) {
   return VswScoreGate.normalizeSettings(candidate, DEFAULT_SETTINGS);
 }
 
-function isConfiguredHost(host, hostList) {
+function rememberScannedHost(host) {
   const normalizedHost = String(host || "").trim().toLowerCase();
-  return Array.isArray(hostList) && hostList.includes(normalizedHost);
+  if (normalizedHost) {
+    recentlyScannedHosts.set(normalizedHost, Date.now());
+  }
+}
+
+function wasRecentlyScanned(host) {
+  const normalizedHost = String(host || "").trim().toLowerCase();
+  const scannedAt = recentlyScannedHosts.get(normalizedHost);
+  if (!scannedAt) {
+    return false;
+  }
+
+  if (Date.now() - scannedAt > RECENT_SCAN_TTL_MS) {
+    recentlyScannedHosts.delete(normalizedHost);
+    return false;
+  }
+
+  return true;
+}
+
+function isLocalVswUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    return (
+      (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
+      (url.port === "5173" || url.port === "8000")
+    );
+  } catch (_error) {
+    return false;
+  }
 }
 
 function sleep(durationMs) {
