@@ -3,6 +3,8 @@ export type ExtensionSettings = {
   blockOnScanFailure: boolean
   minimumAllowedScore: number
   blockBelowMinimumScore: boolean
+  trustedHosts: string[]
+  scoreGateIgnoredHosts: string[]
 }
 
 const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
@@ -10,6 +12,8 @@ const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   blockOnScanFailure: true,
   minimumAllowedScore: 50,
   blockBelowMinimumScore: true,
+  trustedHosts: [],
+  scoreGateIgnoredHosts: [],
 }
 
 const REQUEST_TIMEOUT_MS = 1800
@@ -31,6 +35,8 @@ export function normalizeExtensionSettings(
       candidate?.blockBelowMinimumScore === undefined
         ? DEFAULT_EXTENSION_SETTINGS.blockBelowMinimumScore
         : Boolean(candidate.blockBelowMinimumScore),
+    trustedHosts: normalizeHostList(candidate?.trustedHosts),
+    scoreGateIgnoredHosts: normalizeHostList(candidate?.scoreGateIgnoredHosts),
   }
 }
 
@@ -40,6 +46,20 @@ export function normalizeMinimumScore(value: unknown, fallback = 50) {
     return fallback
   }
   return Math.min(100, Math.max(0, parsed))
+}
+
+export function normalizeHostList(value: unknown) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .map((item) => String(item ?? '').trim().toLowerCase())
+        .filter((item) => item.length > 0),
+    ),
+  ).slice(0, 50)
 }
 
 export async function getExtensionSettings() {

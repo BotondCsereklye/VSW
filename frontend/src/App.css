@@ -159,6 +159,119 @@
   color: var(--warning);
 }
 
+.extension-settings__hosts {
+  grid-column: 1 / -1;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 36, 59, 0.1);
+  background: rgba(255, 255, 255, 0.58);
+  padding: 12px;
+}
+
+.extension-settings__hosts summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 800;
+}
+
+.extension-settings__hosts summary::-webkit-details-marker {
+  display: none;
+}
+
+.extension-settings__hosts summary::before {
+  content: '+';
+  display: inline-flex;
+  min-width: 28px;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(16, 36, 59, 0.08);
+}
+
+.extension-settings__hosts[open] summary::before {
+  content: '-';
+}
+
+.extension-settings__hosts summary span {
+  margin-right: auto;
+}
+
+.extension-settings__hosts summary strong {
+  border-radius: 999px;
+  background: rgba(16, 36, 59, 0.08);
+  color: var(--ink-soft);
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+.extension-settings__hosts > p {
+  margin: 12px 0;
+  color: var(--ink-soft);
+}
+
+.extension-settings__empty {
+  border-radius: 14px;
+  background: rgba(16, 36, 59, 0.06);
+  padding: 10px 12px;
+}
+
+.extension-settings__host-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.extension-settings__host-list li {
+  display: grid;
+  gap: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(16, 36, 59, 0.08);
+  background: rgba(255, 255, 255, 0.76);
+  padding: 12px;
+}
+
+.extension-settings__host-list li > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.extension-settings__host-list span {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.extension-settings__host-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.extension-settings__host-actions button {
+  border: 1px solid rgba(16, 36, 59, 0.14);
+  border-radius: 999px;
+  background: white;
+  color: var(--ink);
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.extension-settings__host-actions button[aria-pressed='true'] {
+  border-color: rgba(34, 117, 106, 0.28);
+  background: rgba(34, 117, 106, 0.12);
+  color: var(--success);
+}
+
 .app-shell__panel {
   padding: 24px;
 }
@@ -773,6 +886,11 @@
 
   .extension-settings__status {
     grid-column: 1 / -1;
+  }
+
+  .extension-settings__host-list li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .safety-messages__header {

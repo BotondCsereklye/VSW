@@ -7,10 +7,16 @@ import {
   setExtensionSettings,
   type ExtensionSettings,
 } from '../extensionSettings'
+import { buildHostSummaries, toggleHost } from '../hostRules'
+import type { ScanSummary } from '../types/scan'
 
 const EXTENSION_RETRY_INTERVAL_MS = 2000
 
-export function ExtensionSettingsPanel() {
+type ExtensionSettingsPanelProps = {
+  scans: ScanSummary[]
+}
+
+export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
   const [settings, setSettings] = useState<ExtensionSettings>(() =>
     normalizeExtensionSettings(null),
   )
@@ -69,6 +75,18 @@ export function ExtensionSettingsPanel() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const hostSummaries = buildHostSummaries(scans).slice(0, 8)
+
+  function updateTrustedHost(host: string) {
+    const trustedHosts = toggleHost(settings.trustedHosts, host)
+    void updateSettings({ ...settings, trustedHosts })
+  }
+
+  function updateScoreIgnoredHost(host: string) {
+    const scoreGateIgnoredHosts = toggleHost(settings.scoreGateIgnoredHosts, host)
+    void updateSettings({ ...settings, scoreGateIgnoredHosts })
   }
 
   return (
@@ -133,6 +151,50 @@ export function ExtensionSettingsPanel() {
           <span>Block visits below the minimum score</span>
         </label>
       </div>
+
+      <details className="extension-settings__hosts">
+        <summary>
+          <span>Website rules</span>
+          <strong>{hostSummaries.length} hosts</strong>
+        </summary>
+        <p>
+          Manage rules for sites you scan regularly. Ignoring the minimum score still
+          creates reports; trusting a site skips blocking for that host.
+        </p>
+        {hostSummaries.length === 0 ? (
+          <p className="extension-settings__empty">No scanned hosts yet.</p>
+        ) : (
+          <ul className="extension-settings__host-list">
+            {hostSummaries.map((summary) => (
+              <li key={summary.host}>
+                <div>
+                  <strong>{summary.host}</strong>
+                  <span>
+                    {summary.scanCount} scans
+                    {summary.latestScore !== null ? `, latest score ${summary.latestScore}/100` : ''}
+                  </span>
+                </div>
+                <div className="extension-settings__host-actions">
+                  <button
+                    type="button"
+                    aria-pressed={settings.scoreGateIgnoredHosts.includes(summary.host)}
+                    onClick={() => updateScoreIgnoredHost(summary.host)}
+                  >
+                    Ignore minimum score
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={settings.trustedHosts.includes(summary.host)}
+                    onClick={() => updateTrustedHost(summary.host)}
+                  >
+                    Trust site
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </details>
 
       <p className="extension-settings__status" data-state={isAvailable ? 'ok' : 'warning'}>
         {isSaving ? 'Saving...' : status}

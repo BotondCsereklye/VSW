@@ -42,9 +42,9 @@ class LauncherApp(tk.Tk):
         self.busy = False
 
         self.title("VSW Launcher")
-        self.geometry("980x720")
+        self.geometry("1040x740")
         self.minsize(840, 620)
-        self.configure(bg="#eef4fb")
+        self.configure(bg="#e8f0f2")
         self.protocol("WM_DELETE_WINDOW", self.handle_close)
 
         self.python_status = tk.StringVar(value="Not checked")
@@ -60,10 +60,11 @@ class LauncherApp(tk.Tk):
         style.theme_use("clam")
         style.configure("Card.TFrame", background="#fbfdff")
         style.configure("Hero.TFrame", background="#fbfdff")
-        style.configure("Title.TLabel", background="#fbfdff", foreground="#132844", font=("Segoe UI", 24, "bold"))
-        style.configure("Subtitle.TLabel", background="#fbfdff", foreground="#49607c", font=("Segoe UI", 11))
+        style.configure("Title.TLabel", background="#fbfdff", foreground="#10243b", font=("Segoe UI", 25, "bold"))
+        style.configure("Subtitle.TLabel", background="#fbfdff", foreground="#52677f", font=("Segoe UI", 11))
         style.configure("StatusLabel.TLabel", background="#fbfdff", foreground="#25415f", font=("Segoe UI", 10, "bold"))
-        style.configure("Primary.TButton", font=("Segoe UI", 10, "bold"))
+        style.configure("Primary.TButton", font=("Segoe UI", 10, "bold"), padding=(12, 8))
+        style.configure("Secondary.TButton", font=("Segoe UI", 10), padding=(12, 8))
 
         outer = ttk.Frame(self, padding=18, style="Card.TFrame")
         outer.pack(fill="both", expand=True, padx=18, pady=18)
@@ -71,11 +72,11 @@ class LauncherApp(tk.Tk):
         hero = ttk.Frame(outer, padding=24, style="Hero.TFrame")
         hero.pack(fill="x")
 
-        ttk.Label(hero, text="VSW launcher", style="Subtitle.TLabel").pack(anchor="w")
-        ttk.Label(hero, text="Start backend and frontend without juggling terminals.", style="Title.TLabel").pack(anchor="w", pady=(6, 10))
+        ttk.Label(hero, text="VSW local launcher", style="Subtitle.TLabel").pack(anchor="w")
+        ttk.Label(hero, text="Start VSW without terminal setup.", style="Title.TLabel").pack(anchor="w", pady=(6, 10))
         ttk.Label(
             hero,
-            text="Recommended path: a local launcher app for the full defensive scanner now, browser extension integration later as link capture only.",
+            text="Starts backend and frontend, keeps logs visible, and opens the browser app for manual testing.",
             style="Subtitle.TLabel",
             wraplength=860,
             justify="left",
@@ -88,10 +89,10 @@ class LauncherApp(tk.Tk):
         button_row.pack(fill="x")
         ttk.Button(button_row, text="Setup or update", command=lambda: self.run_in_background(self.prepare_environment), style="Primary.TButton").pack(side="left", padx=(0, 10))
         ttk.Button(button_row, text="Start VSW", command=lambda: self.run_in_background(self.start_services), style="Primary.TButton").pack(side="left", padx=(0, 10))
-        ttk.Button(button_row, text="Open app", command=lambda: webbrowser.open(FRONTEND_URL)).pack(side="left", padx=(0, 10))
-        ttk.Button(button_row, text="Open API docs", command=lambda: webbrowser.open(f"{BACKEND_URL}/docs")).pack(side="left", padx=(0, 10))
-        ttk.Button(button_row, text="Install shortcut", command=self.install_shortcut).pack(side="left", padx=(0, 10))
-        ttk.Button(button_row, text="Stop services", command=self.stop_services).pack(side="left")
+        ttk.Button(button_row, text="Open app", command=lambda: webbrowser.open(FRONTEND_URL), style="Secondary.TButton").pack(side="left", padx=(0, 10))
+        ttk.Button(button_row, text="Open API docs", command=lambda: webbrowser.open(f"{BACKEND_URL}/docs"), style="Secondary.TButton").pack(side="left", padx=(0, 10))
+        ttk.Button(button_row, text="Install shortcut", command=self.install_shortcut, style="Secondary.TButton").pack(side="left", padx=(0, 10))
+        ttk.Button(button_row, text="Stop services", command=self.stop_services, style="Secondary.TButton").pack(side="left")
 
         status_grid = ttk.Frame(outer, padding=(0, 16, 0, 0), style="Card.TFrame")
         status_grid.pack(fill="x")

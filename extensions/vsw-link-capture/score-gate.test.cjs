@@ -3,6 +3,7 @@ const test = require("node:test");
 
 const {
   evaluateGateDecision,
+  normalizeHostList,
   normalizeMinimumScore,
   normalizeSettings,
 } = require("./score-gate.js");
@@ -12,6 +13,8 @@ const defaults = {
   blockOnScanFailure: true,
   minimumAllowedScore: 50,
   blockBelowMinimumScore: true,
+  trustedHosts: [],
+  scoreGateIgnoredHosts: [],
 };
 
 test("normalizeMinimumScore clamps invalid values into the 0 to 100 range", () => {
@@ -37,7 +40,15 @@ test("normalizeSettings persists a configured minimum score", () => {
     blockOnScanFailure: false,
     minimumAllowedScore: 67,
     blockBelowMinimumScore: true,
+    trustedHosts: [],
+    scoreGateIgnoredHosts: [],
   });
+});
+
+test("normalizeHostList deduplicates and lowercases host rules", () => {
+  assert.deepEqual(normalizeHostList([" GitHub.com ", "github.com", "", null]), [
+    "github.com",
+  ]);
 });
 
 test("evaluateGateDecision blocks navigation below the configured threshold", () => {

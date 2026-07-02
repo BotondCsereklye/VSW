@@ -27,7 +27,7 @@ test('SafetyMessagesPanel renders blocked visit details and retention control', 
   expect(screen.getByText('Website not safe: schulnetz.example')).toBeInTheDocument()
   expect(screen.getByText('Score 83/100 below minimum 85/100.')).toBeInTheDocument()
 
-  fireEvent.change(screen.getByLabelText(/Auto-clear after/i), {
+  fireEvent.change(screen.getByLabelText(/Show latest for/i), {
     target: { value: '10' },
   })
 

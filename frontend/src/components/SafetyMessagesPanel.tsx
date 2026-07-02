@@ -15,11 +15,15 @@ export function SafetyMessagesPanel({
     <section className="safety-messages" aria-label="Latest safety messages">
       <header className="safety-messages__header">
         <div>
-          <p className="safety-messages__eyebrow">Latest safety messages</p>
-          <h2>Blocked visit reports</h2>
+          <p className="safety-messages__eyebrow">Latest visit gate messages</p>
+          <h2>Recent blocked visits</h2>
+          <p>
+            Short-lived alerts stay here first. The related scan remains available in
+            the score categories below.
+          </p>
         </div>
         <label>
-          <span>Auto-clear after</span>
+          <span>Show latest for</span>
           <input
             type="number"
             min="1"
@@ -32,7 +36,7 @@ export function SafetyMessagesPanel({
       </header>
 
       {messages.length === 0 ? (
-        <p className="safety-messages__empty">No blocked visits in the current retention window.</p>
+        <p className="safety-messages__empty">No recent blocked visits in this window.</p>
       ) : (
         <ul className="safety-messages__list">
           {messages.map((message) => (

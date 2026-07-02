@@ -9,6 +9,7 @@ This extension is a defensive helper for local development. It does not scan on 
 - Provides popup button `Scan current page`
 - Provides popup field `Scan and visit target` for manual domains such as `youtube.com`
 - Exposes the same visit-gate settings inside the local VSW app on `localhost:5173`
+- Supports host rules inside the local VSW app for regularly scanned websites
 - Adds live click capture for normal in-page link clicks (http/https)
 - Runs pre-scan before navigation and then continues navigation when the score passes
 - Falls back to normal navigation when an already injected content script loses its extension runtime
@@ -58,6 +59,11 @@ Open the extension popup to configure:
 The same settings are also available inside the VSW app in the `Visit gate settings`
 card. This is the recommended place to change the minimum score during normal use.
 
+The VSW app also shows `Website rules` for hosts that already have scans:
+
+- `Ignore minimum score`: VSW still creates a scan and report, but the extension does not block only because the score is below the global minimum.
+- `Trust site`: VSW allows the host without blocking. Use this only for systems you intentionally trust.
+
 If strict blocking is enabled, navigation stops when pre-scan cannot be created.
 If score blocking is enabled, navigation stops when the completed VSW report is
 below the configured minimum score. The default minimum score is `50`.
@@ -92,11 +98,14 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 5. Popup button creates a scan for current tab host.
 6. Popup target field scans `youtube.com` first and only opens it when the score passes the minimum.
 7. Live click capture creates pre-scan before following clicked links.
-8. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
-9. When backend is offline, popup shows a clear error message.
-10. When strict blocking is enabled and backend is offline, navigation is blocked.
-11. Non-http(s) URLs are rejected with a clear message.
-12. If the extension is reloaded while a tab is open, the next intercepted click continues after runtime fallback instead of staying stuck.
+8. VSW app shows scanned hosts under `Website rules`.
+9. `Ignore minimum score` allows a low-score host while still creating reports.
+10. `Trust site` allows the configured host without blocking.
+11. Live capture is not injected into local VSW pages on `localhost` or `127.0.0.1`.
+12. When backend is offline, popup shows a clear error message.
+13. When strict blocking is enabled and backend is offline, navigation is blocked.
+14. Non-http(s) URLs are rejected with a clear message.
+15. If the extension is reloaded while a tab is open, the next intercepted click continues after runtime fallback instead of staying stuck.
 
 ## Troubleshooting
 

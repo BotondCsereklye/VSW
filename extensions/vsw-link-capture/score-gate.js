@@ -1,6 +1,7 @@
 (function registerScoreGate(root) {
   const api = {
     evaluateGateDecision,
+    normalizeHostList,
     normalizeMinimumScore,
     normalizeSettings,
   };
@@ -74,6 +75,8 @@ function normalizeSettings(candidate, defaultSettings) {
       candidate?.blockBelowMinimumScore === undefined
         ? defaultSettings.blockBelowMinimumScore
         : Boolean(candidate.blockBelowMinimumScore),
+    trustedHosts: normalizeHostList(candidate?.trustedHosts),
+    scoreGateIgnoredHosts: normalizeHostList(candidate?.scoreGateIgnoredHosts),
   };
 }
 
@@ -83,4 +86,18 @@ function normalizeMinimumScore(value, defaultScore = 50) {
     return defaultScore;
   }
   return Math.min(100, Math.max(0, candidate));
+}
+
+function normalizeHostList(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .map((item) => String(item || "").trim().toLowerCase())
+        .filter((item) => item.length > 0),
+    ),
+  ).slice(0, 50);
 }

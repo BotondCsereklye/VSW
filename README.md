@@ -52,6 +52,7 @@ Nur eigene Systeme oder Systeme mit ausdruecklicher Erlaubnis pruefen.
 - Browser-Extension-MVP fuer Link-Capture zum lokalen Backend
 - Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
 - Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore fuer Besuchsfreigabe
+- Host-Regeln für regelmässig geprüfte Websites: Minimum-Score ignorieren oder Host vertrauen
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausfuehrung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -157,6 +158,7 @@ Funktionen:
 - Konfigurierbarer Mindestscore vor Weiterleitung
 - Live-Capture fuer normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
 - Popup-Toggles fuer `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
+- Host-Regeln in der lokalen VSW-App für häufig genutzte Websites
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite fuer den neuen Scan wird bei Popup- oder Kontext-Trigger geoeffnet
 - Runtime-Fallback: Falls die Extension in einem bereits offenen Tab deaktiviert, neu geladen oder entfernt wurde, bleibt die Seite nicht dauerhaft haengen. Nach kurzer Fehlertoleranz wird die Navigation normal fortgesetzt.
@@ -169,6 +171,7 @@ Wichtige Opera-/Chrome-Hinweise:
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
 - Fuer echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
 - Der Mindestscore kann direkt in der VSW-App unter `Visit gate settings` angepasst werden, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
+- Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.
 
 Score-Gruppen im Dashboard:
 

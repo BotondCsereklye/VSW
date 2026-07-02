@@ -322,7 +322,7 @@ export function AppShell() {
 
       {errorMessage ? <p className="app-shell__error">{errorMessage}</p> : null}
 
-      <ExtensionSettingsPanel />
+      <ExtensionSettingsPanel scans={scans} />
 
       <section className="app-shell__content">
         <div className="app-shell__panel">
