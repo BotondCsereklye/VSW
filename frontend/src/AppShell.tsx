@@ -10,10 +10,12 @@ import {
   listScans,
 } from './api/client'
 import { ExtensionSettingsPanel } from './components/ExtensionSettingsPanel'
+import { LanguageSelector } from './components/LanguageSelector'
 import { ReportDetail } from './components/ReportDetail'
 import { SafetyMessagesPanel } from './components/SafetyMessagesPanel'
 import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
+import { useTranslation } from './i18n/useTranslation'
 import {
   addSafetyMessage,
   getSafetyMessageRetentionMinutes,
@@ -34,6 +36,7 @@ function isScanInProgress(status: ScanSummary['status'] | null | undefined) {
 export function AppShell() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const matchedRoute = matchPath('/scans/:scanId', location.pathname)
   const scanId = matchedRoute?.params.scanId ?? null
   const [scans, setScans] = useState<ScanSummary[]>([])
@@ -107,7 +110,7 @@ export function AppShell() {
         })
       } catch {
         if (isActive) {
-          setErrorMessage('Unable to load scans.')
+          setErrorMessage(t('error.loadScans'))
         }
       } finally {
         if (isActive) {
@@ -121,7 +124,7 @@ export function AppShell() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!hasActiveScans) {
@@ -144,7 +147,7 @@ export function AppShell() {
           })
         } catch {
           if (isActive) {
-            setErrorMessage('Unable to refresh scans.')
+            setErrorMessage(t('error.refreshScans'))
           }
         }
       })()
@@ -154,7 +157,7 @@ export function AppShell() {
       isActive = false
       window.clearInterval(intervalId)
     }
-  }, [hasActiveScans])
+  }, [hasActiveScans, t])
 
   useEffect(() => {
     if (!scanId) {
@@ -184,7 +187,7 @@ export function AppShell() {
         })
       } catch {
         if (isActive) {
-          setErrorMessage('Unable to load report details.')
+          setErrorMessage(t('error.loadDetails'))
         }
       }
     }
@@ -194,7 +197,7 @@ export function AppShell() {
     return () => {
       isActive = false
     }
-  }, [scanId])
+  }, [scanId, t])
 
   useEffect(() => {
     if (!scanId || !shouldPollSelectedScan) {
@@ -224,7 +227,7 @@ export function AppShell() {
           })
         } catch {
           if (isActive) {
-            setErrorMessage('Unable to load report details.')
+              setErrorMessage(t('error.loadDetails'))
           }
         }
       })()
@@ -234,7 +237,7 @@ export function AppShell() {
       isActive = false
       window.clearInterval(intervalId)
     }
-  }, [scanId, shouldPollSelectedScan])
+  }, [scanId, shouldPollSelectedScan, t])
 
   async function createScanAndNavigate(target: string): Promise<boolean> {
     setIsSubmitting(true)
@@ -249,7 +252,7 @@ export function AppShell() {
       navigate(`/scans/${createdScan.id}`)
       return true
     } catch {
-      setErrorMessage('Unable to create a scan right now.')
+      setErrorMessage(t('error.createScan'))
       return false
     } finally {
       setIsLoadingScans(false)
@@ -287,14 +290,14 @@ export function AppShell() {
       link.remove()
       window.URL.revokeObjectURL(url)
     } catch {
-      setErrorMessage('Unable to export the selected report.')
+      setErrorMessage(t('error.export'))
     }
   }
 
   async function handleInspectLink(link: string) {
     const hostname = extractHostname(link)
     if (!hostname) {
-      setErrorMessage('Unable to scan this link target.')
+      setErrorMessage(t('error.linkTarget'))
       return
     }
 
@@ -314,8 +317,11 @@ export function AppShell() {
     <main className="app-shell">
       <header className="app-shell__hero">
         <div>
-          <p className="eyebrow">Defensive Vulnerability Scanner</p>
-          <h1>Risk-focused visibility for the systems you are authorized to assess.</h1>
+          <div className="app-shell__topline">
+            <p className="eyebrow">{t('hero.eyebrow')}</p>
+            <LanguageSelector />
+          </div>
+          <h1>{t('hero.title')}</h1>
         </div>
         <TargetInput isSubmitting={isSubmitting} onSubmit={handleCreateScan} />
       </header>
@@ -332,7 +338,7 @@ export function AppShell() {
             onRetentionChange={handleSafetyRetentionChange}
           />
           {isLoadingScans ? (
-            <p>Loading scans...</p>
+            <p>{t('loading.scans')}</p>
           ) : (
             <ScanDashboard
               scans={scans}

@@ -1,4 +1,5 @@
 import type { ScanSummary } from '../types/scan'
+import { useTranslation } from '../i18n/useTranslation'
 import { groupScansByScoreBand } from './ScanDashboard.logic'
 import { ScanStatusBadge } from './ScanStatusBadge'
 import { ScoreBadge } from './ScoreBadge'
@@ -14,11 +15,13 @@ export function ScanDashboard({
   selectedScanId,
   onSelectScan,
 }: ScanDashboardProps) {
+  const { t } = useTranslation()
+
   if (scans.length === 0) {
     return (
       <section className="scan-dashboard scan-dashboard--empty">
-        <h2>No scans yet</h2>
-        <p>Create a safe scan to generate your first report.</p>
+        <h2>{t('dashboard.emptyTitle')}</h2>
+        <p>{t('dashboard.emptyText')}</p>
       </section>
     )
   }
@@ -28,8 +31,8 @@ export function ScanDashboard({
   return (
     <section className="scan-dashboard">
       <header className="scan-dashboard__header">
-        <h2>Recent scans</h2>
-        <span>{scans.length} total</span>
+        <h2>{t('dashboard.title')}</h2>
+        <span>{t('dashboard.total', { count: scans.length })}</span>
       </header>
       <div className="scan-dashboard__list">
         {groups.map((group) => (
@@ -47,17 +50,17 @@ export function ScanDashboard({
                   key={scan.id}
                   type="button"
                   onClick={() => onSelectScan(scan.id)}
-                  aria-label={`Open report for ${scan.target}`}
+                  aria-label={`${t('dashboard.openReport')} for ${scan.target}`}
                   className={`scan-row${selectedScanId === scan.id ? ' scan-row--active' : ''}`}
                 >
                   <div className="scan-row__main">
                     <h4>{scan.target}</h4>
-                    <p>{scan.summary ?? 'Waiting for scan results.'}</p>
+                    <p>{scan.summary ?? t('dashboard.waiting')}</p>
                   </div>
                   <div className="scan-row__meta">
                     <ScanStatusBadge status={scan.status} />
                     <ScoreBadge score={scan.score} />
-                    <span className="scan-row__cta">Open report</span>
+                    <span className="scan-row__cta">{t('dashboard.openReport')}</span>
                   </div>
                 </button>
               ))}

@@ -1,4 +1,5 @@
 import type { SafetyMessage } from '../safetyMessages'
+import { useTranslation } from '../i18n/useTranslation'
 
 type SafetyMessagesPanelProps = {
   messages: SafetyMessage[]
@@ -11,19 +12,18 @@ export function SafetyMessagesPanel({
   retentionMinutes,
   onRetentionChange,
 }: SafetyMessagesPanelProps) {
+  const { t } = useTranslation()
+
   return (
-    <section className="safety-messages" aria-label="Latest safety messages">
+    <section className="safety-messages" aria-label={t('safety.aria')}>
       <header className="safety-messages__header">
         <div>
-          <p className="safety-messages__eyebrow">Latest visit gate messages</p>
-          <h2>Recent blocked visits</h2>
-          <p>
-            Short-lived alerts stay here first. The related scan remains available in
-            the score categories below.
-          </p>
+          <p className="safety-messages__eyebrow">{t('safety.eyebrow')}</p>
+          <h2>{t('safety.title')}</h2>
+          <p>{t('safety.description')}</p>
         </div>
         <label>
-          <span>Show latest for</span>
+          <span>{t('safety.retention')}</span>
           <input
             type="number"
             min="1"
@@ -31,20 +31,23 @@ export function SafetyMessagesPanel({
             value={retentionMinutes}
             onChange={(event) => onRetentionChange(Number.parseInt(event.target.value || '5', 10))}
           />
-          <span>min</span>
+          <span>{t('safety.minutes')}</span>
         </label>
       </header>
 
       {messages.length === 0 ? (
-        <p className="safety-messages__empty">No recent blocked visits in this window.</p>
+        <p className="safety-messages__empty">{t('safety.empty')}</p>
       ) : (
         <ul className="safety-messages__list">
           {messages.map((message) => (
             <li key={message.id}>
-              <strong>Website not safe: {message.target}</strong>
+              <strong>{t('safety.notSafe', { target: message.target })}</strong>
               <span>
                 {message.score !== null && message.minimumAllowedScore !== null
-                  ? `Score ${message.score}/100 below minimum ${message.minimumAllowedScore}/100.`
+                  ? t('safety.scoreBelow', {
+                      score: message.score,
+                      minimum: message.minimumAllowedScore,
+                    })
                   : message.message}
               </span>
             </li>

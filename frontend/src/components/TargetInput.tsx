@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
+import { useTranslation } from '../i18n/useTranslation'
+
 type TargetInputProps = {
   isSubmitting: boolean
   onSubmit: (target: string) => void | Promise<void>
@@ -8,6 +10,7 @@ type TargetInputProps = {
 
 export function TargetInput({ isSubmitting, onSubmit }: TargetInputProps) {
   const [target, setTarget] = useState('')
+  const { t } = useTranslation()
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -21,7 +24,7 @@ export function TargetInput({ isSubmitting, onSubmit }: TargetInputProps) {
   return (
     <form className="target-input" onSubmit={handleSubmit}>
       <label className="target-input__label" htmlFor="scan-target">
-        Target
+        {t('target.label')}
       </label>
       <div className="target-input__controls">
         <input
@@ -30,15 +33,15 @@ export function TargetInput({ isSubmitting, onSubmit }: TargetInputProps) {
           type="text"
           value={target}
           onChange={(event) => setTarget(event.target.value)}
-          placeholder="example.com or 203.0.113.10"
+          placeholder={t('target.placeholder')}
           autoComplete="off"
         />
         <button type="submit" disabled={isSubmitting || target.trim() === ''}>
-          {isSubmitting ? 'Creating scan…' : 'Start safe scan'}
+          {isSubmitting ? t('target.submitting') : t('target.submit')}
         </button>
       </div>
       <p className="target-input__notice">
-        Only scan systems you own or are authorized to assess.
+        {t('target.notice')}
       </p>
     </form>
   )

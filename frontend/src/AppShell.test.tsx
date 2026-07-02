@@ -107,7 +107,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: /open report for example.com/i }))
 
-    expect(await screen.findByRole('button', { name: /tls ansehen/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /view tls/i })).toBeInTheDocument()
   })
 
   test('creates a scan and refreshes the dashboard', async () => {
@@ -225,7 +225,7 @@ describe('AppShell', () => {
       { timeout: 4000 },
     )
 
-    expect(await screen.findByRole('button', { name: /tls ansehen/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /view tls/i })).toBeInTheDocument()
   }, 8000)
 
   test('shows an error message when the scan list cannot be loaded', async () => {
