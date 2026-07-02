@@ -128,7 +128,7 @@ def test_detect_misconfigurations_flags_risky_header_values_and_cookie_flags() -
     assert "Cookie flags are incomplete" in titles
 
 
-def test_detect_misconfigurations_flags_missing_tls13_support() -> None:
+def test_detect_misconfigurations_treats_missing_tls13_as_low_hardening_gap() -> None:
     findings = detect_misconfigurations(
         http_observation=HttpObservation(
             http_reachable=True,
@@ -154,8 +154,83 @@ def test_detect_misconfigurations_flags_missing_tls13_support() -> None:
 
     finding_map = {finding.title: finding for finding in findings}
 
-    assert "TLS 1.3 is not supported" in finding_map
-    assert finding_map["TLS 1.3 is not supported"].severity is FindingSeverity.MEDIUM
-    assert finding_map["TLS 1.3 is not supported"].evidence == {
+    assert "TLS 1.3 support was not confirmed" in finding_map
+    assert finding_map["TLS 1.3 support was not confirmed"].severity is FindingSeverity.LOW
+    assert finding_map["TLS 1.3 support was not confirmed"].evidence == {
         "supported_versions": ["TLSv1.2"]
     }
+
+
+def test_detect_misconfigurations_flags_certificate_that_expires_soon() -> None:
+    expires_at = datetime.now(UTC) + timedelta(days=10)
+
+    findings = detect_misconfigurations(
+        http_observation=HttpObservation(
+            http_reachable=True,
+            https_reachable=True,
+            final_http_url="http://example.com",
+            final_https_url="https://example.com",
+            redirect_target="https://example.com",
+        ),
+        header_analysis=HeaderAnalysis(checks=[], missing_headers=[], all_present=True),
+        response_headers={},
+        tls_analysis=TlsAnalysis(
+            https_reachable=True,
+            certificate_valid=True,
+            certificate_expired=False,
+            issuer="Example CA",
+            expires_at=expires_at,
+            supported_versions=["TLSv1.2", "TLSv1.3"],
+        ),
+        port_results=[],
+    )
+
+    finding_map = {finding.title: finding for finding in findings}
+
+    assert "TLS certificate expires soon" in finding_map
+    assert finding_map["TLS certificate expires soon"].severity is FindingSeverity.LOW
+    assert finding_map["TLS certificate expires soon"].evidence == {
+        "expires_at": expires_at.isoformat(),
+        "days_remaining": 10,
+    }
+
+
+def test_detect_misconfigurations_flags_weak_security_header_values() -> None:
+    findings = detect_misconfigurations(
+        http_observation=HttpObservation(
+            http_reachable=True,
+            https_reachable=True,
+            final_http_url="http://example.com",
+            final_https_url="https://example.com",
+            redirect_target="https://example.com",
+        ),
+        header_analysis=HeaderAnalysis(checks=[], missing_headers=[], all_present=True),
+        response_headers={
+            "strict-transport-security": "max-age=3600",
+            "x-content-type-options": "none",
+            "permissions-policy": "geolocation=*, camera=()",
+        },
+        tls_analysis=TlsAnalysis(
+            https_reachable=True,
+            certificate_valid=True,
+            certificate_expired=False,
+            issuer="Example CA",
+            expires_at=datetime.now(UTC) + timedelta(days=90),
+            supported_versions=["TLSv1.2", "TLSv1.3"],
+        ),
+        port_results=[],
+    )
+
+    finding_map = {finding.title: finding for finding in findings}
+
+    assert "Strict-Transport-Security max-age is weak" in finding_map
+    assert "X-Content-Type-Options value is ineffective" in finding_map
+    assert "Permissions-Policy allows broad feature access" in finding_map
+    assert (
+        finding_map["Strict-Transport-Security max-age is weak"].severity
+        is FindingSeverity.LOW
+    )
+    assert (
+        finding_map["X-Content-Type-Options value is ineffective"].recommendation
+        == "Set X-Content-Type-Options exactly to `nosniff`."
+    )

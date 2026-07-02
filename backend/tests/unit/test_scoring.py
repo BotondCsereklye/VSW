@@ -43,3 +43,24 @@ def test_calculate_score_never_drops_below_zero() -> None:
     ]
 
     assert calculate_score(findings) == 0
+
+
+def test_calculate_score_keeps_low_hardening_findings_lightweight() -> None:
+    findings = [
+        FindingDraft(
+            category=FindingCategory.TRANSPORT,
+            severity=FindingSeverity.LOW,
+            title="TLS 1.3 support was not confirmed",
+            description="desc",
+            recommendation="fix",
+        ),
+        FindingDraft(
+            category=FindingCategory.HEADERS,
+            severity=FindingSeverity.LOW,
+            title="X-Content-Type-Options value is ineffective",
+            description="desc",
+            recommendation="fix",
+        ),
+    ]
+
+    assert calculate_score(findings) == 90

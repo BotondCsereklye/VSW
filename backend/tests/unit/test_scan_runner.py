@@ -47,7 +47,7 @@ def test_run_scan_for_scan_id_persists_findings_snapshot_and_score() -> None:
             https_reachable=True,
             certificate=CertificateDetails(
                 issuer="Example CA",
-                not_after=datetime.now(UTC) + timedelta(days=30),
+                not_after=datetime.now(UTC) + timedelta(days=90),
             ),
             supported_versions=["TLSv1.2", "TLSv1.3"],
         )

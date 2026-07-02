@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
+from math import ceil
 
 from app.services.headers import HeaderAnalysis, RequiredHeader
 from app.services.ports import PortResult, PortState
 from app.services.tls import TlsAnalysis
 from app.services.web import HttpObservation
+
+CERTIFICATE_EXPIRY_WARNING_DAYS = 30
+MIN_HSTS_MAX_AGE_SECONDS = 15552000
 
 DATABASE_PORTS = {
     3306: "MySQL",
@@ -48,6 +53,9 @@ def detect_misconfigurations(
 ) -> list[FindingDraft]:
     findings: list[FindingDraft] = []
     normalized_headers = {name.lower(): value for name, value in response_headers.items()}
+    certificate_expiry_threshold = datetime.now(UTC) + timedelta(
+        days=CERTIFICATE_EXPIRY_WARNING_DAYS
+    )
 
     if not http_observation.https_reachable:
         findings.append(
@@ -106,20 +114,44 @@ def detect_misconfigurations(
                 },
             )
         )
+    elif (
+        tls_analysis.certificate_valid
+        and tls_analysis.expires_at is not None
+        and tls_analysis.expires_at <= certificate_expiry_threshold
+    ):
+        findings.append(
+            FindingDraft(
+                category=FindingCategory.TRANSPORT,
+                severity=FindingSeverity.LOW,
+                title="TLS certificate expires soon",
+                description=(
+                    "The TLS certificate is valid now, but it is close to expiration and "
+                    "could cause client trust failures if renewal is missed."
+                ),
+                recommendation=(
+                    "Renew the certificate before expiration and verify automated renewal "
+                    "monitoring."
+                ),
+                evidence={
+                    "expires_at": tls_analysis.expires_at.isoformat(),
+                    "days_remaining": _days_until(tls_analysis.expires_at),
+                },
+            )
+        )
 
     if tls_analysis.https_reachable and "TLSv1.3" not in tls_analysis.supported_versions:
         findings.append(
             FindingDraft(
                 category=FindingCategory.TRANSPORT,
-                severity=FindingSeverity.MEDIUM,
-                title="TLS 1.3 is not supported",
+                severity=FindingSeverity.LOW,
+                title="TLS 1.3 support was not confirmed",
                 description=(
-                    "The HTTPS endpoint is reachable, but TLS 1.3 was not confirmed during "
-                    "the passive version check."
+                    "The HTTPS endpoint is reachable, but the safe version probe only "
+                    "confirmed older TLS versions."
                 ),
                 recommendation=(
-                    "Enable TLS 1.3 on the server while keeping compatible fallback settings "
-                    "for supported clients."
+                    "Enable TLS 1.3 where supported by the platform, while keeping compatible "
+                    "fallback settings for currently supported clients."
                 ),
                 evidence={"supported_versions": tls_analysis.supported_versions},
             )
@@ -187,6 +219,55 @@ def detect_misconfigurations(
             )
         )
 
+    strict_transport_security = normalized_headers.get(
+        RequiredHeader.STRICT_TRANSPORT_SECURITY.value, ""
+    )
+    hsts_max_age = _parse_hsts_max_age(strict_transport_security)
+    if tls_analysis.https_reachable and strict_transport_security and (
+        hsts_max_age is None or hsts_max_age < MIN_HSTS_MAX_AGE_SECONDS
+    ):
+        findings.append(
+            FindingDraft(
+                category=FindingCategory.HEADERS,
+                severity=FindingSeverity.LOW,
+                title="Strict-Transport-Security max-age is weak",
+                description=(
+                    "The Strict-Transport-Security header is present, but its max-age is "
+                    "missing, invalid, or too short for durable HTTPS enforcement."
+                ),
+                recommendation=(
+                    "Set a valid Strict-Transport-Security max-age of at least 15552000 "
+                    "seconds after HTTPS is fully enabled."
+                ),
+                evidence={
+                    "header": RequiredHeader.STRICT_TRANSPORT_SECURITY.value,
+                    "value": strict_transport_security,
+                    "minimum_max_age_seconds": MIN_HSTS_MAX_AGE_SECONDS,
+                },
+            )
+        )
+
+    x_content_type_options = normalized_headers.get(
+        RequiredHeader.X_CONTENT_TYPE_OPTIONS.value, ""
+    )
+    if x_content_type_options and x_content_type_options.lower().strip() != "nosniff":
+        findings.append(
+            FindingDraft(
+                category=FindingCategory.HEADERS,
+                severity=FindingSeverity.LOW,
+                title="X-Content-Type-Options value is ineffective",
+                description=(
+                    "The X-Content-Type-Options header is present, but the observed value "
+                    "does not enable MIME sniffing protection."
+                ),
+                recommendation="Set X-Content-Type-Options exactly to `nosniff`.",
+                evidence={
+                    "header": RequiredHeader.X_CONTENT_TYPE_OPTIONS.value,
+                    "value": x_content_type_options,
+                },
+            )
+        )
+
     referrer_policy = normalized_headers.get(RequiredHeader.REFERRER_POLICY.value, "")
     if referrer_policy.lower().strip() == "unsafe-url":
         findings.append(
@@ -204,6 +285,28 @@ def detect_misconfigurations(
                     "`same-origin`."
                 ),
                 evidence={"header": RequiredHeader.REFERRER_POLICY.value, "value": referrer_policy},
+            )
+        )
+
+    permissions_policy = normalized_headers.get(RequiredHeader.PERMISSIONS_POLICY.value, "")
+    if _permissions_policy_allows_wildcard(permissions_policy):
+        findings.append(
+            FindingDraft(
+                category=FindingCategory.HEADERS,
+                severity=FindingSeverity.LOW,
+                title="Permissions-Policy allows broad feature access",
+                description=(
+                    "The Permissions-Policy header allows at least one browser feature for "
+                    "all origins, reducing the value of feature restrictions."
+                ),
+                recommendation=(
+                    "Restrict sensitive browser features to `()` or a small set of trusted "
+                    "origins."
+                ),
+                evidence={
+                    "header": RequiredHeader.PERMISSIONS_POLICY.value,
+                    "value": permissions_policy,
+                },
             )
         )
 
@@ -265,3 +368,24 @@ def _recommendation_for_header(header: RequiredHeader) -> str:
         ),
     }
     return recommendations[header]
+
+
+def _days_until(expires_at: datetime) -> int:
+    seconds_remaining = (expires_at - datetime.now(UTC)).total_seconds()
+    return max(0, ceil(seconds_remaining / 86400))
+
+
+def _parse_hsts_max_age(header_value: str) -> int | None:
+    for directive in header_value.split(";"):
+        name, separator, value = directive.strip().partition("=")
+        if separator and name.lower() == "max-age":
+            try:
+                return int(value.strip())
+            except ValueError:
+                return None
+    return None
+
+
+def _permissions_policy_allows_wildcard(header_value: str) -> bool:
+    normalized = header_value.replace(" ", "")
+    return "=*" in normalized or "(*)" in normalized
