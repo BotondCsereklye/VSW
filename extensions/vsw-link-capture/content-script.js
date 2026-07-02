@@ -73,13 +73,33 @@ async function handleClick(event) {
   }
 
   if (!result.allowNavigation) {
+    const delayMs = result.redirectDelayMs ?? 3000;
+    const hasScoreGateDetails =
+      typeof result.score === "number" && typeof result.minimumAllowedScore === "number";
     showToast(
-      result.message
-        ? `Visit blocked by VSW. ${result.message}`
-        : "Visit blocked by VSW because the defensive pre-scan did not pass.",
+      hasScoreGateDetails
+        ? `Website not safe. Score ${result.score}/100 is below your minimum ${result.minimumAllowedScore}/100. Opening the VSW report...`
+        : result.message
+          ? `Website not safe. ${result.message} Opening the VSW report...`
+          : "Website not safe. Opening the VSW report...",
       true,
-      7000,
+      delayMs,
     );
+    if (result.scanId) {
+      window.setTimeout(() => {
+        void sendRuntimeMessageWithTimeout({
+          type: "open-scan-report",
+          scanId: result.scanId,
+          notice: {
+            type: "blocked",
+            message: result.message || "Website blocked by VSW.",
+            target: result.target,
+            score: result.score,
+            minimumAllowedScore: result.minimumAllowedScore,
+          },
+        }).catch(() => undefined);
+      }, delayMs);
+    }
     return;
   }
 

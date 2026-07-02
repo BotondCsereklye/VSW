@@ -64,6 +64,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return;
       }
 
+      if (message?.type === "open-scan-report") {
+        await openOrFocusScanView(message.scanId, message.notice || {});
+        sendResponse({ ok: true });
+        return;
+      }
+
       if (message?.type === "get-settings") {
         const settings = await getSettings();
         sendResponse({ ok: true, settings });
@@ -139,6 +145,7 @@ async function createScanFromTarget(target, options = {}) {
       message: `Scan created for ${target}.`,
       scanId: scanId || null,
       detail,
+      target,
     };
   } catch (error) {
     return {
@@ -162,14 +169,15 @@ async function gateNavigation(rawUrl) {
   if (result.ok) {
     const gateDecision = VswScoreGate.evaluateGateDecision(result.detail, settings);
     if (!gateDecision.allowNavigation) {
-      if (result.scanId) {
-        await openOrFocusScanView(result.scanId);
-      }
       return {
         ok: true,
         allowNavigation: false,
         message: gateDecision.message,
         scanId: result.scanId || null,
+        target: result.target || null,
+        score: typeof result.detail?.score === "number" ? result.detail.score : null,
+        minimumAllowedScore: settings.minimumAllowedScore,
+        redirectDelayMs: 3000,
       };
     }
 
@@ -178,6 +186,7 @@ async function gateNavigation(rawUrl) {
       allowNavigation: true,
       message: gateDecision.message || result.message,
       scanId: result.scanId || null,
+      target: result.target || null,
     };
   }
 
@@ -316,8 +325,8 @@ async function getActiveTab() {
   return tabs[0];
 }
 
-async function openOrFocusScanView(scanId) {
-  return openOrFocusVswApp(`${VSW_APP_BASE_URL}/scans/${scanId}`);
+async function openOrFocusScanView(scanId, notice = {}) {
+  return openOrFocusVswApp(buildScanViewUrl(scanId, notice));
 }
 
 async function openOrFocusVswApp(url) {
@@ -338,6 +347,27 @@ async function openOrFocusVswApp(url) {
   }
 
   await chrome.tabs.create({ url });
+}
+
+function buildScanViewUrl(scanId, notice = {}) {
+  const url = new URL(`${VSW_APP_BASE_URL}/scans/${scanId}`);
+  if (notice.type) {
+    url.searchParams.set("notice", notice.type);
+  }
+  if (notice.message) {
+    url.searchParams.set("message", notice.message);
+  }
+  if (notice.target) {
+    url.searchParams.set("target", notice.target);
+  }
+  if (notice.score !== undefined && notice.score !== null) {
+    url.searchParams.set("score", String(notice.score));
+  }
+  if (notice.minimumAllowedScore !== undefined && notice.minimumAllowedScore !== null) {
+    url.searchParams.set("minimum", String(notice.minimumAllowedScore));
+  }
+  url.searchParams.set("ts", String(Date.now()));
+  return url.toString();
 }
 
 async function getSettings() {
