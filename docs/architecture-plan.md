@@ -21,6 +21,7 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 - Dashboard-Gruppierung nach Score-Klassen `75+`, `50+`, `25+`, `0+` und separater Pending-Gruppe
 - Polling für Status-Updates laufender Scans
 - Responsive Layout mit klarer Typografie und professioneller Informationshierarchie
+- i18n-Grundgerüst mit Englisch als Fallback und UI-Sprachen Deutsch, Ungarisch, Serbisch und Russisch
 
 ### Browser-Extension (MVP)
 
@@ -29,6 +30,7 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 - Popup-Trigger für die aktuelle Seite
 - Popup-Flow für `Scan and visit target` mit konfigurierbarem Mindestscore
 - Live-Capture im Content Script für normale In-Page-Link-Klicks mit Pre-Scan-Gate
+- Passive Erfassung von Adresszeilen-, Bookmark- und Browser-UI-Navigationen über `webNavigation`
 - Sendet nur Host-Ziele an das lokale Backend `POST /api/v1/scans`
 - Öffnet die lokale VSW-Scan-Detailseite bei Kontext- oder Popup-Trigger
 - Runtime-Fallback verhindert dauerhaft hängende Tabs, wenn eine bereits injizierte Extension-Runtime deaktiviert, entfernt oder neu geladen wurde
@@ -50,6 +52,10 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 - Erkennt bereits belegte lokale Ports und nutzt vorhandene Dienste wieder, statt weitere Prozesse zu starten
 - Kann per `install_vsw_launcher.ps1` eine Desktop- oder Startmenü-Verknüpfung erzeugen
 
+### Bedien-Roadmap
+
+Kurzfristig bleibt der Python/Tkinter-Launcher der empfohlene lokale Weg, weil er wenig zusätzlichen Architekturaufwand erzeugt und die bestehende Scanner-Logik direkt nutzt. Für weniger technische Nutzer ist Docker Desktop mit `docker compose up --build` der nächste realistische Verpackungsschritt. Eine spätere native Desktop-App mit Tauri oder Electron ist möglich, sollte aber erst nach stabiler Extension- und Launcher-Erfahrung geplant werden.
+
 ## Warum Launcher und Extension zusammen sinnvoll sind
 
 - Die eigentlichen defensiven Checks liegen im lokalen Backend und brauchen Python, TLS-Logik, Datenpersistenz und kontrollierte Netzwerkaufrufe.
@@ -66,6 +72,7 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 5. Docker, README, Refactoring und End-to-End-Verifikation
 6. Windows-Launcher für Ein-Klick-Start und demo-taugliche lokale Bedienung
 7. Browser-Extension-MVP für lokale Link-Capture-Trigger und Live-Pre-Scan
+8. Produktpolitur mit i18n, passiver Navigationserfassung und klarerer lokaler Bedienung
 
 ## Datenmodell
 
@@ -185,8 +192,16 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
   - Popup-Trigger
   - Mindestscore-Speicherung und Score-Gate-Entscheidungen
   - Live-Capture für normale In-Page-Links
+  - passive Erfassung von Adresszeile, Bookmarks und angehefteten Browser-Links nach Navigation
   - Runtime-Fallback bei verlorener Extension-Runtime
   - klares Fehlerverhalten bei offline Backend
+
+### i18n
+
+- Unit Tests für:
+  - Sprachumschalter
+  - Speicherung in `localStorage`
+  - Englisch-Fallback bei ungültiger gespeicherter Sprache
 
 ### Launcher
 

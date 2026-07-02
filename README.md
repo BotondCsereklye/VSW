@@ -6,6 +6,7 @@ Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder
 
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
 - Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
+- Mehrsprachige Benutzeranleitungen: [EN](docs/i18n/README.en.md), [DE](docs/i18n/README.de.md), [HU](docs/i18n/README.hu.md), [SR](docs/i18n/README.sr.md), [RU](docs/i18n/README.ru.md)
 - Windows-Launcher für Ein-Klick-Start: [launch_vsw_launcher.ps1](launch_vsw_launcher.ps1)
 - Windows-Shortcut-Installer: [install_vsw_launcher.ps1](install_vsw_launcher.ps1)
 - Browser-Extension-MVP: `extensions/vsw-link-capture`
@@ -30,6 +31,7 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Tests: Pytest, Vitest, Testing Library
 - Lokale Bedienung: Windows-Launcher auf Python-Basis
 - Browser-Integration: Manifest-V3-Extension für Link-Capture
+- Frontend-Sprachen: Englisch, Deutsch, Ungarisch, Serbisch, Russisch
 
 ## Aktueller Funktionsumfang
 
@@ -54,6 +56,7 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
 - Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore für Besuchsfreigabe
 - Host-Regeln für regelmässig geprüfte Websites: Minimum-Score ignorieren oder Host vertrauen
+- Sprachumschalter mit Speicherung in `localStorage`
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausführung im Backend
 - Einfache Missbrauchsbremse per Rate-Limit
@@ -226,6 +229,10 @@ Optional mit Startmenü-Eintrag:
 ```
 
 Die Verknüpfung startet die Launcher-App. Der Launcher richtet bei Bedarf Backend und Frontend ein, zeigt Logs an und stoppt nur die Dienste, die er selbst gestartet hat.
+
+### Einfache Bedienung für Nicht-Entwickler
+
+Aktuell ist der Windows-Launcher der empfohlene lokale Weg, weil er die vorhandene Backend-/Frontend-Struktur nutzt und keine zweite Scanner-Engine einführt. Für eine spätere Abgabe an Nutzer ohne Python ist Docker Desktop der realistische nächste Schritt. Eine native Desktop-App mit Tauri oder Electron bleibt sinnvoll, ist aber grösser und sollte erst umgesetzt werden, wenn der lokale Scanner-Workflow stabil bleibt.
 
 ### PowerShell-Fallback
 
