@@ -1,11 +1,12 @@
 const button = document.getElementById("scanCurrentPageButton");
 const scanTargetButton = document.getElementById("scanTargetButton");
+const openDashboardButton = document.getElementById("openDashboardButton");
 const statusElement = document.getElementById("status");
-const liveCaptureToggle = document.getElementById("liveCaptureEnabled");
-const blockOnFailureToggle = document.getElementById("blockOnScanFailure");
-const minimumAllowedScoreInput = document.getElementById("minimumAllowedScore");
-const blockBelowMinimumScoreToggle = document.getElementById("blockBelowMinimumScore");
+const liveCaptureStatus = document.getElementById("liveCaptureStatus");
+const minimumScoreStatus = document.getElementById("minimumScoreStatus");
+const scoreBlockingStatus = document.getElementById("scoreBlockingStatus");
 const manualTargetInput = document.getElementById("manualTargetInput");
+
 const DEFAULT_SETTINGS = {
   liveCaptureEnabled: true,
   blockOnScanFailure: true,
@@ -14,9 +15,9 @@ const DEFAULT_SETTINGS = {
   trustedHosts: [],
   scoreGateIgnoredHosts: [],
 };
-let currentSettings = { ...DEFAULT_SETTINGS };
 
 init().catch((error) => {
+  renderSettingsSummary(DEFAULT_SETTINGS);
   setStatus(`Failed to initialize popup: ${normalizeError(error)}`, "error");
 });
 
@@ -65,27 +66,29 @@ scanTargetButton.addEventListener("click", async () => {
   }
 });
 
+openDashboardButton.addEventListener("click", async () => {
+  setBusyState(true);
+  setStatus("Opening dashboard...", "idle");
+
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "open-dashboard" });
+    if (!result?.ok) {
+      setStatus(result?.error || "Could not open VSW dashboard.", "error");
+      return;
+    }
+    setStatus("Dashboard opened.", "ok");
+  } catch (error) {
+    setStatus(`Failed to contact extension background: ${normalizeError(error)}`, "error");
+  } finally {
+    setBusyState(false);
+  }
+});
+
 manualTargetInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
     scanTargetButton.click();
   }
-});
-
-liveCaptureToggle.addEventListener("change", () => {
-  void persistSettings();
-});
-
-blockOnFailureToggle.addEventListener("change", () => {
-  void persistSettings();
-});
-
-minimumAllowedScoreInput.addEventListener("change", () => {
-  void persistSettings();
-});
-
-blockBelowMinimumScoreToggle.addEventListener("change", () => {
-  void persistSettings();
 });
 
 async function init() {
@@ -94,37 +97,14 @@ async function init() {
     throw new Error(result?.error || "Could not load extension settings.");
   }
 
-  const settings = normalizeSettings(result.settings);
-  currentSettings = settings;
-  liveCaptureToggle.checked = settings.liveCaptureEnabled;
-  blockOnFailureToggle.checked = settings.blockOnScanFailure;
-  minimumAllowedScoreInput.value = String(settings.minimumAllowedScore);
-  blockBelowMinimumScoreToggle.checked = settings.blockBelowMinimumScore;
-  setStatus("Ready.", "ok");
+  renderSettingsSummary(normalizeSettings(result.settings));
+  setStatus("Ready. Change visit-gate settings in the VSW dashboard.", "ok");
 }
 
-async function persistSettings() {
-  const settings = {
-    liveCaptureEnabled: liveCaptureToggle.checked,
-    blockOnScanFailure: blockOnFailureToggle.checked,
-    minimumAllowedScore: normalizeMinimumScore(minimumAllowedScoreInput.value),
-    blockBelowMinimumScore: blockBelowMinimumScoreToggle.checked,
-    trustedHosts: currentSettings.trustedHosts,
-    scoreGateIgnoredHosts: currentSettings.scoreGateIgnoredHosts,
-  };
-
-  const result = await chrome.runtime.sendMessage({
-    type: "set-settings",
-    settings,
-  });
-
-  if (!result?.ok) {
-    setStatus(result?.error || "Failed to save settings.", "error");
-    return;
-  }
-
-  currentSettings = normalizeSettings(result.settings);
-  setStatus("Settings updated.", "ok");
+function renderSettingsSummary(settings) {
+  liveCaptureStatus.textContent = settings.liveCaptureEnabled ? "On" : "Off";
+  minimumScoreStatus.textContent = `${settings.minimumAllowedScore}/100`;
+  scoreBlockingStatus.textContent = settings.blockBelowMinimumScore ? "On" : "Off";
 }
 
 function setStatus(message, state) {
@@ -135,10 +115,11 @@ function setStatus(message, state) {
 function setBusyState(isBusy) {
   button.disabled = isBusy;
   scanTargetButton.disabled = isBusy;
+  openDashboardButton.disabled = isBusy;
   manualTargetInput.disabled = isBusy;
-  minimumAllowedScoreInput.disabled = isBusy;
   button.textContent = isBusy ? "Starting..." : "Scan current page";
   scanTargetButton.textContent = isBusy ? "Scanning..." : "Scan and visit target";
+  openDashboardButton.textContent = isBusy ? "Opening..." : "Open VSW dashboard";
 }
 
 function normalizeError(error) {

@@ -62,6 +62,35 @@
         background: #ffffff;
       }
 
+      .settings-summary {
+        display: grid;
+        gap: 8px;
+      }
+
+      .settings-summary dl {
+        display: grid;
+        gap: 6px;
+        margin: 0;
+      }
+
+      .settings-summary div {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 0.82rem;
+        color: #27486a;
+      }
+
+      .settings-summary dt,
+      .settings-summary dd {
+        margin: 0;
+      }
+
+      .settings-summary dd {
+        font-weight: 700;
+        color: #132844;
+      }
+
       .panel label {
         display: grid;
         gap: 4px;
@@ -96,6 +125,12 @@
         cursor: wait;
       }
 
+      .secondary-button {
+        border: 1px solid #c9d7e7;
+        background: #ffffff;
+        color: #132844;
+      }
+
       .status {
         min-height: 34px;
         font-size: 0.84rem;
@@ -110,25 +145,6 @@
         color: #b2342d;
       }
 
-      .toggles {
-        display: grid;
-        gap: 8px;
-        font-size: 0.82rem;
-        color: #27486a;
-      }
-
-      .toggles label {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      .toggles .threshold-row {
-        display: grid;
-        grid-template-columns: 1fr 72px;
-        gap: 8px;
-        align-items: center;
-      }
     </style>
   </head>
   <body>
@@ -150,25 +166,25 @@
         />
         <button id="scanTargetButton" type="button">Scan and visit target</button>
       </section>
-      <section class="toggles">
-        <label>
-          <input id="liveCaptureEnabled" type="checkbox" />
-          Enable live click capture
-        </label>
-        <label>
-          <input id="blockOnScanFailure" type="checkbox" />
-          Block navigation on pre-scan failure
-        </label>
-        <label class="threshold-row">
-          <span>Minimum allowed score</span>
-          <input id="minimumAllowedScore" type="number" min="0" max="100" step="1" />
-        </label>
-        <label>
-          <input id="blockBelowMinimumScore" type="checkbox" />
-          Block navigation when the score is below the minimum
-        </label>
+      <section class="panel settings-summary" aria-label="Visit gate status">
+        <p>Visit gate settings are managed in the VSW dashboard.</p>
+        <dl>
+          <div>
+            <dt>Live capture</dt>
+            <dd id="liveCaptureStatus">Unknown</dd>
+          </div>
+          <div>
+            <dt>Minimum score</dt>
+            <dd id="minimumScoreStatus">Unknown</dd>
+          </div>
+          <div>
+            <dt>Score blocking</dt>
+            <dd id="scoreBlockingStatus">Unknown</dd>
+          </div>
+        </dl>
       </section>
       <button id="scanCurrentPageButton" type="button">Scan current page</button>
+      <button id="openDashboardButton" class="secondary-button" type="button">Open VSW dashboard</button>
       <div id="status" class="status" data-state="idle"></div>
     </main>
     <script src="popup.js"></script>

@@ -84,6 +84,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return;
       }
 
+      if (message?.type === "open-dashboard") {
+        await openOrFocusVswApp(VSW_APP_BASE_URL);
+        sendResponse({ ok: true });
+        return;
+      }
+
       if (message?.type === "get-settings") {
         const settings = await getSettings();
         sendResponse({ ok: true, settings });
