@@ -166,7 +166,7 @@ Funktionen:
 - Konfigurierbarer Mindestscore vor Weiterleitung
 - Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
 - Passive Navigationserfassung über `webNavigation` für Adresszeile, Bookmarks und angeheftete Browser-Links
-- Popup-Toggles für `Enable live click capture`, `Block navigation on pre-scan failure` und Score-Blocking
+- Popup zeigt nur Status und Schnellaktionen; die Visit-Gate-Einstellungen werden in der lokalen VSW-App verwaltet
 - Host-Regeln in der lokalen VSW-App für häufig genutzte Websites
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite für den neuen Scan wird bei Popup- oder Kontext-Trigger geöffnet
@@ -180,7 +180,7 @@ Wichtige Opera-/Chrome-Hinweise:
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
 - Adresszeile, Bookmarks und angeheftete Browser-Links können durch Manifest V3 nicht zuverlässig vor dem Besuch blockiert werden. VSW erfasst sie nach dem Laden passiv und erstellt daraus einen Report.
 - Für echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
-- Der Mindestscore kann direkt in der VSW-App unter `Visit gate settings` angepasst werden, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
+- Der Mindestscore wird in der VSW-App unter `Visit gate settings` angepasst, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
 - Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.
 
 Score-Gruppen im Dashboard:
@@ -362,6 +362,19 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 - Das Frontend lädt Listen- und Detaildaten separat.
 - CORS ist für lokale Frontend-/Backend-Trennung konfigurierbar.
 - Der Windows-Launcher ist eine Bedien-Schicht über dem bestehenden Backend und Frontend, keine alternative Scanner-Engine.
+
+### Rollen der Oberflächen
+
+| Teil | Rolle |
+| --- | --- |
+| Backend | Scanner-Engine, Datenpersistenz, API und Score-Berechnung |
+| Frontend | Haupt-Dashboard, Reports, Score-Gruppen, Visit-Gate-Einstellungen und Safety-Meldungen |
+| Extension Background | Browser-Gatekeeper für Pre-Scan, Score-Entscheid und Navigation |
+| Content Script | Klick-Abfang, kurze Browser-Toasts und Weiterleitung der Entscheidung |
+| Extension Popup | Mini-Fallback für Schnellscan, manuelle Zielprüfung, Dashboard-Link und Statusübersicht |
+| Windows-Launcher | Lokaler Starter für Setup, Backend, Frontend, App-Link und Logs |
+
+Die Extension soll keine zweite Dashboard-Oberfläche sein. Sie schützt den aktuellen Browserfluss und zeigt nur kurze Sofortmeldungen. Die längerfristige Erklärung, Konfiguration und Auswertung bleibt im Frontend.
 
 ## Zukunftsideen
 

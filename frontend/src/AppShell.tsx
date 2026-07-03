@@ -318,7 +318,10 @@ export function AppShell() {
       <header className="app-shell__hero">
         <div>
           <div className="app-shell__topline">
-            <p className="eyebrow">{t('hero.eyebrow')}</p>
+            <div className="app-shell__brand">
+              <img src="/vsw-logo.svg" alt="" aria-hidden="true" />
+              <p className="eyebrow">{t('hero.eyebrow')}</p>
+            </div>
             <LanguageSelector />
           </div>
           <h1>{t('hero.title')}</h1>

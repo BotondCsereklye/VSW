@@ -15,6 +15,7 @@ backend/htmlcov/
 backend/dist/
 backend/build/
 backend/*.db
+*.db
 backend/*.egg-info/
 frontend/node_modules/
 frontend/dist/

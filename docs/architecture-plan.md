@@ -56,6 +56,20 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 
 Kurzfristig bleibt der Python/Tkinter-Launcher der empfohlene lokale Weg, weil er wenig zusätzlichen Architekturaufwand erzeugt und die bestehende Scanner-Logik direkt nutzt. Für weniger technische Nutzer ist Docker Desktop mit `docker compose up --build` der nächste realistische Verpackungsschritt. Eine spätere native Desktop-App mit Tauri oder Electron ist möglich, sollte aber erst nach stabiler Extension- und Launcher-Erfahrung geplant werden.
 
+## Rollenabgrenzung der Oberflächen
+
+| Teil | Rolle |
+| --- | --- |
+| Backend | Scanner-Engine, Datenquelle und API |
+| Frontend | Haupt-Dashboard, Reports, Konfiguration und langfristige Safety-Meldungen |
+| Extension Background | Browser-Gatekeeper für Pre-Scan und Navigation |
+| Content Script | Klick-Abfang und kurze Browser-Toasts |
+| Extension Popup | Mini-Fallback für Schnellscan, manuelle Zielprüfung und Dashboard-Link |
+| Launcher | Lokaler Starter für Setup, Services, Logs und Links |
+
+Damit bleibt die Produktlogik nachvollziehbar: Die Extension schützt den Browserfluss, das Frontend erklärt und konfiguriert, das Backend analysiert, und der Launcher startet nur die lokale Umgebung.
+
+## Warum Launcher und Extension zusammen sinnvoll sind
 ## Warum Launcher und Extension zusammen sinnvoll sind
 
 - Die eigentlichen defensiven Checks liegen im lokalen Backend und brauchen Python, TLS-Logik, Datenpersistenz und kontrollierte Netzwerkaufrufe.

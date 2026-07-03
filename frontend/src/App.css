@@ -59,6 +59,21 @@
   margin: 0;
 }
 
+.app-shell__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.app-shell__brand img {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  box-shadow: 0 14px 24px rgba(16, 36, 59, 0.16);
+}
+
 .language-selector {
   display: inline-flex;
   align-items: center;

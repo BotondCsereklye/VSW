@@ -8,7 +8,7 @@ This extension is a defensive helper for local development. It does not scan on 
 - Adds context menu action `Scan current tab with VSW`
 - Provides popup button `Scan current page`
 - Provides popup field `Scan and visit target` for manual domains such as `youtube.com`
-- Exposes the same visit-gate settings inside the local VSW app on `localhost:5173`
+- Exposes visit-gate settings inside the local VSW app on `localhost:5173`
 - Supports host rules inside the local VSW app for regularly scanned websites
 - Adds live click capture for normal in-page link clicks (http/https)
 - Records completed browser navigations with `webNavigation` so address-bar,
@@ -16,7 +16,7 @@ This extension is a defensive helper for local development. It does not scan on 
 - Runs pre-scan before navigation and then continues navigation when the score passes
 - Falls back to normal navigation when an already injected content script loses its extension runtime
 - Sends `POST http://127.0.0.1:8000/api/v1/scans` with body `{ "target": "<host>" }`
-- Opens local VSW frontend for the new scan detail when scan is triggered from context menu or popup
+- Opens or focuses the local VSW frontend for scan details when needed
 
 ## Security boundaries
 
@@ -51,15 +51,17 @@ This extension is a defensive helper for local development. It does not scan on 
 
 ## Live capture settings
 
-Open the extension popup to configure:
+The VSW app is the main settings surface. Open the local dashboard and use the
+`Visit gate settings` card to configure:
 
 - `Enable live click capture`
 - `Block navigation on pre-scan failure`
 - `Minimum allowed score before visit`
 - `Block navigation when the score is below the minimum`
 
-The same settings are also available inside the VSW app in the `Visit gate settings`
-card. This is the recommended place to change the minimum score during normal use.
+The extension popup is intentionally small. It shows a short settings summary,
+provides quick scan actions, and links back to the VSW dashboard instead of
+replacing the dashboard.
 
 The VSW app also shows `Website rules` for hosts that already have scans:
 
@@ -94,6 +96,15 @@ Host rules behave as follows:
   subdomains.
 - `Ignore minimum score`: still create VSW reports, but do not block only
   because the score is below the global threshold.
+
+## Surface responsibilities
+
+- Backend: create scans, run defensive checks, store reports, calculate scores.
+- Frontend: explain reports, manage visit-gate settings, show safety messages and host rules.
+- Extension background: decide whether browser navigation is allowed or blocked.
+- Content script: intercept in-page clicks and show short toasts.
+- Extension popup: fallback actions only, not a full settings dashboard.
+- Launcher: start and stop local services, no scanner logic.
 
 ## Runtime fallback
 
