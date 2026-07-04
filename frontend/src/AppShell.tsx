@@ -15,6 +15,7 @@ import { ReportDetail } from './components/ReportDetail'
 import { SafetyMessagesPanel } from './components/SafetyMessagesPanel'
 import { ScanDashboard } from './components/ScanDashboard'
 import { TargetInput } from './components/TargetInput'
+import { ThemeToggle } from './components/ThemeToggle'
 import { useTranslation } from './i18n/useTranslation'
 import {
   addSafetyMessage,
@@ -322,7 +323,10 @@ export function AppShell() {
               <img src="/vsw-logo.svg" alt="" aria-hidden="true" />
               <p className="eyebrow">{t('hero.eyebrow')}</p>
             </div>
-            <LanguageSelector />
+            <div className="app-shell__actions">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
           </div>
           <h1>{t('hero.title')}</h1>
         </div>

@@ -1,6 +1,6 @@
 ﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
   <title id="title">VSW defensive scan mark</title>
-  <desc id="desc">A shield with a link scan signal for the VSW defensive vulnerability scanner.</desc>
+  <desc id="desc">A shield with a smooth V-shaped scan signal for the VSW defensive vulnerability scanner.</desc>
   <defs>
     <linearGradient id="bg" x1="20" y1="12" x2="110" y2="120" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#10243b"/>
@@ -8,8 +8,14 @@
       <stop offset="1" stop-color="#22756a"/>
     </linearGradient>
     <linearGradient id="shield" x1="35" y1="25" x2="93" y2="103" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#f8fffb"/>
-      <stop offset="1" stop-color="#bfe9dc"/>
+      <stop offset="0" stop-color="#fbfffc"/>
+      <stop offset="1" stop-color="#c9eee2"/>
+    </linearGradient>
+    <linearGradient id="scanV" x1="43" y1="45" x2="85" y2="85" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#64c6b7"/>
+      <stop offset="0.42" stop-color="#eefbf7"/>
+      <stop offset="0.62" stop-color="#fffdf8"/>
+      <stop offset="1" stop-color="#d46f2b"/>
     </linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#07111f" flood-opacity="0.28"/>
@@ -18,10 +24,5 @@
   <rect width="128" height="128" rx="30" fill="url(#bg)"/>
   <path d="M64 18 98 30v28c0 25.5-13.8 43.4-34 54-20.2-10.6-34-28.5-34-54V30l34-12Z" fill="url(#shield)" opacity="0.98" filter="url(#shadow)"/>
   <path d="M64 31 86 39v19c0 17.4-8.4 30.1-22 38.4C50.4 88.1 42 75.4 42 58V39l22-8Z" fill="#10243b"/>
-  <path d="M51 57h26c7.2 0 13 5.8 13 13s-5.8 13-13 13H64" fill="none" stroke="#d46f2b" stroke-width="8" stroke-linecap="round"/>
-  <path d="M77 71H51c-7.2 0-13-5.8-13-13s5.8-13 13-13h13" fill="none" stroke="#64c6b7" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="64" cy="64" r="8" fill="#fffdf8"/>
-  <path d="M64 47v34" stroke="#fffdf8" stroke-width="7" stroke-linecap="round"/>
-  <path d="M53 49h22" stroke="#fffdf8" stroke-width="7" stroke-linecap="round"/>
-  <path d="M47 104c10 5.8 24 5.8 34 0" fill="none" stroke="#f4cfa8" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <path d="M49 48 64 83 79 48" fill="none" stroke="url(#scanV)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

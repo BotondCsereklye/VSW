@@ -6,6 +6,14 @@ export const languages = {
   ru: 'Русский',
 } as const
 
+export const languageFlags: Record<keyof typeof languages, string> = {
+  en: '🇬🇧',
+  de: '🇨🇭',
+  hu: '🇭🇺',
+  sr: '🇷🇸',
+  ru: '🇷🇺',
+}
+
 export type LanguageCode = keyof typeof languages
 
 export const defaultLanguage: LanguageCode = 'en'
@@ -13,6 +21,8 @@ export const defaultLanguage: LanguageCode = 'en'
 export const translations = {
   en: {
     'language.label': 'Language',
+    'theme.toggleToDark': 'Switch to dark mode',
+    'theme.toggleToLight': 'Switch to light mode',
     'hero.eyebrow': 'Defensive Vulnerability Scanner',
     'hero.title': 'Risk-focused visibility for the systems you are authorized to assess.',
     'target.label': 'Target',
@@ -95,6 +105,8 @@ export const translations = {
   },
   de: {
     'language.label': 'Sprache',
+    'theme.toggleToDark': 'In den Dark Mode wechseln',
+    'theme.toggleToLight': 'In den Light Mode wechseln',
     'hero.eyebrow': 'Defensiver Vulnerability Scanner',
     'hero.title': 'Risikofokussierte Sichtbarkeit für Systeme, die du prüfen darfst.',
     'target.label': 'Ziel',
@@ -177,6 +189,8 @@ export const translations = {
   },
   hu: {
     'language.label': 'Nyelv',
+    'theme.toggleToDark': 'Váltás sötét módra',
+    'theme.toggleToLight': 'Váltás világos módra',
     'hero.eyebrow': 'Defenzív sérülékenység-ellenőrző',
     'hero.title': 'Kockázatközpontú áttekintés az engedélyezett rendszerekhez.',
     'target.label': 'Cél',
@@ -255,6 +269,8 @@ export const translations = {
   },
   sr: {
     'language.label': 'Jezik',
+    'theme.toggleToDark': 'Prebaci na tamni režim',
+    'theme.toggleToLight': 'Prebaci na svetli režim',
     'hero.eyebrow': 'Defanzivni skener ranjivosti',
     'hero.title': 'Pregled rizika za sisteme koje smeš da proveravaš.',
     'target.label': 'Cilj',
@@ -333,6 +349,8 @@ export const translations = {
   },
   ru: {
     'language.label': 'Язык',
+    'theme.toggleToDark': 'Переключить на тёмную тему',
+    'theme.toggleToLight': 'Переключить на светлую тему',
     'hero.eyebrow': 'Защитный сканер уязвимостей',
     'hero.title': 'Обзор рисков для систем, которые вам разрешено проверять.',
     'target.label': 'Цель',
@@ -417,5 +435,6 @@ export function getLanguageOptions() {
   return Object.entries(languages).map(([code, label]) => ({
     code: code as LanguageCode,
     label,
+    flag: languageFlags[code as LanguageCode],
   }))
 }

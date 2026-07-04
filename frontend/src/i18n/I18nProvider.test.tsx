@@ -29,7 +29,7 @@ test('language selector stores the selected language', async () => {
     </I18nProvider>,
   )
 
-  await user.selectOptions(screen.getByLabelText(/language/i), 'de')
+  await user.click(screen.getByRole('button', { name: 'Deutsch' }))
 
   expect(window.localStorage.getItem('vsw-language')).toBe('de')
   expect(screen.getByText('Sicheren Scan starten')).toBeInTheDocument()
