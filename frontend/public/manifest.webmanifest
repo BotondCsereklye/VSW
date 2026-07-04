@@ -1,0 +1,24 @@
+{
+  "name": "VSW Defensive Scanner",
+  "short_name": "VSW",
+  "description": "Mobile-ready dashboard and report viewer for the VSW defensive scanner.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffdf8",
+  "theme_color": "#d46f2b",
+  "icons": [
+    {
+      "src": "/vsw-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
