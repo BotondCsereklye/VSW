@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 48px 20px 72px;
   color: var(--ink);
+  overflow-x: clip;
 }
 
 .app-shell__hero,
@@ -28,7 +29,7 @@
   margin: 0 0 10px;
   font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: var(--accent-deep);
 }
@@ -125,8 +126,9 @@
 .app-shell h1 {
   margin: 0;
   max-width: 14ch;
-  font-size: clamp(2.6rem, 4vw, 4.6rem);
+  font-size: 3.2rem;
   line-height: 0.94;
+  overflow-wrap: anywhere;
 }
 
 .app-shell__error {
@@ -142,6 +144,7 @@
 .app-shell__content {
   display: grid;
   gap: 20px;
+  min-width: 0;
 }
 
 .extension-settings {
@@ -173,7 +176,7 @@
   color: var(--accent-deep);
   font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -385,7 +388,7 @@
   color: var(--danger);
   font-size: 0.74rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -479,7 +482,7 @@
   background: var(--accent);
   color: white;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   box-shadow: 0 14px 24px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
@@ -506,6 +509,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+  min-width: 0;
 }
 
 .scan-dashboard__header span {
@@ -696,7 +700,7 @@
   font-size: 0.84rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
 }
 
 .status-pending,
@@ -793,7 +797,7 @@
   font-size: 0.84rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
 }
 
 .report-detail__link-checks {
@@ -871,7 +875,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 
 .report-detail__modal-backdrop {
@@ -910,7 +914,7 @@
   margin: 0;
   font-size: 0.95rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   color: var(--accent-deep);
 }
 
@@ -960,6 +964,10 @@
     grid-template-columns: 1.3fr 0.9fr;
   }
 
+  .app-shell h1 {
+    font-size: 4.2rem;
+  }
+
   .target-input__controls {
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -1002,5 +1010,198 @@
 
   .report-detail__snapshot-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 22px 10px 42px;
+  }
+
+  .app-shell__hero,
+  .app-shell__panel,
+  .extension-settings {
+    border-radius: 18px;
+  }
+
+  .app-shell__hero {
+    gap: 20px;
+    padding: 18px;
+  }
+
+  .app-shell__topline {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .app-shell__brand {
+    flex: 1 1 180px;
+  }
+
+  .app-shell__actions {
+    margin-left: auto;
+  }
+
+  .app-shell h1 {
+    max-width: none;
+    font-size: 2.35rem;
+    line-height: 1;
+  }
+
+  .app-shell__panel {
+    padding: 14px;
+  }
+
+  .extension-settings {
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .extension-settings__controls {
+    gap: 10px;
+  }
+
+  .extension-settings__toggle,
+  .extension-settings__score {
+    align-items: flex-start;
+    border-radius: 14px;
+    padding: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .extension-settings__score {
+    display: grid;
+  }
+
+  .extension-settings__score input {
+    width: 100%;
+  }
+
+  .extension-settings__hosts {
+    border-radius: 16px;
+  }
+
+  .extension-settings__hosts summary,
+  .scan-dashboard__group-header,
+  .report-detail__history-header,
+  .report-detail__link-checks-header {
+    align-items: flex-start;
+  }
+
+  .extension-settings__host-actions button,
+  .report-detail__link-actions button,
+  .report-detail__findings-toggle,
+  .report-detail__exports button {
+    min-height: 44px;
+  }
+
+  .extension-settings__host-actions button {
+    flex: 1 1 150px;
+  }
+
+  .safety-messages {
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  .safety-messages__header label {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 14px;
+  }
+
+  .target-input__controls {
+    gap: 10px;
+  }
+
+  .target-input input,
+  .target-input button {
+    min-height: 52px;
+    border-radius: 15px;
+  }
+
+  .scan-dashboard,
+  .report-detail {
+    gap: 14px;
+  }
+
+  .scan-dashboard__header,
+  .report-detail__header,
+  .report-detail__link-checks-header {
+    flex-direction: column;
+  }
+
+  .scan-dashboard__header span,
+  .report-detail__trend {
+    width: fit-content;
+  }
+
+  .scan-dashboard__group {
+    border-radius: 16px;
+    padding: 10px;
+  }
+
+  .scan-dashboard__group-header > div,
+  .scan-row__main,
+  .report-detail__header > div,
+  .report-detail__history-item,
+  .finding-card {
+    min-width: 0;
+  }
+
+  .scan-row,
+  .finding-card,
+  .report-detail__link-checks,
+  .report-detail__link-item {
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .scan-row__main h4,
+  .scan-row__main p,
+  .report-detail h2,
+  .report-detail p,
+  .finding-card h3,
+  .finding-card p,
+  .extension-settings__host-list strong {
+    overflow-wrap: anywhere;
+  }
+
+  .scan-row__cta,
+  .status-badge,
+  .score-badge,
+  .finding-card__severity {
+    min-height: 38px;
+  }
+
+  .report-detail__header-actions,
+  .report-detail__exports {
+    width: 100%;
+  }
+
+  .report-detail__history-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .report-detail__snapshot-actions {
+    gap: 10px;
+  }
+
+  .report-detail__modal-backdrop {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .report-detail__modal {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .report-detail__modal-close {
+    width: 44px;
+    height: 44px;
   }
 }
