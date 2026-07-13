@@ -6,14 +6,6 @@ export const languages = {
   ru: 'Русский',
 } as const
 
-export const languageFlags: Record<keyof typeof languages, string> = {
-  en: '🇬🇧',
-  de: '🇨🇭',
-  hu: '🇭🇺',
-  sr: '🇷🇸',
-  ru: '🇷🇺',
-}
-
 export type LanguageCode = keyof typeof languages
 
 export const defaultLanguage: LanguageCode = 'en'
@@ -435,6 +427,6 @@ export function getLanguageOptions() {
   return Object.entries(languages).map(([code, label]) => ({
     code: code as LanguageCode,
     label,
-    flag: languageFlags[code as LanguageCode],
+    shortLabel: code.toUpperCase(),
   }))
 }

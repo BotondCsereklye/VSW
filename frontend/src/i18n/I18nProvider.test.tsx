@@ -29,6 +29,11 @@ test('language selector stores the selected language', async () => {
     </I18nProvider>,
   )
 
+  expect(screen.getByRole('button', { name: 'English' })).toHaveTextContent('EN')
+  expect(screen.getByRole('button', { name: 'Deutsch' })).toHaveTextContent('DE')
+  expect(screen.queryByText('🇬🇧')).not.toBeInTheDocument()
+  expect(screen.queryByText('🇨🇭')).not.toBeInTheDocument()
+
   await user.click(screen.getByRole('button', { name: 'Deutsch' }))
 
   expect(window.localStorage.getItem('vsw-language')).toBe('de')
@@ -46,4 +51,3 @@ test('provider falls back to English for invalid stored language', () => {
 
   expect(screen.getByText('Start safe scan')).toBeInTheDocument()
 })
-
