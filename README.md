@@ -5,6 +5,7 @@ Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder
 ## Dokumentation
 
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
+- Mobile- und PWA-Zielbild: [docs/mobile-plan.md](docs/mobile-plan.md)
 - Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
 - Mehrsprachige Benutzeranleitungen: [EN](docs/i18n/README.en.md), [DE](docs/i18n/README.de.md), [HU](docs/i18n/README.hu.md), [SR](docs/i18n/README.sr.md), [RU](docs/i18n/README.ru.md)
 - Windows-Launcher für Ein-Klick-Start: [launch_vsw_launcher.ps1](launch_vsw_launcher.ps1)
@@ -31,6 +32,7 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Tests: Pytest, Vitest, Testing Library
 - Lokale Bedienung: Windows-Launcher auf Python-Basis
 - Browser-Integration: Manifest-V3-Extension für Link-Capture
+- Mobile/PWA: installierbares React-Frontend mit Webmanifest, ohne Offline-Scan-Versprechen
 - Frontend-Sprachen: Englisch, Deutsch, Ungarisch, Serbisch, Russisch
 
 ## Aktueller Funktionsumfang
@@ -56,6 +58,8 @@ Nur eigene Systeme oder Systeme mit ausdrücklicher Erlaubnis prüfen.
 - Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
 - Extension-Settings direkt in der lokalen VSW-App, inklusive Mindestscore für Besuchsfreigabe
 - Host-Regeln für regelmässig geprüfte Websites: Minimum-Score ignorieren oder Host vertrauen
+- Mobile-taugliches Dashboard für 360px bis 430px Breite mit besser antippbaren Controls
+- PWA-Grundlage mit Manifest, Mobile-Meta-Tags, App-Name, Theme-Farbe und vorhandenen Icons
 - Sprachumschalter mit Speicherung in `localStorage`
 - Dashboard mit Status, Datum und Score
 - Background-Scan-Ausführung im Backend
@@ -152,6 +156,7 @@ Die Snapshot-Metadaten enthalten zusätzlich beobachtete Security Header, Redire
 - Die Trendanzeige ist bewusst einfach gehalten: verbessert, verschlechtert oder stabil im Vergleich zum vorherigen Score.
 - Guided link checks bleiben defensiv: nur same-origin Links, keine Auth-Bypass-Logik, keine aggressiven Crawl-Strategien.
 - Die Browser-Extension ist nur ein Trigger für Folge-Scans im lokalen VSW-Backend und enthält keine eigene Scan-Engine.
+- Auf Mobile ist VSW zuerst Dashboard, Scanner und Report-Viewer. Globales Link-Blocking wie bei der Desktop-Extension ist dort nicht das Ziel.
 
 ## Browser-Extension (MVP)
 
@@ -171,6 +176,8 @@ Funktionen:
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite für den neuen Scan wird bei Popup- oder Kontext-Trigger geöffnet
 - Runtime-Fallback: Falls die Extension in einem bereits offenen Tab deaktiviert, neu geladen oder entfernt wurde, bleibt die Seite nicht dauerhaft hängen. Nach kurzer Fehlertoleranz wird die Navigation normal fortgesetzt.
+- Backend-Health-Check vor Scan-Erstellung: Wenn Backend oder Launcher offline sind, werden keine Phantom-Scans als erstellt angezeigt.
+- Popup-Status für Backend Online/Offline mit `Retry connection`.
 
 Wichtige Opera-/Chrome-Hinweise:
 
@@ -182,6 +189,8 @@ Wichtige Opera-/Chrome-Hinweise:
 - Für echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
 - Der Mindestscore wird in der VSW-App unter `Visit gate settings` angepasst, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
 - Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.
+- Nach Sleep, Browser-Neustart oder Extension-Reload werden Host-Regeln neu aus dem Storage geladen und normalisiert. `www.github.com`, `github.com` und URL-basierte Regeln werden auf denselben Host zurückgeführt.
+- Wenn Backend/Frontend nicht laufen, zeigt das Frontend einen Offline-Status und einen `Reconnect`-Button, statt alte Scan-Daten als live darzustellen.
 
 Score-Gruppen im Dashboard:
 
@@ -194,6 +203,27 @@ Score-Gruppen im Dashboard:
 Installationsanleitung und manuelle Test-Checkliste:
 
 - `extensions/vsw-link-capture/README.md`
+
+## Mobile / PWA
+
+Das Frontend ist für Handy-Breiten vorbereitet und kann als PWA im mobilen Browser installiert werden, wenn der Browser Webmanifest-Installation unterstützt.
+
+Wichtige Punkte:
+
+- Mobile nutzt dieselbe Backend-API wie das Desktop-Frontend.
+- Das Backend muss vom Handy erreichbar sein, zum Beispiel über die lokale Netzwerkadresse des Rechners oder einen Server.
+- Es gibt bewusst keinen Service Worker und kein Offline-Versprechen.
+- Die PWA ersetzt nicht die Desktop-Browser-Extension.
+- Globales Link-Blocking ist auf Mobile nicht zuverlässig verfügbar und bleibt nicht Hauptziel.
+- Eine APK ist ein möglicher nächster Schritt über Capacitor, aber noch nicht Teil dieser Umsetzung.
+
+Empfohlene Tests:
+
+- Browser DevTools Mobile View mit 360px bis 430px Breite
+- echtes Handy im gleichen Netzwerk, wenn Backend-URL und CORS passend konfiguriert sind
+- `cd frontend && npm run lint`
+- `cd frontend && npm test -- --run`
+- `cd frontend && npm run build`
 
 ## Empfohlener Windows-Start
 
@@ -285,6 +315,8 @@ Das Frontend erwartet standardmässig die API unter `http://localhost:8000/api/v
 - Keine tiefgehende Langzeit-Trendanalyse über viele Zeiträume
 - Keine Vollscanner-Extension direkt im Browser, weil die eigentlichen defensiven Checks bewusst im lokalen Backend bleiben
 - Browser-Limitation: Bereits injizierte Content Scripts können in offenen Tabs bis zum Reload verbleiben. Der Extension-Fallback verhindert dauerhaft kaputte Tabs, indem er bei Runtime-Verlust nach kurzer Wartezeit weiterleitet.
+- Kein mobiles globales Link-Blocking wie auf Desktop-Browsern mit Extension
+- Kein Offline-Scan in der PWA, weil Backend, Netzwerk und Datenbank erreichbar sein müssen
 
 ## Noch nicht umgesetzt
 
@@ -292,6 +324,7 @@ Das Frontend erwartet standardmässig die API unter `http://localhost:8000/api/v
 - Authentifizierung und Team-Workspaces
 - Scheduling für regelmässige Scans
 - Grössere OWASP-orientierte Read-only Checklisten über die aktuelle v1-Erweiterung hinaus
+- Native APK-/Capacitor-Projektstruktur inklusive Android-Build, Signierung und Store-Verteilung
 
 ## Docker Setup
 
@@ -384,3 +417,4 @@ Die Extension soll keine zweite Dashboard-Oberfläche sein. Sie schützt den akt
 - Optionales, kontrolliertes Scheduling mit klaren Limits
 - Rollen-/Rechtemodell für Team-Nutzung
 - Browser-Extension-Ausbau mit klarerem Statusbild für aktive Pre-Scans und bekannte Browser-Limitationen
+- Capacitor-Schale für Android, sobald API-Basis-URL, CORS, Zertifikate und Signierung geklärt sind

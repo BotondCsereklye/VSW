@@ -34,6 +34,8 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 - Sendet nur Host-Ziele an das lokale Backend `POST /api/v1/scans`
 - Öffnet die lokale VSW-Scan-Detailseite bei Kontext- oder Popup-Trigger
 - Runtime-Fallback verhindert dauerhaft hängende Tabs, wenn eine bereits injizierte Extension-Runtime deaktiviert, entfernt oder neu geladen wurde
+- Backend-Health-Check verhindert Phantom-Scans, wenn Laptop, Launcher oder Backend nach Sleep/Restart offline sind
+- Host-Regeln werden zentral normalisiert, damit `www.`-Hosts, Subdomains und URL-basierte Regeln stabil verglichen werden
 - Nutzt bewusst minimale Berechtigungen und keine Browserhistorie-Berechtigung
 - Enthält keine offensive Logik und keine eigenständige Scan-Engine
 
@@ -68,6 +70,8 @@ Kurzfristig bleibt der Python/Tkinter-Launcher der empfohlene lokale Weg, weil e
 | Launcher | Lokaler Starter für Setup, Services, Logs und Links |
 
 Damit bleibt die Produktlogik nachvollziehbar: Die Extension schützt den Browserfluss, das Frontend erklärt und konfiguriert, das Backend analysiert, und der Launcher startet nur die lokale Umgebung.
+
+Nach Sleep/Restart gilt: Das Frontend zeigt Backend offline statt alte Daten als live zu verkaufen, die Extension prüft `/api/v1/health` vor Scan-Erstellung, und alte Tabs dürfen bei Runtime-Verlust nicht dauerhaft blockiert bleiben.
 
 ## Warum Launcher und Extension zusammen sinnvoll sind
 ## Warum Launcher und Extension zusammen sinnvoll sind

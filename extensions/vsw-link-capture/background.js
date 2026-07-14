@@ -3,6 +3,7 @@ importScripts("score-gate.js");
 const MENU_SCAN_LINK = "vsw-scan-link";
 const MENU_SCAN_TAB = "vsw-scan-current-tab";
 const VSW_API_URL = "http://127.0.0.1:8000/api/v1/scans";
+const VSW_HEALTH_URL = "http://127.0.0.1:8000/api/v1/health";
 const VSW_APP_BASE_URL = "http://127.0.0.1:5173";
 const SETTINGS_KEY = "vswLinkCaptureSettings";
 const SCAN_POLL_INTERVAL_MS = 1200;
@@ -90,6 +91,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return;
       }
 
+      if (message?.type === "get-backend-status") {
+        const reachable = await isBackendReachable();
+        sendResponse({
+          ok: true,
+          reachable,
+          message: reachable
+            ? "VSW backend is reachable."
+            : "VSW backend is offline. Start VSW to scan this site.",
+        });
+        return;
+      }
+
       if (message?.type === "get-settings") {
         const settings = await getSettings();
         sendResponse({ ok: true, settings });
@@ -129,6 +142,16 @@ async function createScanFromUrl(rawUrl, options = {}) {
 async function createScanFromTarget(target, options = {}) {
   const openScanView = options.openScanView ?? true;
   const waitForCompletion = options.waitForCompletion ?? false;
+
+  const backendReachable = await isBackendReachable();
+  if (!backendReachable) {
+    return {
+      ok: false,
+      error: "VSW backend is offline. Start VSW to scan this site.",
+      backendOffline: true,
+      target,
+    };
+  }
 
   try {
     const response = await fetch(VSW_API_URL, {
@@ -191,6 +214,11 @@ async function createPassiveNavigationScan(rawUrl) {
 
   const hostRule = VswScoreGate.getHostRule(parsed.target, settings);
   if (hostRule === "trusted" || wasRecentlyScanned(parsed.target)) {
+    return;
+  }
+
+  const backendReachable = await isBackendReachable();
+  if (!backendReachable) {
     return;
   }
 
@@ -257,6 +285,7 @@ async function gateNavigation(rawUrl) {
       ok: true,
       allowNavigation: false,
       message: result.error || "Pre-scan failed.",
+      backendOffline: Boolean(result.backendOffline),
     };
   }
 
@@ -264,6 +293,7 @@ async function gateNavigation(rawUrl) {
     ok: true,
     allowNavigation: true,
     warning: result.error || "Pre-scan failed. Navigation continues.",
+    backendOffline: Boolean(result.backendOffline),
   };
 }
 
@@ -341,6 +371,18 @@ async function waitForScanCompletion(scanId) {
   }
 
   throw new Error("Timed out while waiting for the defensive scan to finish.");
+}
+
+async function isBackendReachable() {
+  try {
+    const response = await fetch(VSW_HEALTH_URL, {
+      method: "GET",
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch (_error) {
+    return false;
+  }
 }
 
 function extractTarget(rawUrl) {

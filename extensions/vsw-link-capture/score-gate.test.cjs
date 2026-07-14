@@ -47,6 +47,24 @@ test("normalizeSettings persists a configured minimum score", () => {
   });
 });
 
+test("normalizeSettings migrates older partial storage safely", () => {
+  const settings = normalizeSettings(
+    {
+      trustedHosts: ["https://www.GitHub.com/settings"],
+    },
+    defaults,
+  );
+
+  assert.deepEqual(settings, {
+    liveCaptureEnabled: true,
+    blockOnScanFailure: true,
+    minimumAllowedScore: 50,
+    blockBelowMinimumScore: true,
+    trustedHosts: ["github.com"],
+    scoreGateIgnoredHosts: [],
+  });
+});
+
 test("normalizeHostList deduplicates and lowercases host rules", () => {
   assert.deepEqual(normalizeHostList([" GitHub.com ", "github.com", "", null]), [
     "github.com",
@@ -56,6 +74,8 @@ test("normalizeHostList deduplicates and lowercases host rules", () => {
 test("matchesConfiguredHost supports exact hosts and subdomains", () => {
   assert.equal(matchesConfiguredHost("github.com", ["github.com"]), true);
   assert.equal(matchesConfiguredHost("www.github.com", ["github.com"]), true);
+  assert.equal(matchesConfiguredHost("https://www.github.com/issues", ["github.com"]), true);
+  assert.equal(matchesConfiguredHost("api.github.com", ["www.github.com"]), true);
   assert.equal(matchesConfiguredHost("badgithub.com", ["github.com"]), false);
 });
 

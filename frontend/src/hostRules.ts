@@ -1,4 +1,5 @@
 import type { ScanSummary } from './types/scan'
+import { normalizeHost } from './extensionSettings'
 
 export type HostSummary = {
   host: string
@@ -55,6 +56,3 @@ export function toggleHost(list: string[], host: string) {
   return [normalizedHost, ...list].slice(0, 50)
 }
 
-function normalizeHost(value: string) {
-  return value.trim().toLowerCase()
-}

@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router-dom'
 
 import {
@@ -28,6 +28,7 @@ import type { ScanDetail, ScanExportFormat, ScanSummary } from './types/scan'
 
 const ACTIVE_SCAN_POLL_INTERVAL_MS = 1500
 const SAFETY_MESSAGE_PRUNE_INTERVAL_MS = 30_000
+const BACKEND_OFFLINE_MESSAGE = 'Backend is offline. Start VSW Launcher or backend to continue.'
 
 function isScanInProgress(status: ScanSummary['status'] | null | undefined) {
   return status === 'pending' || status === 'running'
@@ -47,6 +48,9 @@ export function AppShell() {
   const [checkedLinks, setCheckedLinks] = useState<string[]>([])
   const [isLoadingScans, setIsLoadingScans] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'online' | 'offline'>(
+    'checking',
+  )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [safetyMessages, setSafetyMessages] = useState<SafetyMessage[]>(() =>
     loadSafetyMessages(),
@@ -59,6 +63,31 @@ export function AppShell() {
     scanId !== null &&
     selectedScan?.id === scanId &&
     isScanInProgress(selectedScan.status)
+
+  const refreshScans = useCallback(async () => {
+    setIsLoadingScans(true)
+    setConnectionStatus('checking')
+    try {
+      const response = await listScans()
+      startTransition(() => {
+        setScans(response)
+        setErrorMessage(null)
+        setConnectionStatus('online')
+      })
+    } catch {
+      startTransition(() => {
+        setScans([])
+        setSelectedScan(null)
+        setScanHistory([])
+        setDiscoveredLinks([])
+        setCheckedLinks([])
+        setConnectionStatus('offline')
+        setErrorMessage(BACKEND_OFFLINE_MESSAGE)
+      })
+    } finally {
+      setIsLoadingScans(false)
+    }
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -96,36 +125,14 @@ export function AppShell() {
   }, [])
 
   useEffect(() => {
-    let isActive = true
-
-    async function loadScans() {
-      try {
-        const response = await listScans()
-        if (!isActive) {
-          return
-        }
-
-        startTransition(() => {
-          setScans(response)
-          setErrorMessage(null)
-        })
-      } catch {
-        if (isActive) {
-          setErrorMessage(t('error.loadScans'))
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingScans(false)
-        }
-      }
-    }
-
-    void loadScans()
+    const timeoutId = window.setTimeout(() => {
+      void refreshScans()
+    }, 0)
 
     return () => {
-      isActive = false
+      window.clearTimeout(timeoutId)
     }
-  }, [t])
+  }, [refreshScans])
 
   useEffect(() => {
     if (!hasActiveScans) {
@@ -148,7 +155,8 @@ export function AppShell() {
           })
         } catch {
           if (isActive) {
-            setErrorMessage(t('error.refreshScans'))
+            setConnectionStatus('offline')
+            setErrorMessage(BACKEND_OFFLINE_MESSAGE)
           }
         }
       })()
@@ -188,6 +196,7 @@ export function AppShell() {
         })
       } catch {
         if (isActive) {
+          setConnectionStatus('offline')
           setErrorMessage(t('error.loadDetails'))
         }
       }
@@ -228,6 +237,7 @@ export function AppShell() {
           })
         } catch {
           if (isActive) {
+              setConnectionStatus('offline')
               setErrorMessage(t('error.loadDetails'))
           }
         }
@@ -249,10 +259,12 @@ export function AppShell() {
       startTransition(() => {
         setScans(refreshedScans)
         setErrorMessage(null)
+        setConnectionStatus('online')
       })
       navigate(`/scans/${createdScan.id}`)
       return true
     } catch {
+      setConnectionStatus('offline')
       setErrorMessage(t('error.createScan'))
       return false
     } finally {
@@ -332,6 +344,21 @@ export function AppShell() {
         </div>
         <TargetInput isSubmitting={isSubmitting} onSubmit={handleCreateScan} />
       </header>
+
+      <section className="app-shell__connection" data-state={connectionStatus}>
+        <span>
+          {connectionStatus === 'online'
+            ? 'Backend online'
+            : connectionStatus === 'offline'
+              ? BACKEND_OFFLINE_MESSAGE
+              : 'Checking backend...'}
+        </span>
+        {connectionStatus === 'offline' ? (
+          <button type="button" onClick={() => void refreshScans()}>
+            Reconnect
+          </button>
+        ) : null}
+      </section>
 
       {errorMessage ? <p className="app-shell__error">{errorMessage}</p> : null}
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { normalizeExtensionSettings, normalizeMinimumScore } from './extensionSettings'
+import { normalizeExtensionSettings, normalizeHost, normalizeMinimumScore } from './extensionSettings'
 
 describe('extension settings helpers', () => {
   test('normalizes missing settings to safe defaults', () => {
@@ -19,6 +19,19 @@ describe('extension settings helpers', () => {
       normalizeExtensionSettings({
         trustedHosts: [' GitHub.com ', 'github.com', ''],
         scoreGateIgnoredHosts: ['YouTube.com'],
+      }),
+    ).toMatchObject({
+      trustedHosts: ['github.com'],
+      scoreGateIgnoredHosts: ['youtube.com'],
+    })
+  })
+
+  test('normalizes URL-like host values for migrated settings', () => {
+    expect(normalizeHost('https://www.GitHub.com/settings')).toBe('github.com')
+    expect(
+      normalizeExtensionSettings({
+        trustedHosts: ['https://www.GitHub.com/settings'],
+        scoreGateIgnoredHosts: ['www.youtube.com/watch?v=1'],
       }),
     ).toMatchObject({
       trustedHosts: ['github.com'],

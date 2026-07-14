@@ -1,56 +1,58 @@
 :root {
-  font-family: 'Space Grotesk', 'Avenir Next', sans-serif;
+  font-family: 'Space Grotesk', 'Avenir Next', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #10243b;
+  color: #0a0a0a;
   background: var(--app-bg);
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --app-bg: #f4f1ea;
-  --bg-panel: #fffdf8;
-  --bg-panel-muted: #f7f3eb;
+  --app-bg: #f2f2f2;
+  --bg-panel: #ffffff;
+  --bg-panel-muted: #ededed;
   --bg-strong: #ffffff;
   --button-surface: #ffffff;
   --input-bg: #ffffff;
-  --line: rgba(16, 36, 59, 0.12);
-  --line-strong: rgba(16, 36, 59, 0.2);
-  --shadow: 0 18px 44px rgba(15, 35, 53, 0.1);
-  --ink: #10243b;
-  --ink-soft: #4d6175;
-  --accent: #d46f2b;
-  --accent-deep: #8d3a0f;
-  --success: #22756a;
-  --warning: #b17b00;
-  --danger: #b73a3a;
-  --code-bg: #0f2234;
-  --code-ink: #eef4f8;
+  --line: rgba(0, 0, 0, 0.24);
+  --line-strong: rgba(0, 0, 0, 0.78);
+  --ink: #0a0a0a;
+  --ink-soft: #5c5c5c;
+  --accent: #0a0a0a;
+  --accent-deep: #0a0a0a;
+  --success: #0a0a0a;
+  --warning: #3d3d3d;
+  --danger: #000000;
+  --code-bg: #0a0a0a;
+  --code-ink: #ffffff;
+  --state-muted: #e2e2e2;
+  --state-strong: #000000;
 }
 
 :root[data-theme='dark'] {
-  color: #ecf3f7;
+  color: #f7f7f7;
   background: var(--app-bg);
   color-scheme: dark;
-  --app-bg: #0e1720;
-  --bg-panel: #131f29;
-  --bg-panel-muted: #172631;
-  --bg-strong: #101a23;
-  --button-surface: #172631;
-  --input-bg: #101a23;
-  --line: rgba(236, 243, 247, 0.12);
-  --line-strong: rgba(236, 243, 247, 0.24);
-  --shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
-  --ink: #ecf3f7;
-  --ink-soft: #a9b8c3;
-  --accent: #f09a54;
-  --accent-deep: #f4b579;
-  --success: #65c3a8;
-  --warning: #f0c36b;
-  --danger: #f47f7f;
-  --code-bg: #07111a;
-  --code-ink: #f6fbff;
+  --app-bg: #080808;
+  --bg-panel: #111111;
+  --bg-panel-muted: #1b1b1b;
+  --bg-strong: #0d0d0d;
+  --button-surface: #111111;
+  --input-bg: #080808;
+  --line: rgba(255, 255, 255, 0.24);
+  --line-strong: rgba(255, 255, 255, 0.78);
+  --ink: #f7f7f7;
+  --ink-soft: #b5b5b5;
+  --accent: #f7f7f7;
+  --accent-deep: #f7f7f7;
+  --success: #f7f7f7;
+  --warning: #c7c7c7;
+  --danger: #ffffff;
+  --code-bg: #000000;
+  --code-ink: #ffffff;
+  --state-muted: #242424;
+  --state-strong: #ffffff;
 }
 
 * {
@@ -64,24 +66,8 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--app-bg) 92%, white), var(--app-bg));
+  background: var(--app-bg);
   color: var(--ink);
-  transition:
-    background 180ms ease,
-    color 180ms ease;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--ink) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--ink) 5%, transparent) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.42), transparent 72%);
 }
 
 #root {
@@ -97,12 +83,16 @@ button {
   cursor: pointer;
 }
 
+input[type='checkbox'] {
+  accent-color: var(--ink);
+}
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 summary:focus-visible,
 a:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--accent) 44%, transparent);
+  outline: 3px solid var(--ink);
   outline-offset: 3px;
 }
 
