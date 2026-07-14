@@ -176,6 +176,8 @@ Funktionen:
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
 - Erfolg: VSW-Detailseite für den neuen Scan wird bei Popup- oder Kontext-Trigger geöffnet
 - Runtime-Fallback: Falls die Extension in einem bereits offenen Tab deaktiviert, neu geladen oder entfernt wurde, bleibt die Seite nicht dauerhaft hängen. Nach kurzer Fehlertoleranz wird die Navigation normal fortgesetzt.
+- Backend-Health-Check vor Scan-Erstellung: Wenn Backend oder Launcher offline sind, werden keine Phantom-Scans als erstellt angezeigt.
+- Popup-Status für Backend Online/Offline mit `Retry connection`.
 
 Wichtige Opera-/Chrome-Hinweise:
 
@@ -187,6 +189,8 @@ Wichtige Opera-/Chrome-Hinweise:
 - Für echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
 - Der Mindestscore wird in der VSW-App unter `Visit gate settings` angepasst, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
 - Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.
+- Nach Sleep, Browser-Neustart oder Extension-Reload werden Host-Regeln neu aus dem Storage geladen und normalisiert. `www.github.com`, `github.com` und URL-basierte Regeln werden auf denselben Host zurückgeführt.
+- Wenn Backend/Frontend nicht laufen, zeigt das Frontend einen Offline-Status und einen `Reconnect`-Button, statt alte Scan-Daten als live darzustellen.
 
 Score-Gruppen im Dashboard:
 

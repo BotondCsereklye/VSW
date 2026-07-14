@@ -15,6 +15,7 @@ This extension is a defensive helper for local development. It does not scan on 
   bookmark-bar, and pinned-link visits still create passive VSW reports
 - Runs pre-scan before navigation and then continues navigation when the score passes
 - Falls back to normal navigation when an already injected content script loses its extension runtime
+- Checks backend health before creating scans so offline backend state does not create phantom scans
 - Sends `POST http://127.0.0.1:8000/api/v1/scans` with body `{ "target": "<host>" }`
 - Opens or focuses the local VSW frontend for scan details when needed
 
@@ -116,6 +117,25 @@ If `chrome.runtime.sendMessage` fails or times out, the extension shows a short
 message and continues normal navigation. This avoids tabs that feel permanently
 broken after changing extension state.
 
+## Sleep, restart, and offline backend behavior
+
+After laptop sleep, browser restart, extension reload, or local VSW shutdown,
+old tabs can still contain an injected content script. The extension handles that
+state defensively:
+
+- before creating a scan, the background service checks `/api/v1/health`
+- if the backend is offline, no scan is marked as created
+- passive navigation capture skips scan creation while backend is offline
+- the popup shows `Backend: Offline` and offers `Retry connection`
+- old content scripts continue navigation after runtime timeout instead of
+  leaving links permanently blocked
+
+Trusted hosts and score-ignore hosts are normalized before comparison. Stored
+rules such as `https://www.github.com/settings`, `www.github.com`, and
+`github.com` resolve to the same base host. A trusted host and its subdomains
+skip blocking. A score-ignore host can still create reports, but it is not
+blocked only because the score is below the global minimum.
+
 ## Developer checks
 
 ```bash
@@ -144,6 +164,8 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 13. When strict blocking is enabled and backend is offline, navigation is blocked.
 14. Non-http(s) URLs are rejected with a clear message.
 15. If the extension is reloaded while a tab is open, the next intercepted click continues after runtime fallback instead of staying stuck.
+16. After laptop sleep with backend stopped, passive captures do not create phantom scans.
+17. Trusted hosts still bypass blocking after extension reload or browser restart.
 
 ## Troubleshooting
 
