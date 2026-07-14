@@ -1,10 +1,12 @@
 const button = document.getElementById("scanCurrentPageButton");
 const scanTargetButton = document.getElementById("scanTargetButton");
 const openDashboardButton = document.getElementById("openDashboardButton");
+const retryConnectionButton = document.getElementById("retryConnectionButton");
 const statusElement = document.getElementById("status");
 const liveCaptureStatus = document.getElementById("liveCaptureStatus");
 const minimumScoreStatus = document.getElementById("minimumScoreStatus");
 const scoreBlockingStatus = document.getElementById("scoreBlockingStatus");
+const backendStatus = document.getElementById("backendStatus");
 const manualTargetInput = document.getElementById("manualTargetInput");
 
 const DEFAULT_SETTINGS = {
@@ -84,6 +86,19 @@ openDashboardButton.addEventListener("click", async () => {
   }
 });
 
+retryConnectionButton.addEventListener("click", async () => {
+  setBusyState(true);
+  setStatus("Checking backend...", "idle");
+
+  try {
+    await refreshBackendStatus();
+  } catch (error) {
+    setStatus(`Failed to contact extension background: ${normalizeError(error)}`, "error");
+  } finally {
+    setBusyState(false);
+  }
+});
+
 manualTargetInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
@@ -98,7 +113,7 @@ async function init() {
   }
 
   renderSettingsSummary(normalizeSettings(result.settings));
-  setStatus("Ready. Change visit-gate settings in the VSW dashboard.", "ok");
+  await refreshBackendStatus();
 }
 
 function renderSettingsSummary(settings) {
@@ -116,10 +131,29 @@ function setBusyState(isBusy) {
   button.disabled = isBusy;
   scanTargetButton.disabled = isBusy;
   openDashboardButton.disabled = isBusy;
+  retryConnectionButton.disabled = isBusy;
   manualTargetInput.disabled = isBusy;
   button.textContent = isBusy ? "Starting..." : "Scan current page";
   scanTargetButton.textContent = isBusy ? "Scanning..." : "Scan and visit target";
   openDashboardButton.textContent = isBusy ? "Opening..." : "Open VSW dashboard";
+  retryConnectionButton.textContent = isBusy ? "Checking..." : "Retry connection";
+}
+
+async function refreshBackendStatus() {
+  const result = await chrome.runtime.sendMessage({ type: "get-backend-status" });
+  if (!result?.ok) {
+    backendStatus.textContent = "Unknown";
+    setStatus(result?.error || "Could not check backend status.", "error");
+    return;
+  }
+
+  backendStatus.textContent = result.reachable ? "Online" : "Offline";
+  setStatus(
+    result.reachable
+      ? "Ready. Change visit-gate settings in the VSW dashboard."
+      : result.message || "VSW backend is offline. Start VSW to scan this site.",
+    result.reachable ? "ok" : "warning",
+  );
 }
 
 function normalizeError(error) {

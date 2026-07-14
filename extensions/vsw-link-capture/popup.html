@@ -141,6 +141,10 @@
         color: #1d6b46;
       }
 
+      .status[data-state="warning"] {
+        color: #a16207;
+      }
+
       .status[data-state="error"] {
         color: #b2342d;
       }
@@ -181,8 +185,13 @@
             <dt>Score blocking</dt>
             <dd id="scoreBlockingStatus">Unknown</dd>
           </div>
+          <div>
+            <dt>Backend</dt>
+            <dd id="backendStatus">Unknown</dd>
+          </div>
         </dl>
       </section>
+      <button id="retryConnectionButton" class="secondary-button" type="button">Retry connection</button>
       <button id="scanCurrentPageButton" type="button">Scan current page</button>
       <button id="openDashboardButton" class="secondary-button" type="button">Open VSW dashboard</button>
       <div id="status" class="status" data-state="idle"></div>
