@@ -56,10 +56,24 @@ export function normalizeHostList(value: unknown) {
   return Array.from(
     new Set(
       value
-        .map((item) => String(item ?? '').trim().toLowerCase())
+        .map((item) => normalizeHost(item))
         .filter((item) => item.length > 0),
     ),
   ).slice(0, 50)
+}
+
+export function normalizeHost(value: unknown) {
+  const rawValue = String(value ?? '').trim().toLowerCase()
+  if (!rawValue) {
+    return ''
+  }
+
+  const candidate = /^https?:\/\//i.test(rawValue) ? rawValue : `https://${rawValue}`
+  try {
+    return new URL(candidate).hostname.replace(/^www\./, '')
+  } catch {
+    return rawValue.replace(/^www\./, '')
+  }
 }
 
 export async function getExtensionSettings() {

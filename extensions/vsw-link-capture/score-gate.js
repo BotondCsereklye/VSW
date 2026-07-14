@@ -3,6 +3,7 @@
     evaluateGateDecision,
     getHostRule,
     matchesConfiguredHost,
+    normalizeHost,
     normalizeHostList,
     normalizeMinimumScore,
     normalizeSettings,
@@ -98,7 +99,7 @@ function normalizeHostList(value) {
   return Array.from(
     new Set(
       value
-        .map((item) => String(item || "").trim().toLowerCase())
+        .map((item) => normalizeHost(item))
         .filter((item) => item.length > 0),
     ),
   ).slice(0, 50);
@@ -117,16 +118,31 @@ function getHostRule(host, settings) {
 }
 
 function matchesConfiguredHost(host, hostList) {
-  const normalizedHost = String(host || "").trim().toLowerCase();
+  const normalizedHost = normalizeHost(host);
   if (!normalizedHost || !Array.isArray(hostList)) {
     return false;
   }
 
   return hostList.some((configuredHost) => {
-    const normalizedConfiguredHost = String(configuredHost || "").trim().toLowerCase();
+    const normalizedConfiguredHost = normalizeHost(configuredHost);
     return (
       normalizedHost === normalizedConfiguredHost ||
       normalizedHost.endsWith(`.${normalizedConfiguredHost}`)
     );
   });
+}
+
+function normalizeHost(value) {
+  const rawValue = String(value || "").trim().toLowerCase();
+  if (!rawValue) {
+    return "";
+  }
+
+  const candidate = /^https?:\/\//i.test(rawValue) ? rawValue : `https://${rawValue}`;
+  try {
+    const parsedUrl = new URL(candidate);
+    return parsedUrl.hostname.replace(/^www\./, "");
+  } catch (_error) {
+    return rawValue.replace(/^www\./, "");
+  }
 }
