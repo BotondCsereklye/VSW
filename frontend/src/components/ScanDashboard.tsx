@@ -1,18 +1,22 @@
 import type { ScanSummary } from '../types/scan'
 import { useTranslation } from '../i18n/useTranslation'
-import { groupScansByScoreBand } from './ScanDashboard.logic'
+import { groupScansByScoreBand, splitScansByRecency } from './ScanDashboard.logic'
 import { ScanStatusBadge } from './ScanStatusBadge'
 import { ScoreBadge } from './ScoreBadge'
 
 type ScanDashboardProps = {
   scans: ScanSummary[]
   selectedScanId: string | null
+  recentMinutes: number
+  onRecentMinutesChange: (minutes: number) => void
   onSelectScan: (scanId: string) => void
 }
 
 export function ScanDashboard({
   scans,
   selectedScanId,
+  recentMinutes,
+  onRecentMinutesChange,
   onSelectScan,
 }: ScanDashboardProps) {
   const { t } = useTranslation()
@@ -26,15 +30,53 @@ export function ScanDashboard({
     )
   }
 
-  const groups = groupScansByScoreBand(scans)
+  const { recentScans, archivedScans } = splitScansByRecency(scans, recentMinutes)
+  const groups = groupScansByScoreBand(archivedScans)
 
   return (
     <section className="scan-dashboard">
       <header className="scan-dashboard__header">
-        <h2>{t('dashboard.title')}</h2>
+        <div>
+          <h2>{t('dashboard.title')}</h2>
+          <label className="scan-dashboard__recent-setting">
+            <span>Move recent scans after</span>
+            <input
+              type="number"
+              min="10"
+              max="30"
+              value={recentMinutes}
+              onChange={(event) =>
+                onRecentMinutesChange(Number.parseInt(event.target.value || '20', 10))
+              }
+            />
+            <span>min</span>
+          </label>
+        </div>
         <span>{t('dashboard.total', { count: scans.length })}</span>
       </header>
       <div className="scan-dashboard__list">
+        <section className="scan-dashboard__recent">
+          <header>
+            <h3>Recent scan inbox</h3>
+            <span>{recentScans.length}</span>
+          </header>
+          {recentScans.length === 0 ? (
+            <p>No fresh scans waiting for classification.</p>
+          ) : (
+            <div className="scan-dashboard__group-list">
+              {recentScans.map((scan) => (
+                <ScanRow
+                  key={scan.id}
+                  scan={scan}
+                  selectedScanId={selectedScanId}
+                  onSelectScan={onSelectScan}
+                  openLabel={t('dashboard.openReport')}
+                  waitingLabel={t('dashboard.waiting')}
+                />
+              ))}
+            </div>
+          )}
+        </section>
         {groups.map((group) => (
           <details key={group.id} className={`scan-dashboard__group scan-dashboard__group--${group.id}`}>
             <summary className="scan-dashboard__group-header">
@@ -46,28 +88,54 @@ export function ScanDashboard({
             </summary>
             <div className="scan-dashboard__group-list">
               {group.scans.map((scan) => (
-                <button
+                <ScanRow
                   key={scan.id}
-                  type="button"
-                  onClick={() => onSelectScan(scan.id)}
-                  aria-label={`${t('dashboard.openReport')} for ${scan.target}`}
-                  className={`scan-row${selectedScanId === scan.id ? ' scan-row--active' : ''}`}
-                >
-                  <div className="scan-row__main">
-                    <h4>{scan.target}</h4>
-                    <p>{scan.summary ?? t('dashboard.waiting')}</p>
-                  </div>
-                  <div className="scan-row__meta">
-                    <ScanStatusBadge status={scan.status} />
-                    <ScoreBadge score={scan.score} />
-                    <span className="scan-row__cta">{t('dashboard.openReport')}</span>
-                  </div>
-                </button>
+                  scan={scan}
+                  selectedScanId={selectedScanId}
+                  onSelectScan={onSelectScan}
+                  openLabel={t('dashboard.openReport')}
+                  waitingLabel={t('dashboard.waiting')}
+                />
               ))}
             </div>
           </details>
         ))}
       </div>
     </section>
+  )
+}
+
+type ScanRowProps = {
+  scan: ScanSummary
+  selectedScanId: string | null
+  openLabel: string
+  waitingLabel: string
+  onSelectScan: (scanId: string) => void
+}
+
+function ScanRow({
+  scan,
+  selectedScanId,
+  openLabel,
+  waitingLabel,
+  onSelectScan,
+}: ScanRowProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectScan(scan.id)}
+      aria-label={`${openLabel} for ${scan.target}`}
+      className={`scan-row${selectedScanId === scan.id ? ' scan-row--active' : ''}`}
+    >
+      <div className="scan-row__main">
+        <h4>{scan.target}</h4>
+        <p>{scan.summary ?? waitingLabel}</p>
+      </div>
+      <div className="scan-row__meta">
+        <ScanStatusBadge status={scan.status} />
+        <ScoreBadge score={scan.score} />
+        <span className="scan-row__cta">{openLabel}</span>
+      </div>
+    </button>
   )
 }

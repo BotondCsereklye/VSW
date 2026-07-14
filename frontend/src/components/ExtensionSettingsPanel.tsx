@@ -97,6 +97,11 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
         <p className="extension-settings__eyebrow">{t('extension.eyebrow')}</p>
         <h2>{t('extension.title')}</h2>
         <p>{t('extension.description')}</p>
+        {!isAvailable ? (
+          <p className="extension-settings__warning" role="status">
+            Browser protection inactive. Enable or reload the VSW Link Capture extension.
+          </p>
+        ) : null}
       </div>
 
       <div className="extension-settings__controls">
