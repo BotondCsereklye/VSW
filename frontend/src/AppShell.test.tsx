@@ -237,6 +237,42 @@ describe('AppShell', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/unable to load scans/i)).toBeInTheDocument()
+    expect((await screen.findAllByText(/backend is offline/i)).length).toBeGreaterThan(0)
+  })
+
+  test('shows offline state and reconnects when the backend returns', async () => {
+    fetchMock
+      .mockRejectedValueOnce(new Error('Backend offline'))
+      .mockImplementationOnce(() =>
+        jsonResponse([
+          {
+            id: 'scan-online',
+            target: 'example.com',
+            normalized_target: 'example.com',
+            target_type: 'domain',
+            status: 'completed',
+            score: 88,
+            summary: 'Recovered backend',
+            started_at: null,
+            completed_at: '2026-05-28T08:30:00Z',
+            created_at: '2026-05-28T08:00:00Z',
+            updated_at: '2026-05-28T08:30:00Z',
+          },
+        ]),
+      )
+
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppShell />
+      </MemoryRouter>,
+    )
+
+    expect((await screen.findAllByText(/backend is offline/i)).length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole('button', { name: /reconnect/i }))
+
+    expect(await screen.findByText(/backend online/i)).toBeInTheDocument()
+    expect(await screen.findByText(/recovered backend/i)).toBeInTheDocument()
   })
 })
