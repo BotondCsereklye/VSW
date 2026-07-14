@@ -151,6 +151,43 @@
   font-weight: 600;
 }
 
+.app-shell__connection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-panel);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.app-shell__connection[data-state='online'] {
+  border-left: 6px solid var(--ink);
+}
+
+.app-shell__connection[data-state='offline'] {
+  border-left: 6px solid var(--danger);
+  color: var(--ink);
+}
+
+.app-shell__connection[data-state='checking'] {
+  border-left: 6px solid var(--warning);
+}
+
+.app-shell__connection button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--ink);
+  color: var(--bg-panel);
+  font: inherit;
+  cursor: pointer;
+}
+
 .app-shell__content {
   display: grid;
   gap: 20px;
