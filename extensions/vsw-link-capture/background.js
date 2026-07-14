@@ -21,6 +21,7 @@ const recentlyScannedHosts = new Map();
 
 chrome.runtime.onInstalled.addListener(() => {
   void ensureSettings();
+  void injectContentScriptsIntoOpenTabs();
 
   chrome.contextMenus.create({
     id: MENU_SCAN_LINK,
@@ -33,6 +34,11 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "Scan current tab with VSW",
     contexts: ["page", "action"],
   });
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void ensureSettings();
+  void injectContentScriptsIntoOpenTabs();
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
@@ -54,6 +60,16 @@ if (chrome.webNavigation?.onCompleted) {
     }
 
     void createPassiveNavigationScan(details.url);
+  });
+}
+
+if (chrome.tabs?.onUpdated) {
+  chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+    if (changeInfo.status !== "complete" || !tab.url) {
+      return;
+    }
+
+    void createPassiveNavigationScan(tab.url);
   });
 }
 
@@ -222,6 +238,8 @@ async function createPassiveNavigationScan(rawUrl) {
     return;
   }
 
+  rememberScannedHost(parsed.target);
+
   await createScanFromTarget(parsed.target, {
     openScanView: false,
     waitForCompletion: false,
@@ -239,7 +257,7 @@ async function gateNavigation(rawUrl) {
     return {
       ok: true,
       allowNavigation: true,
-      message: `${parsedTarget.target} is trusted in VSW. Navigation continues without blocking.`,
+      message: `Automatically allowed entry: ${parsedTarget.target} is trusted in VSW.`,
       target: parsedTarget.target,
     };
   }
@@ -308,7 +326,7 @@ async function scanTargetAndVisit(rawTarget) {
     await openVisitUrl(normalized.visitUrl);
     return {
       ok: true,
-      message: `${normalized.target} is trusted in VSW. Navigation continues without blocking.`,
+      message: `Automatically allowed entry: ${normalized.target} is trusted in VSW.`,
       scanId: null,
       detail: null,
     };
@@ -383,6 +401,27 @@ async function isBackendReachable() {
   } catch (_error) {
     return false;
   }
+}
+
+async function injectContentScriptsIntoOpenTabs() {
+  if (!chrome.scripting?.executeScript || !chrome.tabs?.query) {
+    return;
+  }
+
+  const tabs = await chrome.tabs.query({
+    url: ["http://*/*", "https://*/*"],
+  });
+
+  await Promise.allSettled(
+    tabs
+      .filter((tab) => tab.id !== undefined && tab.url && !isLocalVswUrl(tab.url))
+      .map(async (tab) => {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["runtime-fallback.js", "content-script.js"],
+        });
+      }),
+  );
 }
 
 function extractTarget(rawUrl) {
