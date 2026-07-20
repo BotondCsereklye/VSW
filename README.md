@@ -5,6 +5,8 @@ Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder
 ## Dokumentation
 
 - Projektarchitektur und Zielbild: [docs/architecture-plan.md](docs/architecture-plan.md)
+- Demo- und User-Guide: [docs/demo-guide.md](docs/demo-guide.md)
+- Release-Checkliste: [docs/release-checklist.md](docs/release-checklist.md)
 - Mobile- und PWA-Zielbild: [docs/mobile-plan.md](docs/mobile-plan.md)
 - Backend-Setup und API-Hinweise: [backend/README.md](backend/README.md)
 - Mehrsprachige Benutzeranleitungen: [EN](docs/i18n/README.en.md), [DE](docs/i18n/README.de.md), [HU](docs/i18n/README.hu.md), [SR](docs/i18n/README.sr.md), [RU](docs/i18n/README.ru.md)

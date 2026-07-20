@@ -74,7 +74,6 @@ Damit bleibt die Produktlogik nachvollziehbar: Die Extension schützt den Browse
 Nach Sleep/Restart gilt: Das Frontend zeigt Backend offline statt alte Daten als live zu verkaufen, die Extension prüft `/api/v1/health` vor Scan-Erstellung, und alte Tabs dürfen bei Runtime-Verlust nicht dauerhaft blockiert bleiben.
 
 ## Warum Launcher und Extension zusammen sinnvoll sind
-## Warum Launcher und Extension zusammen sinnvoll sind
 
 - Die eigentlichen defensiven Checks liegen im lokalen Backend und brauchen Python, TLS-Logik, Datenpersistenz und kontrollierte Netzwerkaufrufe.
 - Der Launcher reduziert die lokale Start-Reibung deutlich und ersetzt das Terminal-Jonglieren.
