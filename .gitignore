@@ -24,3 +24,4 @@ frontend/.vite/
 extensions/*.crx
 extensions/*.pem
 postgres-data/
+.local/
