@@ -24,6 +24,7 @@ import {
   setSafetyMessageRetentionMinutes,
   type SafetyMessage,
 } from './safetyMessages'
+import { getRecentScanMinutes, setRecentScanMinutes } from './scanDisplaySettings'
 import type { ScanDetail, ScanExportFormat, ScanSummary } from './types/scan'
 
 const ACTIVE_SCAN_POLL_INTERVAL_MS = 1500
@@ -58,6 +59,7 @@ export function AppShell() {
   const [safetyRetentionMinutes, setSafetyRetentionMinutes] = useState(() =>
     getSafetyMessageRetentionMinutes(),
   )
+  const [recentScanMinutes, setRecentScanMinutesState] = useState(() => getRecentScanMinutes())
   const hasActiveScans = scans.some((scan) => isScanInProgress(scan.status))
   const shouldPollSelectedScan =
     scanId !== null &&
@@ -287,6 +289,10 @@ export function AppShell() {
     setSafetyMessages(loadSafetyMessages())
   }
 
+  function handleRecentScanMinutesChange(minutes: number) {
+    setRecentScanMinutesState(setRecentScanMinutes(minutes))
+  }
+
   async function handleExport(format: ScanExportFormat) {
     if (!scanId) {
       return
@@ -377,6 +383,8 @@ export function AppShell() {
             <ScanDashboard
               scans={scans}
               selectedScanId={scanId ?? null}
+              recentMinutes={recentScanMinutes}
+              onRecentMinutesChange={handleRecentScanMinutesChange}
               onSelectScan={handleSelectScan}
             />
           )}

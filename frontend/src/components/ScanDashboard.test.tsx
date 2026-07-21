@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 
 import type { ScanSummary } from '../types/scan'
-import { groupScansByScoreBand } from './ScanDashboard.logic'
+import { groupScansByScoreBand, splitScansByRecency } from './ScanDashboard.logic'
 import { ScanDashboard } from './ScanDashboard'
 
 function scan(overrides: Partial<ScanSummary>): ScanSummary {
@@ -33,9 +33,12 @@ test('ScanDashboard makes the full scan card clickable to open a report', async 
         scan({
           id: 'scan-1',
           target: 'example.com',
+          created_at: '2026-05-28T07:30:00Z',
         }),
       ]}
       selectedScanId={null}
+      recentMinutes={20}
+      onRecentMinutesChange={vi.fn()}
       onSelectScan={onSelectScan}
     />,
   )
@@ -50,7 +53,15 @@ test('ScanDashboard makes the full scan card clickable to open a report', async 
 
 
 test('ScanDashboard renders an empty state when no scans exist', () => {
-  render(<ScanDashboard scans={[]} selectedScanId={null} onSelectScan={vi.fn()} />)
+  render(
+    <ScanDashboard
+      scans={[]}
+      selectedScanId={null}
+      recentMinutes={20}
+      onRecentMinutesChange={vi.fn()}
+      onSelectScan={vi.fn()}
+    />,
+  )
 
   expect(screen.getByText(/no scans yet/i)).toBeInTheDocument()
 })
@@ -75,6 +86,21 @@ test('groupScansByScoreBand groups scans into score classes and keeps pending sc
   ])
 })
 
+test('splitScansByRecency keeps fresh scans out of score categories until the timeout passes', () => {
+  const now = Date.parse('2026-05-28T08:30:00Z')
+  const { recentScans, archivedScans } = splitScansByRecency(
+    [
+      scan({ id: 'fresh', created_at: '2026-05-28T08:20:00Z', score: 91 }),
+      scan({ id: 'old', created_at: '2026-05-28T07:50:00Z', score: 91 }),
+    ],
+    20,
+    now,
+  )
+
+  expect(recentScans.map((item) => item.id)).toEqual(['fresh'])
+  expect(archivedScans.map((item) => item.id)).toEqual(['old'])
+})
+
 
 test('ScanDashboard renders score classification sections as collapsed groups', async () => {
   const user = userEvent.setup()
@@ -85,13 +111,16 @@ test('ScanDashboard renders score classification sections as collapsed groups', 
         scan({ id: 'scan-watch', target: 'watch.example', score: 63 }),
         scan({ id: 'scan-critical', target: 'critical.example', score: 12 }),
         scan({ id: 'scan-pending', target: 'pending.example', status: 'pending', score: null }),
-      ]}
+      ].map((item) => ({ ...item, created_at: '2026-05-28T07:30:00Z' }))}
       selectedScanId="scan-critical"
+      recentMinutes={20}
+      onRecentMinutesChange={vi.fn()}
       onSelectScan={vi.fn()}
     />,
   )
 
-  expect(screen.getByRole('heading', { name: 'Pending' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: /recent scan inbox/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /open report for pending.example/i })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: '75+' })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: '50+' })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: '0+' })).toBeInTheDocument()

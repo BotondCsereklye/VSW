@@ -7,6 +7,11 @@ export type ScanScoreBand = {
   scans: ScanSummary[]
 }
 
+export type SplitScansByRecencyResult = {
+  recentScans: ScanSummary[]
+  archivedScans: ScanSummary[]
+}
+
 const SCORE_BANDS = [
   {
     id: 'score-75',
@@ -60,4 +65,26 @@ export function groupScansByScoreBand(scans: ScanSummary[]): ScanScoreBand[] {
   }
 
   return groups
+}
+
+export function splitScansByRecency(
+  scans: ScanSummary[],
+  recentMinutes: number,
+  now = Date.now(),
+): SplitScansByRecencyResult {
+  const maxAgeMs = Math.max(10, Math.min(30, recentMinutes)) * 60 * 1000
+  const recentScans: ScanSummary[] = []
+  const archivedScans: ScanSummary[] = []
+
+  for (const scan of scans) {
+    const createdAt = Date.parse(scan.created_at)
+    const isRecent = Number.isFinite(createdAt) && now - createdAt <= maxAgeMs
+    if (isRecent || scan.score === null) {
+      recentScans.push(scan)
+    } else {
+      archivedScans.push(scan)
+    }
+  }
+
+  return { recentScans, archivedScans }
 }

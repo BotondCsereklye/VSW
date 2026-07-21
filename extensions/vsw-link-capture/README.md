@@ -13,6 +13,9 @@ This extension is a defensive helper for local development. It does not scan on 
 - Adds live click capture for normal in-page link clicks (http/https)
 - Records completed browser navigations with `webNavigation` so address-bar,
   bookmark-bar, and pinned-link visits still create passive VSW reports
+- Uses `tabs.onUpdated` as a fallback for browsers where completed navigation
+  events are less reliable
+- Injects the live capture scripts into already open tabs after install/startup
 - Runs pre-scan before navigation and then continues navigation when the score passes
 - Falls back to normal navigation when an already injected content script loses its extension runtime
 - Checks backend health before creating scans so offline backend state does not create phantom scans
@@ -38,7 +41,8 @@ This extension is a defensive helper for local development. It does not scan on 
 3. Click `Load unpacked`
 4. Select folder: `extensions/vsw-link-capture`
 5. Open `Details` and set website access to `On all sites`
-6. Reload target pages after changing extension permissions
+6. Reload target pages after changing extension permissions. Existing tabs are
+   also reinjected on startup/install where the browser allows it.
 
 ## Usage
 
@@ -129,6 +133,8 @@ state defensively:
 - the popup shows `Backend: Offline` and offers `Retry connection`
 - old content scripts continue navigation after runtime timeout instead of
   leaving links permanently blocked
+- already open tabs receive a best-effort script injection after extension
+  startup, so many old tabs work without a manual refresh
 
 Trusted hosts and score-ignore hosts are normalized before comparison. Stored
 rules such as `https://www.github.com/settings`, `www.github.com`, and
@@ -177,7 +183,8 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
   - Reload extension in developer mode and refresh current page.
 - Live capture does not trigger:
   - Confirm website access is set to `On all sites`.
-  - Reload the page with `Ctrl+F5`.
+  - Reload the extension once, then test the existing tab again.
+  - Reload the page with `Ctrl+F5` if the browser refused script injection.
   - Test on a normal in-page link, not the browser address bar or tab strip.
 - Address-bar or bookmark visits do not block before loading:
   - This is a browser limitation.
