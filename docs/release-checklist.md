@@ -18,9 +18,20 @@ VSW wird als lokales defensives Security-Toolkit veröffentlicht:
 
 - `main` enthält nur geprüfte, gemergte Änderungen.
 - Alte Feature-Branches sind gelöscht oder klar begründet.
+- Vor dem Löschen von Branches wird geprüft, ob sie bereits in `main` enthalten sind.
 - Keine lokalen Datenbanken, Build-Artefakte oder virtuelle Umgebungen sind getrackt.
 - `.env.example` ist aktuell.
 - README verweist auf Demo Guide, Release Checklist und Extension README.
+
+Branch-Cleanup sicher prüfen:
+
+```bash
+git fetch --all --prune
+git branch --merged main
+git branch -r --merged origin/main
+```
+
+Nur Branches löschen, die bereits gemergt oder bewusst verworfen sind. Unklare Arbeitsbranches bleiben erhalten, bis der Inhalt geprüft wurde.
 
 ### Windows-Launcher
 
