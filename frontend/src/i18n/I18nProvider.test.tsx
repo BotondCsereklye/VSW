@@ -29,12 +29,15 @@ test('language selector stores the selected language', async () => {
     </I18nProvider>,
   )
 
-  expect(screen.getByRole('button', { name: 'English' })).toHaveTextContent('EN')
-  expect(screen.getByRole('button', { name: 'Deutsch' })).toHaveTextContent('DE')
-  expect(screen.queryByText('🇬🇧')).not.toBeInTheDocument()
-  expect(screen.queryByText('🇨🇭')).not.toBeInTheDocument()
+  const englishButton = screen.getByRole('button', { name: 'English' })
+  const germanButton = screen.getByRole('button', { name: 'Deutsch' })
 
-  await user.click(screen.getByRole('button', { name: 'Deutsch' }))
+  expect(englishButton).not.toHaveTextContent('EN')
+  expect(germanButton).not.toHaveTextContent('DE')
+  expect(englishButton.querySelector('.language-flag--en')).not.toBeNull()
+  expect(germanButton.querySelector('.language-flag--de')).not.toBeNull()
+
+  await user.click(germanButton)
 
   expect(window.localStorage.getItem('vsw-language')).toBe('de')
   expect(screen.getByText('Sicheren Scan starten')).toBeInTheDocument()

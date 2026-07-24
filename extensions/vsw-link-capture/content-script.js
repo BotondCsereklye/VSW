@@ -104,7 +104,15 @@
               score: result.score,
               minimumAllowedScore: result.minimumAllowedScore,
             },
-          }).catch(() => undefined);
+          })
+            .then((openResult) => {
+              if (!openResult?.ok) {
+                showToast(openResult?.error || "Start VSW to open the report.", true);
+              }
+            })
+            .catch(() => {
+              showToast("Start VSW to open the report.", true);
+            });
         }, delayMs);
       }
       return;

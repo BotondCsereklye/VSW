@@ -2,6 +2,7 @@ import { startTransition, useCallback, useEffect, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router-dom'
 
 import {
+  ApiError,
   createScan,
   discoverScanLinks,
   exportScan,
@@ -65,6 +66,7 @@ export function AppShell() {
     scanId !== null &&
     selectedScan?.id === scanId &&
     isScanInProgress(selectedScan.status)
+  const visibleErrorMessage = errorMessage === BACKEND_OFFLINE_MESSAGE ? null : errorMessage
 
   const refreshScans = useCallback(async () => {
     setIsLoadingScans(true)
@@ -265,8 +267,12 @@ export function AppShell() {
       })
       navigate(`/scans/${createdScan.id}`)
       return true
-    } catch {
-      setConnectionStatus('offline')
+    } catch (error) {
+      if (error instanceof ApiError && error.status < 500) {
+        setConnectionStatus('online')
+      } else {
+        setConnectionStatus('offline')
+      }
       setErrorMessage(t('error.createScan'))
       return false
     } finally {
@@ -366,7 +372,7 @@ export function AppShell() {
         ) : null}
       </section>
 
-      {errorMessage ? <p className="app-shell__error">{errorMessage}</p> : null}
+      {visibleErrorMessage ? <p className="app-shell__error">{visibleErrorMessage}</p> : null}
 
       <ExtensionSettingsPanel scans={scans} />
 

@@ -10,6 +10,7 @@ import {
 import { buildHostSummaries, toggleHost } from '../hostRules'
 import { useTranslation } from '../i18n/useTranslation'
 import type { ScanSummary } from '../types/scan'
+import { NumericSettingInput } from './NumericSettingInput'
 
 const EXTENSION_RETRY_INTERVAL_MS = 2000
 
@@ -129,16 +130,15 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
 
         <label className="extension-settings__score">
           <span>{t('extension.minimumScore')}</span>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            step="1"
+          <NumericSettingInput
+            min={0}
+            max={100}
             value={settings.minimumAllowedScore}
-            onChange={(event) =>
+            ariaLabel={t('extension.minimumScore')}
+            onCommit={(value) =>
               void updateSettings({
                 ...settings,
-                minimumAllowedScore: normalizeMinimumScore(event.target.value),
+                minimumAllowedScore: normalizeMinimumScore(value),
               })
             }
           />
@@ -162,6 +162,14 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
           <strong>{t('extension.hosts', { count: hostSummaries.length })}</strong>
         </summary>
         <p>{t('extension.rulesHelp')}</p>
+        <div className="extension-settings__rule-legend" aria-label="Website rule explanation">
+          <p>
+            <strong>{t('extension.ignoreScore')}:</strong> {t('extension.ignoreScoreHelp')}
+          </p>
+          <p>
+            <strong>{t('extension.trustSite')}:</strong> {t('extension.trustSiteHelp')}
+          </p>
+        </div>
         {hostSummaries.length === 0 ? (
           <p className="extension-settings__empty">{t('extension.noHosts')}</p>
         ) : (

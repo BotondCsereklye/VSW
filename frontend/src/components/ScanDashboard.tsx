@@ -1,6 +1,7 @@
 import type { ScanSummary } from '../types/scan'
 import { useTranslation } from '../i18n/useTranslation'
 import { groupScansByScoreBand, splitScansByRecency } from './ScanDashboard.logic'
+import { NumericSettingInput } from './NumericSettingInput'
 import { ScanStatusBadge } from './ScanStatusBadge'
 import { ScoreBadge } from './ScoreBadge'
 
@@ -32,6 +33,7 @@ export function ScanDashboard({
 
   const { recentScans, archivedScans } = splitScansByRecency(scans, recentMinutes)
   const groups = groupScansByScoreBand(archivedScans)
+  const archivedCount = archivedScans.length
 
   return (
     <section className="scan-dashboard">
@@ -39,15 +41,13 @@ export function ScanDashboard({
         <div>
           <h2>{t('dashboard.title')}</h2>
           <label className="scan-dashboard__recent-setting">
-            <span>Move recent scans after</span>
-            <input
-              type="number"
-              min="10"
-              max="30"
+            <span>{t('dashboard.recentRetention')}</span>
+            <NumericSettingInput
+              min={10}
+              max={30}
               value={recentMinutes}
-              onChange={(event) =>
-                onRecentMinutesChange(Number.parseInt(event.target.value || '20', 10))
-              }
+              ariaLabel={t('dashboard.recentAria')}
+              onCommit={onRecentMinutesChange}
             />
             <span>min</span>
           </label>
@@ -57,11 +57,11 @@ export function ScanDashboard({
       <div className="scan-dashboard__list">
         <section className="scan-dashboard__recent">
           <header>
-            <h3>Recent scan inbox</h3>
+            <h3>{t('dashboard.recentInbox')}</h3>
             <span>{recentScans.length}</span>
           </header>
           {recentScans.length === 0 ? (
-            <p>No fresh scans waiting for classification.</p>
+            <p>{t('dashboard.recentEmpty')}</p>
           ) : (
             <div className="scan-dashboard__group-list">
               {recentScans.map((scan) => (
@@ -77,6 +77,10 @@ export function ScanDashboard({
             </div>
           )}
         </section>
+        <div className="scan-dashboard__category-title">
+          <h3>{t('dashboard.scoreCategories')}</h3>
+          <span>{t('dashboard.classified', { count: archivedCount })}</span>
+        </div>
         {groups.map((group) => (
           <details key={group.id} className={`scan-dashboard__group scan-dashboard__group--${group.id}`}>
             <summary className="scan-dashboard__group-header">

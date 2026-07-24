@@ -1,5 +1,6 @@
 import type { SafetyMessage } from '../safetyMessages'
 import { useTranslation } from '../i18n/useTranslation'
+import { NumericSettingInput } from './NumericSettingInput'
 
 type SafetyMessagesPanelProps = {
   messages: SafetyMessage[]
@@ -24,12 +25,12 @@ export function SafetyMessagesPanel({
         </div>
         <label>
           <span>{t('safety.retention')}</span>
-          <input
-            type="number"
-            min="1"
-            max="60"
+          <NumericSettingInput
+            min={1}
+            max={60}
             value={retentionMinutes}
-            onChange={(event) => onRetentionChange(Number.parseInt(event.target.value || '5', 10))}
+            ariaLabel={t('safety.retention')}
+            onCommit={onRetentionChange}
           />
           <span>{t('safety.minutes')}</span>
         </label>
