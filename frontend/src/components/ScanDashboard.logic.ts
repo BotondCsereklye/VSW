@@ -77,8 +77,8 @@ export function splitScansByRecency(
   const archivedScans: ScanSummary[] = []
 
   for (const scan of scans) {
-    const createdAt = Date.parse(scan.created_at)
-    const isRecent = Number.isFinite(createdAt) && now - createdAt <= maxAgeMs
+    const activityAt = getLatestScanActivityTime(scan)
+    const isRecent = Number.isFinite(activityAt) && now - activityAt <= maxAgeMs
     if (isRecent || scan.score === null) {
       recentScans.push(scan)
     } else {
@@ -87,4 +87,12 @@ export function splitScansByRecency(
   }
 
   return { recentScans, archivedScans }
+}
+
+function getLatestScanActivityTime(scan: ScanSummary) {
+  return Math.max(
+    ...[scan.updated_at, scan.completed_at, scan.started_at, scan.created_at]
+      .map((value) => (value === null ? Number.NaN : Date.parse(value)))
+      .filter((value) => Number.isFinite(value)),
+  )
 }

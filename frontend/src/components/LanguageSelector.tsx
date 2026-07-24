@@ -16,7 +16,7 @@ export function LanguageSelector() {
           title={option.label}
           onClick={() => setLanguage(option.code)}
         >
-          <span aria-hidden="true">{option.shortLabel}</span>
+          <span className={`language-flag ${option.flagClass}`} aria-hidden="true" />
         </button>
       ))}
     </div>

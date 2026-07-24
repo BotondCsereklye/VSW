@@ -5,6 +5,7 @@ const MENU_SCAN_TAB = "vsw-scan-current-tab";
 const VSW_API_URL = "http://127.0.0.1:8000/api/v1/scans";
 const VSW_HEALTH_URL = "http://127.0.0.1:8000/api/v1/health";
 const VSW_APP_BASE_URL = "http://127.0.0.1:5173";
+const VSW_APP_HEALTH_URL = "http://127.0.0.1:5173/";
 const SETTINGS_KEY = "vswLinkCaptureSettings";
 const SCAN_POLL_INTERVAL_MS = 1200;
 const SCAN_POLL_TIMEOUT_MS = 20000;
@@ -96,8 +97,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       }
 
       if (message?.type === "open-scan-report") {
-        await openOrFocusScanView(message.scanId, message.notice || {});
-        sendResponse({ ok: true });
+        const opened = await openOrFocusScanView(message.scanId, message.notice || {}, {
+          requireReachable: true,
+        });
+        sendResponse(
+          opened
+            ? { ok: true }
+            : {
+                ok: false,
+                error: "VSW frontend is offline. Start VSW before opening the report.",
+              },
+        );
         return;
       }
 
@@ -403,6 +413,18 @@ async function isBackendReachable() {
   }
 }
 
+async function isFrontendReachable() {
+  try {
+    const response = await fetch(VSW_APP_HEALTH_URL, {
+      method: "GET",
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch (_error) {
+    return false;
+  }
+}
+
 async function injectContentScriptsIntoOpenTabs() {
   if (!chrome.scripting?.executeScript || !chrome.tabs?.query) {
     return;
@@ -489,11 +511,15 @@ async function openVisitUrl(url) {
   await chrome.tabs.create({ url });
 }
 
-async function openOrFocusScanView(scanId, notice = {}) {
-  return openOrFocusVswApp(buildScanViewUrl(scanId, notice));
+async function openOrFocusScanView(scanId, notice = {}, options = {}) {
+  return openOrFocusVswApp(buildScanViewUrl(scanId, notice), options);
 }
 
-async function openOrFocusVswApp(url) {
+async function openOrFocusVswApp(url, options = {}) {
+  if (options.requireReachable && !(await isFrontendReachable())) {
+    return false;
+  }
+
   const tabs = await chrome.tabs.query({
     url: [
       `${VSW_APP_BASE_URL}/*`,
@@ -507,10 +533,11 @@ async function openOrFocusVswApp(url) {
     if (existingTab.windowId !== undefined) {
       await chrome.windows.update(existingTab.windowId, { focused: true });
     }
-    return;
+    return true;
   }
 
   await chrome.tabs.create({ url });
+  return true;
 }
 
 function buildScanViewUrl(scanId, notice = {}) {

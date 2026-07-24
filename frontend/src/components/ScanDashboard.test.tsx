@@ -91,7 +91,14 @@ test('splitScansByRecency keeps fresh scans out of score categories until the ti
   const { recentScans, archivedScans } = splitScansByRecency(
     [
       scan({ id: 'fresh', created_at: '2026-05-28T08:20:00Z', score: 91 }),
-      scan({ id: 'old', created_at: '2026-05-28T07:50:00Z', score: 91 }),
+      scan({
+        id: 'old',
+        created_at: '2026-05-28T07:50:00Z',
+        started_at: '2026-05-28T07:50:00Z',
+        completed_at: '2026-05-28T07:55:00Z',
+        updated_at: '2026-05-28T07:55:00Z',
+        score: 91,
+      }),
     ],
     20,
     now,

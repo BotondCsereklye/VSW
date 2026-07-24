@@ -28,6 +28,8 @@
   --code-ink: #ffffff;
   --state-muted: #e2e2e2;
   --state-strong: #000000;
+  --ui-radius: 14px;
+  --ui-radius-sm: 10px;
 }
 
 :root[data-theme='dark'] {
@@ -61,6 +63,7 @@
 
 html {
   min-width: 320px;
+  scrollbar-gutter: stable;
 }
 
 body {

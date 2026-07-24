@@ -31,12 +31,13 @@ function expectOnlyGrayscaleColors(source: string) {
   }
 }
 
-test('frontend styling stays monochrome, square and free of decorative transitions', () => {
+test('frontend styling stays restrained, consistent and free of decorative motion', () => {
   const appCss = readFrontendFile('src/App.css')
   const indexCss = readFrontendFile('src/index.css')
   const css = `${indexCss}\n${appCss}`
+  const cssWithoutFlags = css.replace(/\.language-flag--[a-z]+\s*{[^}]*}/g, '')
 
-  expect(css).not.toMatch(/(?:linear|radial)-gradient/i)
+  expect(cssWithoutFlags).not.toMatch(/(?:linear|radial)-gradient/i)
   expect(css).not.toContain('color-mix(')
   expect(css).not.toMatch(/\btransition\s*:/)
   expect(css).not.toMatch(/\banimation\s*:/)
@@ -44,8 +45,10 @@ test('frontend styling stays monochrome, square and free of decorative transitio
 
   const radii = [...css.matchAll(/border-radius:\s*([^;]+);/g)].map(([, value]) => value.trim())
   expect(radii.length).toBeGreaterThan(0)
-  expect(new Set(radii)).toEqual(new Set(['0']))
-  expectOnlyGrayscaleColors(css)
+  expect(new Set(radii)).toEqual(
+    new Set(['0', '3px', '12px', '999px', 'var(--ui-radius)', 'var(--ui-radius-sm)']),
+  )
+  expectOnlyGrayscaleColors(cssWithoutFlags)
 
   expect(appCss).toMatch(/\.app-shell h1\s*{[^}]*font-family:\s*Georgia/s)
   expect(appCss).not.toContain('line-height: 0.94')
