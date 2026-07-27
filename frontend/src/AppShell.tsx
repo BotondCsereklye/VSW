@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router-dom'
 
 import {
@@ -44,6 +44,8 @@ export function AppShell() {
   const matchedRoute = matchPath('/scans/:scanId', location.pathname)
   const scanId = matchedRoute?.params.scanId ?? null
   const [scans, setScans] = useState<ScanSummary[]>([])
+  const knownScanIdsRef = useRef<Set<string> | null>(null)
+  const [clientSeenScans, setClientSeenScans] = useState<Record<string, number>>({})
   const [selectedScan, setSelectedScan] = useState<ScanDetail | null>(null)
   const [scanHistory, setScanHistory] = useState<ScanSummary[]>([])
   const [discoveredLinks, setDiscoveredLinks] = useState<string[]>([])
@@ -68,12 +70,49 @@ export function AppShell() {
     isScanInProgress(selectedScan.status)
   const visibleErrorMessage = errorMessage === BACKEND_OFFLINE_MESSAGE ? null : errorMessage
 
+  const decorateScansWithClientSeenAt = useCallback(
+    (nextScans: ScanSummary[]) =>
+      nextScans.map((scan) => ({
+        ...scan,
+        client_seen_at: clientSeenScans[scan.id],
+      })),
+    [clientSeenScans],
+  )
+
+  const rememberNewScans = useCallback((nextScans: ScanSummary[]) => {
+    const nextIds = new Set(nextScans.map((scan) => scan.id))
+    const knownIds = knownScanIdsRef.current
+
+    if (knownIds === null) {
+      knownScanIdsRef.current = nextIds
+      return
+    }
+
+    const newScanIds = nextScans
+      .map((scan) => scan.id)
+      .filter((scanId) => !knownIds.has(scanId))
+
+    if (newScanIds.length > 0) {
+      const seenAt = Date.now()
+      setClientSeenScans((previous) => {
+        const next = { ...previous }
+        for (const scanId of newScanIds) {
+          next[scanId] = seenAt
+        }
+        return next
+      })
+    }
+
+    knownScanIdsRef.current = nextIds
+  }, [])
+
   const refreshScans = useCallback(async () => {
     setIsLoadingScans(true)
     setConnectionStatus('checking')
     try {
       const response = await listScans()
       startTransition(() => {
+        rememberNewScans(response)
         setScans(response)
         setErrorMessage(null)
         setConnectionStatus('online')
@@ -91,7 +130,7 @@ export function AppShell() {
     } finally {
       setIsLoadingScans(false)
     }
-  }, [])
+  }, [rememberNewScans])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -154,6 +193,7 @@ export function AppShell() {
           }
 
           startTransition(() => {
+            rememberNewScans(response)
             setScans(response)
             setErrorMessage(null)
           })
@@ -170,7 +210,7 @@ export function AppShell() {
       isActive = false
       window.clearInterval(intervalId)
     }
-  }, [hasActiveScans, t])
+  }, [hasActiveScans, rememberNewScans, t])
 
   useEffect(() => {
     if (!scanId) {
@@ -261,6 +301,8 @@ export function AppShell() {
       const createdScan = await createScan(target)
       const refreshedScans = await listScans()
       startTransition(() => {
+        rememberNewScans(refreshedScans)
+        setClientSeenScans((previous) => ({ ...previous, [createdScan.id]: Date.now() }))
         setScans(refreshedScans)
         setErrorMessage(null)
         setConnectionStatus('online')
@@ -387,7 +429,7 @@ export function AppShell() {
             <p>{t('loading.scans')}</p>
           ) : (
             <ScanDashboard
-              scans={scans}
+              scans={decorateScansWithClientSeenAt(scans)}
               selectedScanId={scanId ?? null}
               recentMinutes={recentScanMinutes}
               onRecentMinutesChange={handleRecentScanMinutesChange}

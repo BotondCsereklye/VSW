@@ -21,9 +21,14 @@
   --ink-soft: #5c5c5c;
   --accent: #0a0a0a;
   --accent-deep: #0a0a0a;
-  --success: #0a0a0a;
-  --warning: #3d3d3d;
-  --danger: #000000;
+  --success: #15803d;
+  --success-bg: #dcfce7;
+  --success-ink: #052e16;
+  --warning: #a16207;
+  --danger: #b42318;
+  --danger-bg: #fee2e2;
+  --danger-ink: #450a0a;
+  --focus: var(--ink);
   --code-bg: #0a0a0a;
   --code-ink: #ffffff;
   --state-muted: #e2e2e2;
@@ -48,9 +53,14 @@
   --ink-soft: #b5b5b5;
   --accent: #f7f7f7;
   --accent-deep: #f7f7f7;
-  --success: #f7f7f7;
-  --warning: #c7c7c7;
-  --danger: #ffffff;
+  --success: #4ade80;
+  --success-bg: #052e16;
+  --success-ink: #dcfce7;
+  --warning: #facc15;
+  --danger: #f87171;
+  --danger-bg: #450a0a;
+  --danger-ink: #fee2e2;
+  --focus: var(--ink);
   --code-bg: #000000;
   --code-ink: #ffffff;
   --state-muted: #242424;
@@ -93,10 +103,15 @@ input[type='checkbox'] {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-summary:focus-visible,
+summary:focus-visible {
+  outline: 0;
+  border-color: var(--focus) !important;
+  border-width: 3px !important;
+}
+
 a:focus-visible {
-  outline: 3px solid var(--ink);
-  outline-offset: 3px;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 pre,

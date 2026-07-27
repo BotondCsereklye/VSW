@@ -46,6 +46,13 @@ export function ReportDetail({
   const [activeSnapshotPanel, setActiveSnapshotPanel] = useState<SnapshotPanel | null>(null)
   const [expandedFindingsForScanId, setExpandedFindingsForScanId] = useState<string | null>(null)
 
+  function closeSnapshotPanel() {
+    setActiveSnapshotPanel(null)
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+  }
+
   const snapshotTitle = activeSnapshotPanel === 'tls' ? t('report.tls') : t('report.headers')
   const snapshotContent = useMemo(() => {
     if (scan === null || activeSnapshotPanel === null) {
@@ -68,7 +75,7 @@ export function ReportDetail({
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        setActiveSnapshotPanel(null)
+        closeSnapshotPanel()
       }
     }
 
@@ -98,7 +105,7 @@ export function ReportDetail({
       ? createPortal(
           <div
             className="report-detail__modal-backdrop"
-            onClick={() => setActiveSnapshotPanel(null)}
+            onClick={closeSnapshotPanel}
             role="presentation"
           >
             <section
@@ -114,7 +121,7 @@ export function ReportDetail({
                   type="button"
                   className="report-detail__modal-close"
                   aria-label={t('report.closeDetails')}
-                  onClick={() => setActiveSnapshotPanel(null)}
+                  onClick={closeSnapshotPanel}
                 >
                   X
                 </button>

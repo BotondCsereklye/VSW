@@ -35,9 +35,11 @@ test('frontend styling stays restrained, consistent and free of decorative motio
   const appCss = readFrontendFile('src/App.css')
   const indexCss = readFrontendFile('src/index.css')
   const css = `${indexCss}\n${appCss}`
-  const cssWithoutFlags = css.replace(/\.language-flag--[a-z]+\s*{[^}]*}/g, '')
+  const cssWithoutFlagsAndStates = css
+    .replace(/\.language-flag--[a-z]+\s*{[^}]*}/g, '')
+    .replace(/\s*--(?:success|success-bg|success-ink|warning|danger|danger-bg|danger-ink):[^;]+;/g, '')
 
-  expect(cssWithoutFlags).not.toMatch(/(?:linear|radial)-gradient/i)
+  expect(cssWithoutFlagsAndStates).not.toMatch(/(?:linear|radial)-gradient/i)
   expect(css).not.toContain('color-mix(')
   expect(css).not.toMatch(/\btransition\s*:/)
   expect(css).not.toMatch(/\banimation\s*:/)
@@ -48,7 +50,7 @@ test('frontend styling stays restrained, consistent and free of decorative motio
   expect(new Set(radii)).toEqual(
     new Set(['0', '3px', '12px', '999px', 'var(--ui-radius)', 'var(--ui-radius-sm)']),
   )
-  expectOnlyGrayscaleColors(cssWithoutFlags)
+  expectOnlyGrayscaleColors(cssWithoutFlagsAndStates)
 
   expect(appCss).toMatch(/\.app-shell h1\s*{[^}]*font-family:\s*Georgia/s)
   expect(appCss).not.toContain('line-height: 0.94')
@@ -64,3 +66,4 @@ test('brand artwork is flat, square and monochrome', () => {
     expectOnlyGrayscaleColors(svg)
   }
 })
+

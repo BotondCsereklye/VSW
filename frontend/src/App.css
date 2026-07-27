@@ -117,10 +117,12 @@
 
 .language-flag--en {
   background:
+    linear-gradient(27deg, transparent 40%, #fff 40% 47%, #c8102e 47% 53%, #fff 53% 60%, transparent 60%),
+    linear-gradient(153deg, transparent 40%, #fff 40% 47%, #c8102e 47% 53%, #fff 53% 60%, transparent 60%),
     linear-gradient(90deg, transparent 42%, #fff 42% 58%, transparent 58%),
-    linear-gradient(transparent 38%, #fff 38% 62%, transparent 62%),
+    linear-gradient(transparent 36%, #fff 36% 64%, transparent 64%),
     linear-gradient(90deg, transparent 46%, #c8102e 46% 54%, transparent 54%),
-    linear-gradient(transparent 44%, #c8102e 44% 56%, transparent 56%),
+    linear-gradient(transparent 43%, #c8102e 43% 57%, transparent 57%),
     #012169;
 }
 
@@ -185,11 +187,11 @@
 .app-shell__error {
   margin: 0 0 20px;
   padding: 14px 18px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--danger);
   border-radius: var(--ui-radius-sm);
-  background: var(--bg-panel);
-  color: var(--ink);
-  font-weight: 600;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  font-weight: 700;
 }
 
 .app-shell__connection {
@@ -342,8 +344,9 @@
   margin-top: 14px !important;
   padding: 10px 12px;
   border: 2px solid var(--danger);
-  background: var(--bg-strong);
-  color: var(--ink) !important;
+  border-radius: var(--ui-radius-sm);
+  background: var(--danger-bg);
+  color: var(--danger-ink) !important;
   font-weight: 700;
 }
 
@@ -489,9 +492,16 @@
   font-weight: 650;
 }
 
-.extension-settings__host-actions button[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--bg-panel);
+.extension-settings__host-action--enabled {
+  border-color: var(--success) !important;
+  background: var(--success-bg) !important;
+  color: var(--success-ink) !important;
+}
+
+.extension-settings__host-action--disabled {
+  border-color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+  color: var(--danger-ink) !important;
 }
 
 .app-shell__panel {

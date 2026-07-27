@@ -99,7 +99,7 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
         <h2>{t('extension.title')}</h2>
         <p>{t('extension.description')}</p>
         {!isAvailable ? (
-          <p className="extension-settings__warning" role="status">
+          <p className="extension-settings__warning" role="alert">
             Browser protection inactive. Enable or reload the VSW Link Capture extension.
           </p>
         ) : null}
@@ -189,6 +189,11 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
                   <button
                     type="button"
                     aria-pressed={settings.scoreGateIgnoredHosts.includes(summary.host)}
+                    className={`extension-settings__host-action ${
+                      settings.scoreGateIgnoredHosts.includes(summary.host)
+                        ? 'extension-settings__host-action--enabled'
+                        : 'extension-settings__host-action--disabled'
+                    }`}
                     onClick={() => updateScoreIgnoredHost(summary.host)}
                   >
                     {t('extension.ignoreScore')}
@@ -196,6 +201,11 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
                   <button
                     type="button"
                     aria-pressed={settings.trustedHosts.includes(summary.host)}
+                    className={`extension-settings__host-action ${
+                      settings.trustedHosts.includes(summary.host)
+                        ? 'extension-settings__host-action--enabled'
+                        : 'extension-settings__host-action--disabled'
+                    }`}
                     onClick={() => updateTrustedHost(summary.host)}
                   >
                     {t('extension.trustSite')}
