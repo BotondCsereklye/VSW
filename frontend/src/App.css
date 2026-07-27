@@ -117,12 +117,12 @@
 
 .language-flag--en {
   background:
-    linear-gradient(27deg, transparent 40%, #fff 40% 47%, #c8102e 47% 53%, #fff 53% 60%, transparent 60%),
-    linear-gradient(153deg, transparent 40%, #fff 40% 47%, #c8102e 47% 53%, #fff 53% 60%, transparent 60%),
-    linear-gradient(90deg, transparent 42%, #fff 42% 58%, transparent 58%),
-    linear-gradient(transparent 36%, #fff 36% 64%, transparent 64%),
-    linear-gradient(90deg, transparent 46%, #c8102e 46% 54%, transparent 54%),
-    linear-gradient(transparent 43%, #c8102e 43% 57%, transparent 57%),
+    linear-gradient(90deg, transparent 45%, #c8102e 45% 55%, transparent 55%),
+    linear-gradient(transparent 42%, #c8102e 42% 58%, transparent 58%),
+    linear-gradient(27deg, transparent 42%, #fff 42% 47%, #c8102e 47% 53%, #fff 53% 58%, transparent 58%),
+    linear-gradient(153deg, transparent 42%, #fff 42% 47%, #c8102e 47% 53%, #fff 53% 58%, transparent 58%),
+    linear-gradient(90deg, transparent 40%, #fff 40% 60%, transparent 60%),
+    linear-gradient(transparent 34%, #fff 34% 66%, transparent 66%),
     #012169;
 }
 
@@ -754,21 +754,11 @@
   background: var(--bg-panel-muted);
 }
 
-.scan-dashboard__group--score-75 {
-  border-left-style: solid;
-}
-
+.scan-dashboard__group--score-75,
 .scan-dashboard__group--score-50,
+.scan-dashboard__group--score-25,
+.scan-dashboard__group--score-0,
 .scan-dashboard__group--in-progress {
-  border-left-style: double;
-}
-
-.scan-dashboard__group--score-25 {
-  border-left-style: dashed;
-}
-
-.scan-dashboard__group--score-0 {
-  border-left-width: 8px;
   border-left-style: solid;
 }
 

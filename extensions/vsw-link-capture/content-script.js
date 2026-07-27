@@ -67,7 +67,9 @@
       });
     } catch (error) {
       const fallback = VswRuntimeFallback.createRuntimeFallbackDecision(normalizeError(error));
-      showToast(fallback.message, true);
+      if (!fallback.continueNavigation) {
+        showToast(fallback.message, true);
+      }
       if (fallback.continueNavigation) {
         continueNavigation(href, openInNewTab);
       }
