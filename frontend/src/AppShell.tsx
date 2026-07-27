@@ -85,25 +85,29 @@ export function AppShell() {
 
     if (knownIds === null) {
       knownScanIdsRef.current = nextIds
-      return
+      return nextScans
     }
 
-    const newScanIds = nextScans
-      .map((scan) => scan.id)
-      .filter((scanId) => !knownIds.has(scanId))
+    const newScanIds = new Set(nextScans.map((scan) => scan.id).filter((scanId) => !knownIds.has(scanId)))
 
-    if (newScanIds.length > 0) {
-      const seenAt = Date.now()
-      setClientSeenScans((previous) => {
-        const next = { ...previous }
-        for (const scanId of newScanIds) {
-          next[scanId] = seenAt
-        }
-        return next
-      })
+    if (newScanIds.size === 0) {
+      knownScanIdsRef.current = nextIds
+      return nextScans
     }
+
+    const seenAt = Date.now()
+    setClientSeenScans((previous) => {
+      const next = { ...previous }
+      for (const scanId of newScanIds) {
+        next[scanId] = seenAt
+      }
+      return next
+    })
 
     knownScanIdsRef.current = nextIds
+    return nextScans.map((scan) =>
+      newScanIds.has(scan.id) ? { ...scan, client_seen_at: seenAt } : scan,
+    )
   }, [])
 
   const refreshScans = useCallback(async () => {
@@ -112,8 +116,7 @@ export function AppShell() {
     try {
       const response = await listScans()
       startTransition(() => {
-        rememberNewScans(response)
-        setScans(response)
+        setScans(rememberNewScans(response))
         setErrorMessage(null)
         setConnectionStatus('online')
       })
@@ -193,8 +196,7 @@ export function AppShell() {
           }
 
           startTransition(() => {
-            rememberNewScans(response)
-            setScans(response)
+            setScans(rememberNewScans(response))
             setErrorMessage(null)
           })
         } catch {
@@ -301,9 +303,12 @@ export function AppShell() {
       const createdScan = await createScan(target)
       const refreshedScans = await listScans()
       startTransition(() => {
-        rememberNewScans(refreshedScans)
-        setClientSeenScans((previous) => ({ ...previous, [createdScan.id]: Date.now() }))
-        setScans(refreshedScans)
+        const createdAt = Date.now()
+        const rememberedScans = rememberNewScans(refreshedScans).map((scan) =>
+          scan.id === createdScan.id ? { ...scan, client_seen_at: createdAt } : scan,
+        )
+        setClientSeenScans((previous) => ({ ...previous, [createdScan.id]: createdAt }))
+        setScans(rememberedScans)
         setErrorMessage(null)
         setConnectionStatus('online')
       })

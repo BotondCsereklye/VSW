@@ -102,11 +102,15 @@ input[type='checkbox'] {
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible,
-summary:focus-visible {
-  outline: 0;
+select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -5px;
   border-color: var(--focus) !important;
-  border-width: 3px !important;
+}
+
+summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -5px;
 }
 
 a:focus-visible {
