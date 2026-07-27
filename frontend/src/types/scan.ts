@@ -20,6 +20,7 @@ export type ScanFinding = {
 }
 
 export type ScanSummary = {
+  client_seen_at?: number
   id: string
   target: string
   normalized_target: string

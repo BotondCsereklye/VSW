@@ -29,7 +29,7 @@
       return;
     }
 
-    const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+    const anchor = findLinkAnchor(event);
     if (!anchor) {
       return;
     }
@@ -127,6 +127,26 @@
     }
 
     continueNavigation(href, openInNewTab);
+  }
+
+
+  function findLinkAnchor(event) {
+    if (event.target instanceof Element) {
+      const closestAnchor = event.target.closest("a[href], area[href]");
+      if (closestAnchor) {
+        return closestAnchor;
+      }
+    }
+
+    if (typeof event.composedPath !== "function") {
+      return null;
+    }
+
+    return (
+      event.composedPath().find((item) => {
+        return item instanceof HTMLAnchorElement || item instanceof HTMLAreaElement;
+      }) || null
+    );
   }
 
   function sendRuntimeMessageWithTimeout(message) {

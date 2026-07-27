@@ -91,8 +91,13 @@ export function splitScansByRecency(
 
 function getLatestScanActivityTime(scan: ScanSummary) {
   return Math.max(
-    ...[scan.updated_at, scan.completed_at, scan.started_at, scan.created_at]
-      .map((value) => (value === null ? Number.NaN : Date.parse(value)))
+    ...[scan.client_seen_at, scan.updated_at, scan.completed_at, scan.started_at, scan.created_at]
+      .map((value) => {
+        if (typeof value === 'number') {
+          return value
+        }
+        return value === null || value === undefined ? Number.NaN : Date.parse(value)
+      })
       .filter((value) => Number.isFinite(value)),
   )
 }
