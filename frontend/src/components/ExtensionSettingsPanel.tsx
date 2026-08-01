@@ -7,7 +7,7 @@ import {
   setExtensionSettings,
   type ExtensionSettings,
 } from '../extensionSettings'
-import { buildHostSummaries, toggleHost } from '../hostRules'
+import { addHost, buildHostSummaries, toggleHost } from '../hostRules'
 import { useTranslation } from '../i18n/useTranslation'
 import type { ScanSummary } from '../types/scan'
 import { NumericSettingInput } from './NumericSettingInput'
@@ -26,6 +26,7 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
   const [status, setStatus] = useState(t('extension.checking'))
   const [isAvailable, setIsAvailable] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [manualHost, setManualHost] = useState('')
 
   useEffect(() => {
     let isActive = true
@@ -80,7 +81,10 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
     }
   }
 
-  const hostSummaries = buildHostSummaries(scans).slice(0, 8)
+  const hostSummaries = buildHostSummaries(scans, [
+    ...settings.trustedHosts,
+    ...settings.scoreGateIgnoredHosts,
+  ]).slice(0, 8)
 
   function updateTrustedHost(host: string) {
     const trustedHosts = toggleHost(settings.trustedHosts, host)
@@ -89,6 +93,18 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
 
   function updateScoreIgnoredHost(host: string) {
     const scoreGateIgnoredHosts = toggleHost(settings.scoreGateIgnoredHosts, host)
+    void updateSettings({ ...settings, scoreGateIgnoredHosts })
+  }
+
+  function addManualTrustedHost() {
+    const trustedHosts = addHost(settings.trustedHosts, manualHost)
+    setManualHost('')
+    void updateSettings({ ...settings, trustedHosts })
+  }
+
+  function addManualScoreIgnoredHost() {
+    const scoreGateIgnoredHosts = addHost(settings.scoreGateIgnoredHosts, manualHost)
+    setManualHost('')
     void updateSettings({ ...settings, scoreGateIgnoredHosts })
   }
 
@@ -169,6 +185,25 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
           <p>
             <strong>{t('extension.trustSite')}:</strong> {t('extension.trustSiteHelp')}
           </p>
+        </div>
+        <div className="extension-settings__manual-host">
+          <label>
+            <span>{t('extension.manualHost')}</span>
+            <input
+              type="text"
+              value={manualHost}
+              placeholder={t('extension.manualHostPlaceholder')}
+              onChange={(event) => setManualHost(event.target.value)}
+            />
+          </label>
+          <div>
+            <button type="button" disabled={!manualHost.trim()} onClick={addManualScoreIgnoredHost}>
+              {t('extension.addIgnoreScore')}
+            </button>
+            <button type="button" disabled={!manualHost.trim()} onClick={addManualTrustedHost}>
+              {t('extension.addTrustSite')}
+            </button>
+          </div>
         </div>
         {hostSummaries.length === 0 ? (
           <p className="extension-settings__empty">{t('extension.noHosts')}</p>

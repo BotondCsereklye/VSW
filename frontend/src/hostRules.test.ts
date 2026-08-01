@@ -41,6 +41,41 @@ test('buildHostSummaries groups scans by host and keeps the latest score', () =>
   ])
 })
 
+test('buildHostSummaries includes manually configured hosts without previous scans', () => {
+  const summaries = buildHostSummaries(
+    [
+      scan({
+        id: 'github',
+        normalized_target: 'github.com',
+        score: 91,
+        updated_at: '2026-06-03T10:00:00Z',
+      }),
+    ],
+    ['wikipedia.org', 'https://www.chatgpt.com/c/example'],
+  )
+
+  expect(summaries).toEqual([
+    {
+      host: 'github.com',
+      scanCount: 1,
+      latestScore: 91,
+      latestUpdatedAt: '2026-06-03T10:00:00Z',
+    },
+    {
+      host: 'wikipedia.org',
+      scanCount: 0,
+      latestScore: null,
+      latestUpdatedAt: '',
+    },
+    {
+      host: 'chatgpt.com',
+      scanCount: 0,
+      latestScore: null,
+      latestUpdatedAt: '',
+    },
+  ])
+})
+
 test('toggleHost adds and removes normalized host names', () => {
   expect(toggleHost([], ' GitHub.com ')).toEqual(['github.com'])
   expect(toggleHost(['github.com'], 'github.com')).toEqual([])
