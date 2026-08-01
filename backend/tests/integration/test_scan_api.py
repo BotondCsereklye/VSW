@@ -14,6 +14,16 @@ def test_create_scan_persists_pending_scan(client) -> None:
     assert body["score"] is None
 
 
+def test_scan_api_requires_api_key(app) -> None:
+    from fastapi.testclient import TestClient
+
+    with TestClient(app) as unauthenticated_client:
+        response = unauthenticated_client.get("/api/v1/scans")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid or missing API key."
+
+
 def test_create_scan_rejects_invalid_targets(client) -> None:
     response = client.post("/api/v1/scans", json={"target": "https://example.com"})
 

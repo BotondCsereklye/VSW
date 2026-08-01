@@ -6,6 +6,14 @@ import type {
 } from '../types/scan'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
+const API_KEY = import.meta.env.VITE_VSW_API_KEY
+
+function apiHeaders(extraHeaders?: HeadersInit): HeadersInit {
+  return {
+    ...(API_KEY ? { 'X-VSW-API-Key': API_KEY } : {}),
+    ...(extraHeaders ?? {}),
+  }
+}
 
 export class ApiError extends Error {
   status: number
@@ -23,7 +31,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
+      ...apiHeaders(init?.headers),
     },
     ...init,
   })
@@ -67,7 +75,9 @@ export function discoverScanLinks(scanId: string, limit = 12) {
 }
 
 export async function exportScan(scanId: string, format: ScanExportFormat) {
-  const response = await fetch(`${API_BASE_URL}/scans/${scanId}/export?format=${format}`)
+  const response = await fetch(`${API_BASE_URL}/scans/${scanId}/export?format=${format}`, {
+    headers: apiHeaders(),
+  })
 
   if (!response.ok) {
     throw new Error(`Export failed with status ${response.status}`)

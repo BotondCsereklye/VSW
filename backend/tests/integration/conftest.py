@@ -17,6 +17,7 @@ def settings(tmp_path: pytest.TempPathFactory) -> Settings:
         enable_background_scans=False,
         rate_limit_max_requests=50,
         rate_limit_window_seconds=60,
+        api_key="test-api-key",
     )
 
 
@@ -33,6 +34,7 @@ def app(settings: Settings):
 @pytest.fixture
 def client(app) -> Iterator[TestClient]:
     with TestClient(app) as test_client:
+        test_client.headers.update({"X-VSW-API-Key": "test-api-key"})
         yield test_client
 
 

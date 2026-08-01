@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 
 import { AppShell } from './AppShell'
 import { I18nProvider } from './i18n/I18nProvider'

@@ -10,10 +10,12 @@ def test_scan_creation_rate_limit_returns_429(tmp_path) -> None:
         enable_background_scans=False,
         rate_limit_max_requests=1,
         rate_limit_window_seconds=60,
+        api_key="test-api-key",
     )
     app = create_app(settings=settings)
 
     with TestClient(app) as client:
+        client.headers.update({"X-VSW-API-Key": "test-api-key"})
         first = client.post("/api/v1/scans", json={"target": "example.com"})
         second = client.post("/api/v1/scans", json={"target": "example.com"})
 

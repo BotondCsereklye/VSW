@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     app_name: str = "Vulnerability Scanner Web App"
     app_version: str = "0.1.0"
     api_prefix: str = "/api/v1"
+    api_key: str | None = None
+    api_key_header_name: str = "X-VSW-API-Key"
     database_url: str = "sqlite:///./vsw.db"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     enable_background_scans: bool = True

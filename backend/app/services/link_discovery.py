@@ -6,6 +6,8 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import httpx
 
+from app.services.targeting import ensure_public_target
+
 HtmlFetcher = Callable[[str], tuple[str, str]]
 
 
@@ -33,6 +35,9 @@ def discover_links_for_target(
     if limit < 1:
         return []
 
+    if fetcher is None:
+        ensure_public_target(target)
+
     fetcher = fetcher or _default_fetcher(timeout_seconds=timeout_seconds)
     for candidate_url in (f"https://{target}", f"http://{target}"):
         try:
@@ -48,7 +53,7 @@ def _default_fetcher(*, timeout_seconds: float) -> HtmlFetcher:
     def fetch(url: str) -> tuple[str, str]:
         with httpx.Client(
             timeout=timeout_seconds,
-            follow_redirects=True,
+            follow_redirects=False,
             headers={"User-Agent": "vsw-defensive-scanner/0.1"},
         ) as client:
             response = client.get(url)

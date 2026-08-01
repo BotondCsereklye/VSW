@@ -5,6 +5,8 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import StrEnum
 
+from app.services.targeting import ensure_public_target
+
 SAFE_PORTS = [80, 443, 22, 25, 53, 3306, 5432, 6379, 8080]
 
 
@@ -48,6 +50,9 @@ async def probe_standard_ports(
     timeout_seconds: float = 1.0,
     connector: Connector | None = None,
 ) -> list[PortResult]:
+    if connector is None:
+        ensure_public_target(host)
+
     tasks = [
         probe_port(host, port, timeout_seconds=timeout_seconds, connector=connector)
         for port in SAFE_PORTS

@@ -7,7 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, R
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db_session
+from app.api.dependencies import get_db_session, require_api_key
 from app.schemas.scan import (
     ScanCreateRequest,
     ScanDetailResponse,
@@ -22,7 +22,7 @@ from app.services.scan_service import (
 )
 from app.services.targeting import InvalidTargetError
 
-router = APIRouter(prefix="/scans", tags=["scans"])
+router = APIRouter(prefix="/scans", tags=["scans"], dependencies=[Depends(require_api_key)])
 DbSession = Annotated[Session, Depends(get_db_session)]
 
 

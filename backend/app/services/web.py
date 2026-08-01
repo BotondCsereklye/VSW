@@ -6,6 +6,8 @@ from typing import Any
 
 import httpx
 
+from app.services.targeting import ensure_public_target
+
 Fetcher = Callable[[str], Awaitable[Any]]
 
 
@@ -31,10 +33,11 @@ async def probe_http_target(
     timeout_seconds: float = 5.0,
 ) -> HttpScanResult:
     if fetcher is None:
+        ensure_public_target(target)
         async with httpx.AsyncClient(
             timeout=timeout_seconds,
             headers={"User-Agent": "vsw-defensive-scanner/0.1"},
-            follow_redirects=True,
+            follow_redirects=False,
         ) as client:
             return await _probe_with_fetcher(target, client.get)
 
