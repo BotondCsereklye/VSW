@@ -52,6 +52,10 @@
       return;
     }
 
+    if (isSameOriginNavigation(url)) {
+      return;
+    }
+
     const openInNewTab = anchor.target === "_blank";
 
     event.preventDefault();
@@ -203,6 +207,11 @@
       targetUrl.search === current.search &&
       targetUrl.hash !== ""
     );
+  }
+
+  function isSameOriginNavigation(targetUrl) {
+    const current = new URL(window.location.href);
+    return targetUrl.origin === current.origin;
   }
 
   function showToast(message, isError = false, durationMs = 2800) {

@@ -8,7 +8,7 @@ export type HostSummary = {
   latestUpdatedAt: string
 }
 
-export function buildHostSummaries(scans: ScanSummary[]) {
+export function buildHostSummaries(scans: ScanSummary[], configuredHosts: string[] = []) {
   const summaries = new Map<string, HostSummary>()
 
   for (const scan of scans) {
@@ -35,12 +35,35 @@ export function buildHostSummaries(scans: ScanSummary[]) {
     }
   }
 
+  for (const configuredHost of configuredHosts) {
+    const host = normalizeHost(configuredHost)
+    if (!host || summaries.has(host)) {
+      continue
+    }
+
+    summaries.set(host, {
+      host,
+      scanCount: 0,
+      latestScore: null,
+      latestUpdatedAt: '',
+    })
+  }
+
   return Array.from(summaries.values()).sort((left, right) => {
     if (right.scanCount !== left.scanCount) {
       return right.scanCount - left.scanCount
     }
     return new Date(right.latestUpdatedAt).getTime() - new Date(left.latestUpdatedAt).getTime()
   })
+}
+
+export function addHost(list: string[], host: string) {
+  const normalizedHost = normalizeHost(host)
+  if (!normalizedHost || list.includes(normalizedHost)) {
+    return list
+  }
+
+  return [normalizedHost, ...list].slice(0, 50)
 }
 
 export function toggleHost(list: string[], host: string) {
@@ -53,6 +76,6 @@ export function toggleHost(list: string[], host: string) {
     return list.filter((item) => item !== normalizedHost)
   }
 
-  return [normalizedHost, ...list].slice(0, 50)
+  return addHost(list, normalizedHost)
 }
 

@@ -365,6 +365,37 @@
   font-size: 0.9rem;
 }
 
+.extension-settings__manual-host {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--ui-radius-sm);
+  background: var(--bg-strong);
+}
+
+.extension-settings__manual-host label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.extension-settings__manual-host input {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--ui-radius-sm);
+  background: var(--input-surface);
+  color: var(--ink);
+}
+
+.extension-settings__manual-host > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .extension-settings__hosts {
   grid-column: 1 / -1;
   padding: 14px;
@@ -479,6 +510,7 @@
 }
 
 .extension-settings__host-actions button,
+.extension-settings__manual-host button,
 .report-detail__exports button,
 .report-detail__link-actions button,
 .report-detail__findings-toggle,
