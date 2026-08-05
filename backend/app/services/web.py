@@ -3,10 +3,11 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 
-from app.services.targeting import ensure_public_target
+from app.services.targeting import ResolvedTarget, resolve_public_target
 
 Fetcher = Callable[[str], Awaitable[Any]]
 
@@ -33,13 +34,16 @@ async def probe_http_target(
     timeout_seconds: float = 5.0,
 ) -> HttpScanResult:
     if fetcher is None:
-        ensure_public_target(target)
+        resolved_target = resolve_public_target(target)
         async with httpx.AsyncClient(
             timeout=timeout_seconds,
             headers={"User-Agent": "vsw-defensive-scanner/0.1"},
             follow_redirects=False,
         ) as client:
-            return await _probe_with_fetcher(target, client.get)
+            return await _probe_with_fetcher(
+                target,
+                lambda url: _fetch_resolved_url(client, url, resolved_target),
+            )
 
     return await _probe_with_fetcher(target, fetcher)
 
@@ -71,6 +75,29 @@ async def _try_fetch(fetcher: Fetcher, url: str) -> Any | None:
         return await fetcher(url)
     except Exception:
         return None
+
+
+async def _fetch_resolved_url(
+    client: httpx.AsyncClient,
+    url: str,
+    resolved_target: ResolvedTarget,
+) -> httpx.Response:
+    parsed_url = urlparse(url)
+    connect_url = urlunparse(
+        (
+            parsed_url.scheme,
+            resolved_target.url_host,
+            parsed_url.path or "/",
+            "",
+            parsed_url.query,
+            "",
+        )
+    )
+    return await client.get(
+        connect_url,
+        headers={"Host": resolved_target.host_header},
+        extensions={"sni_hostname": resolved_target.host},
+    )
 
 
 def _derive_redirect_target(response: Any | None, target: str) -> str | None:

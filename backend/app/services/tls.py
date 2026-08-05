@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TypeAlias
 
+from app.services.targeting import resolve_public_target
+
 CertificateLoader: TypeAlias = Callable[
     [str], tuple[bool, "CertificateDetails | None"]
 ]  # noqa: UP040
@@ -69,12 +71,13 @@ def probe_tls_target(
 
 
 def _load_certificate_details(target: str) -> tuple[bool, CertificateDetails | None]:
+    resolved_target = resolve_public_target(target)
     context = ssl.create_default_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
 
     try:
-        with socket.create_connection((target, 443), timeout=3.0) as tcp_socket:
+        with socket.create_connection((resolved_target.address, 443), timeout=3.0) as tcp_socket:
             with context.wrap_socket(tcp_socket, server_hostname=target) as tls_socket:
                 certificate = tls_socket.getpeercert()
     except (OSError, ssl.SSLError):
@@ -91,6 +94,7 @@ def _load_certificate_details(target: str) -> tuple[bool, CertificateDetails | N
 
 
 def _probe_supported_tls_versions(target: str) -> list[str]:
+    resolved_target = resolve_public_target(target)
     supported_versions: list[str] = []
     candidate_versions = {
         "TLSv1.2": ssl.TLSVersion.TLSv1_2,
@@ -104,7 +108,10 @@ def _probe_supported_tls_versions(target: str) -> list[str]:
         context.minimum_version = version
         context.maximum_version = version
         try:
-            with socket.create_connection((target, 443), timeout=3.0) as tcp_socket:
+            with socket.create_connection(
+                (resolved_target.address, 443),
+                timeout=3.0,
+            ) as tcp_socket:
                 with context.wrap_socket(tcp_socket, server_hostname=target):
                     supported_versions.append(label)
         except (OSError, ssl.SSLError, ValueError):

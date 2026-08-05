@@ -7,6 +7,7 @@ from app.services.targeting import (
     TargetType,
     UnsafeTargetError,
     ensure_public_target,
+    resolve_public_target,
     validate_target,
 )
 
@@ -74,3 +75,20 @@ def test_ensure_public_target_accepts_domains_resolving_to_public_ips(monkeypatc
     monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
 
     ensure_public_target("dns.google")
+
+
+def test_resolve_public_target_returns_validated_address(monkeypatch) -> None:
+    def fake_getaddrinfo(*args, **kwargs):
+        return [
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0)),
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("1.1.1.1", 0)),
+        ]
+
+    monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
+
+    resolved = resolve_public_target("dns.google")
+
+    assert resolved.host == "dns.google"
+    assert resolved.address == "1.1.1.1"
+    assert resolved.url_host == "1.1.1.1"
+    assert resolved.host_header == "dns.google"

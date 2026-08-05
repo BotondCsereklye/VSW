@@ -52,3 +52,30 @@ async def test_probe_standard_ports_uses_safe_default_port_list() -> None:
 
     assert [result.port for result in results] == SAFE_PORTS
     assert calls == SAFE_PORTS
+
+
+@pytest.mark.asyncio
+async def test_default_connector_uses_validated_ip_address(monkeypatch) -> None:
+    calls: list[tuple[str, int]] = []
+
+    class FakeWriter:
+        def close(self) -> None:
+            return None
+
+        async def wait_closed(self) -> None:
+            return None
+
+    async def fake_open_connection(host: str, port: int):
+        calls.append((host, port))
+        return object(), FakeWriter()
+
+    def fake_getaddrinfo(*args, **kwargs):
+        return [(0, 0, 0, "", ("8.8.8.8", 0))]
+
+    monkeypatch.setattr("socket.getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr("asyncio.open_connection", fake_open_connection)
+
+    result = await probe_port("dns.google", 443)
+
+    assert result.state is PortState.OPEN
+    assert calls == [("8.8.8.8", 443)]

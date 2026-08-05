@@ -2,10 +2,10 @@ importScripts("score-gate.js");
 
 const MENU_SCAN_LINK = "vsw-scan-link";
 const MENU_SCAN_TAB = "vsw-scan-current-tab";
-const VSW_API_URL = "http://127.0.0.1:8000/api/v1/scans";
-const VSW_HEALTH_URL = "http://127.0.0.1:8000/api/v1/health";
-const VSW_APP_BASE_URL = "http://127.0.0.1:5173";
-const VSW_APP_HEALTH_URL = "http://127.0.0.1:5173/";
+const VSW_API_URL = "http://127.0.0.1:8080/api/v1/scans";
+const VSW_HEALTH_URL = "http://127.0.0.1:8080/api/v1/health";
+const VSW_APP_BASE_URL = "http://127.0.0.1:8080";
+const VSW_APP_HEALTH_URL = "http://127.0.0.1:8080/";
 const SETTINGS_KEY = "vswLinkCaptureSettings";
 const SCAN_POLL_INTERVAL_MS = 1200;
 const SCAN_POLL_TIMEOUT_MS = 20000;

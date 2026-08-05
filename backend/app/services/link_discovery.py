@@ -6,7 +6,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import httpx
 
-from app.services.targeting import ensure_public_target
+from app.services.targeting import ResolvedTarget, resolve_public_target
 
 HtmlFetcher = Callable[[str], tuple[str, str]]
 
@@ -35,10 +35,10 @@ def discover_links_for_target(
     if limit < 1:
         return []
 
-    if fetcher is None:
-        ensure_public_target(target)
-
-    fetcher = fetcher or _default_fetcher(timeout_seconds=timeout_seconds)
+    fetcher = fetcher or _default_fetcher(
+        resolve_public_target(target),
+        timeout_seconds=timeout_seconds,
+    )
     for candidate_url in (f"https://{target}", f"http://{target}"):
         try:
             final_url, html = fetcher(candidate_url)
@@ -49,16 +49,31 @@ def discover_links_for_target(
     return []
 
 
-def _default_fetcher(*, timeout_seconds: float) -> HtmlFetcher:
+def _default_fetcher(resolved_target: ResolvedTarget, *, timeout_seconds: float) -> HtmlFetcher:
     def fetch(url: str) -> tuple[str, str]:
+        parsed_url = urlparse(url)
+        connect_url = urlunparse(
+            (
+                parsed_url.scheme,
+                resolved_target.url_host,
+                parsed_url.path or "/",
+                "",
+                parsed_url.query,
+                "",
+            )
+        )
         with httpx.Client(
             timeout=timeout_seconds,
             follow_redirects=False,
             headers={"User-Agent": "vsw-defensive-scanner/0.1"},
         ) as client:
-            response = client.get(url)
+            response = client.get(
+                connect_url,
+                headers={"Host": resolved_target.host_header},
+                extensions={"sni_hostname": resolved_target.host},
+            )
             response.raise_for_status()
-            return str(response.url), response.text
+            return url, response.text
 
     return fetch
 

@@ -17,10 +17,7 @@ def require_api_key(request: Request) -> None:
     settings = request.app.state.settings
     expected_api_key = settings.api_key
     if not expected_api_key:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="API key authentication is not configured.",
-        )
+        return
 
     supplied_api_key = request.headers.get(settings.api_key_header_name)
     if supplied_api_key != expected_api_key:

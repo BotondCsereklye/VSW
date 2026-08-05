@@ -24,6 +24,24 @@ def test_scan_api_requires_api_key(app) -> None:
     assert response.json()["detail"] == "Invalid or missing API key."
 
 
+def test_scan_api_allows_requests_when_api_key_is_not_configured(settings) -> None:
+    from fastapi.testclient import TestClient
+
+    from app.db.base import Base
+    from app.main import create_app
+
+    settings.api_key = None
+    application = create_app(settings=settings)
+    Base.metadata.create_all(bind=application.state.engine)
+    try:
+        with TestClient(application) as unauthenticated_client:
+            response = unauthenticated_client.get("/api/v1/scans")
+    finally:
+        Base.metadata.drop_all(bind=application.state.engine)
+
+    assert response.status_code == 200
+
+
 def test_create_scan_rejects_invalid_targets(client) -> None:
     response = client.post("/api/v1/scans", json={"target": "https://example.com"})
 

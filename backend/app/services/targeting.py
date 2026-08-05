@@ -28,6 +28,29 @@ class NormalizedTarget:
     target_type: TargetType
 
 
+@dataclass(frozen=True, slots=True)
+class ResolvedTarget:
+    host: str
+    address: str
+
+    @property
+    def url_host(self) -> str:
+        parsed_address = ipaddress.ip_address(self.address)
+        if parsed_address.version == 6:
+            return f"[{self.address}]"
+        return self.address
+
+    @property
+    def host_header(self) -> str:
+        try:
+            parsed_host = ipaddress.ip_address(self.host)
+        except ValueError:
+            return self.host
+        if parsed_host.version == 6:
+            return f"[{self.host}]"
+        return self.host
+
+
 def validate_target(raw_target: str) -> NormalizedTarget:
     candidate = raw_target.strip().lower()
 
@@ -60,9 +83,13 @@ def is_public_ip(address: ipaddress._BaseAddress) -> bool:
 
 
 def ensure_public_target(target: str) -> None:
+    resolve_public_target(target)
+
+
+def resolve_public_target(target: str) -> ResolvedTarget:
     normalized = validate_target(target)
     if normalized.target_type is TargetType.IP:
-        return
+        return ResolvedTarget(host=normalized.value, address=normalized.value)
 
     try:
         address_infos = socket.getaddrinfo(normalized.value, None, type=socket.SOCK_STREAM)
@@ -79,6 +106,12 @@ def ensure_public_target(target: str) -> None:
 
     if any(not is_public_ip(address) for address in resolved_addresses):
         raise UnsafeTargetError("Target resolves to a private or reserved IP address.")
+
+    selected_address = sorted(
+        resolved_addresses,
+        key=lambda address: (address.version, str(address)),
+    )[0]
+    return ResolvedTarget(host=normalized.value, address=str(selected_address))
 
 
 def _validate_domain(candidate: str) -> str:

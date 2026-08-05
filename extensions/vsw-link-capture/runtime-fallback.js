@@ -13,7 +13,7 @@
 function createRuntimeFallbackDecision(errorMessage) {
   const detail = String(errorMessage || "Extension runtime is unavailable.");
   return {
-    continueNavigation: true,
-    message: `Extension unavailable. Continuing navigation. ${detail}`,
+    continueNavigation: false,
+    message: `Extension unavailable. Navigation blocked. ${detail}`,
   };
 }

@@ -1,6 +1,6 @@
 ﻿(function registerLiveCapture() {
   const LIVE_CAPTURE_TOAST_ID = "vsw-live-capture-toast";
-  const RUNTIME_RESPONSE_TIMEOUT_MS = 4500;
+  const RUNTIME_RESPONSE_TIMEOUT_MS = 22000;
   const INSTALL_FLAG = "__vswLinkCaptureInstalled";
 
   if (window[INSTALL_FLAG]) {
