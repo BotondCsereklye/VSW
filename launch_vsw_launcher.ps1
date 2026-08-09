@@ -1,3 +1,7 @@
+param(
+  [switch]$StartServices
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -58,11 +62,14 @@ function Find-CompatiblePython {
 }
 
 $pythonPath = Find-CompatiblePython
-$quotedLauncherPath = '"' + $launcherPath + '"'
+$launcherArguments = @('"' + $launcherPath + '"')
+if ($StartServices) {
+  $launcherArguments += "--start-services"
+}
 
 "$(Get-Date -Format o) Starting VSW launcher" | Out-File -FilePath $logPath -Encoding utf8
 "Project root: $projectRoot" | Out-File -FilePath $logPath -Encoding utf8 -Append
 "Python: $pythonPath" | Out-File -FilePath $logPath -Encoding utf8 -Append
 "Launcher: $launcherPath" | Out-File -FilePath $logPath -Encoding utf8 -Append
 
-Start-Process -FilePath $pythonPath -ArgumentList @($quotedLauncherPath) -WorkingDirectory $projectRoot
+Start-Process -FilePath $pythonPath -ArgumentList $launcherArguments -WorkingDirectory $projectRoot

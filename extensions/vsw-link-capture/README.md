@@ -89,6 +89,7 @@ Browser UI actions are different:
 - bookmark-bar clicks
 - pinned browser shortcuts
 - tab-strip actions
+- links opened from external apps such as WhatsApp, mail clients, or chat tools
 
 Those actions are controlled by the browser UI, not by the page content script.
 The extension therefore cannot promise a reliable scan-before-visit block for
