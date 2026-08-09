@@ -187,6 +187,7 @@ Wichtige Opera-/Chrome-Hinweise:
 - Nach Änderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
 - Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
 - Adresszeile, Bookmarks und angeheftete Browser-Links können durch Manifest V3 nicht zuverlässig vor dem Besuch blockiert werden. VSW erfasst sie nach dem Laden passiv und erstellt daraus einen Report.
+- Links aus externen Apps wie WhatsApp, Mail oder Chat-Clients werden vom Browser wie neue Navigationsstarts behandelt. Die Extension kann solche Aufrufe nicht zuverlässig vor dem ersten Laden stoppen, kann sie aber über passive Navigation erfassen, sobald der Browser sie geladen hat und das lokale Backend läuft.
 - Für echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
 - Der Mindestscore wird in der VSW-App unter `Visit gate settings` angepasst, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
 - Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.
@@ -244,6 +245,7 @@ Die Launcher-App ist der bevorzugte Weg für lokale Entwicklung und manuelle Dem
 - erkennt bereits belegte Ports `8000` und `5173` und meldet klar, dass ein vorhandener Dienst wiederverwendet wird
 - öffnet App und API-Doku direkt aus der GUI
 - kann eine Desktop-Verknüpfung für den App-Start anlegen
+- kann einen Windows-Autostart-Eintrag anlegen, damit Backend und Frontend nach dem Login automatisch starten
 - stoppt beide Services wieder sauber
 
 ### Desktop-Verknüpfung installieren
@@ -257,6 +259,20 @@ Optional mit Startmenü-Eintrag:
 
 ```powershell
 .\install_vsw_launcher.ps1 -StartMenu
+```
+
+Optional mit Windows-Autostart:
+
+```powershell
+.\install_vsw_launcher.ps1 -Startup
+```
+
+Der Autostart-Eintrag öffnet nach dem Windows-Login den Launcher, startet Backend und Frontend automatisch und öffnet das lokale Dashboard einmal im Browser. Dadurch muss VSW nach einem Laptop-Neustart nicht mehr manuell mit zwei Terminal-Kommandos gestartet werden.
+
+Autostart wieder entfernen:
+
+```powershell
+.\install_vsw_launcher.ps1 -RemoveStartup
 ```
 
 Die Verknüpfung startet die Launcher-App. Der Launcher richtet bei Bedarf Backend und Frontend ein, zeigt Logs an und stoppt nur die Dienste, die er selbst gestartet hat.

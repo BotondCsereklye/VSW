@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
 from pathlib import Path
 from queue import Empty, Queue
 import subprocess
+import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox, scrolledtext, ttk
@@ -32,7 +34,7 @@ class ManagedProcess:
 
 
 class LauncherApp(tk.Tk):
-    def __init__(self, project_root: Path) -> None:
+    def __init__(self, project_root: Path, start_services_on_launch: bool = False) -> None:
         super().__init__()
         self.project_root = project_root
         self.runtime: RuntimePaths | None = None
@@ -54,6 +56,9 @@ class LauncherApp(tk.Tk):
 
         self._build_ui()
         self.after(100, self._drain_queue)
+        if start_services_on_launch:
+            self.note_status.set("Autostart enabled. Starting VSW services...")
+            self.after(250, lambda: self.run_in_background(self.start_services))
 
     def _build_ui(self) -> None:
         style = ttk.Style(self)
@@ -92,6 +97,7 @@ class LauncherApp(tk.Tk):
         ttk.Button(button_row, text="Open app", command=lambda: webbrowser.open(FRONTEND_URL), style="Secondary.TButton").pack(side="left", padx=(0, 10))
         ttk.Button(button_row, text="Open API docs", command=lambda: webbrowser.open(f"{BACKEND_URL}/docs"), style="Secondary.TButton").pack(side="left", padx=(0, 10))
         ttk.Button(button_row, text="Install shortcut", command=self.install_shortcut, style="Secondary.TButton").pack(side="left", padx=(0, 10))
+        ttk.Button(button_row, text="Install autostart", command=self.install_autostart, style="Secondary.TButton").pack(side="left", padx=(0, 10))
         ttk.Button(button_row, text="Stop services", command=self.stop_services, style="Secondary.TButton").pack(side="left")
 
         status_grid = ttk.Frame(outer, padding=(0, 16, 0, 0), style="Card.TFrame")
@@ -267,6 +273,20 @@ class LauncherApp(tk.Tk):
         webbrowser.open(FRONTEND_URL)
 
     def install_shortcut(self) -> None:
+        self._run_shortcut_installer(
+            extra_args=[],
+            success_note="Desktop shortcut created. You can start VSW from the desktop now.",
+            failure_title="Desktop shortcut could not be created. See launcher output.",
+        )
+
+    def install_autostart(self) -> None:
+        self._run_shortcut_installer(
+            extra_args=["-Startup"],
+            success_note="Autostart shortcut created. VSW will start after Windows login.",
+            failure_title="Autostart shortcut could not be created. See launcher output.",
+        )
+
+    def _run_shortcut_installer(self, extra_args: list[str], success_note: str, failure_title: str) -> None:
         script_path = self.project_root / "install_vsw_launcher.ps1"
         if not script_path.exists():
             messagebox.showerror("Shortcut setup", f"Shortcut installer not found: {script_path}")
@@ -280,6 +300,7 @@ class LauncherApp(tk.Tk):
             "Bypass",
             "-File",
             str(script_path),
+            *extra_args,
         ]
         try:
             completed = subprocess.run(
@@ -298,11 +319,11 @@ class LauncherApp(tk.Tk):
         if completed.returncode != 0:
             self.queue_log("system", completed.stdout)
             self.queue_log("system", completed.stderr)
-            messagebox.showerror("Shortcut setup", "Desktop shortcut could not be created. See launcher output.")
+            messagebox.showerror("Shortcut setup", failure_title)
             return
 
         self.queue_log("system", completed.stdout.strip())
-        self.queue_status("note", "Desktop shortcut created. You can start VSW from the desktop now.")
+        self.queue_status("note", success_note)
 
     def _start_process(self, name: str, command: list[str], cwd: Path) -> ManagedProcess:
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -382,9 +403,17 @@ class LauncherApp(tk.Tk):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Start the local VSW launcher.")
+    parser.add_argument(
+        "--start-services",
+        action="store_true",
+        help="Prepare and start backend/frontend immediately after opening the launcher.",
+    )
+    args = parser.parse_args(sys.argv[1:])
+
     launcher_file = Path(__file__).resolve()
     project_root = launcher_file.parent.parent
-    app = LauncherApp(project_root)
+    app = LauncherApp(project_root, start_services_on_launch=args.start_services)
     app.mainloop()
 
 
