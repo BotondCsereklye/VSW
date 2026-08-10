@@ -52,7 +52,7 @@ test('frontend styling stays monochrome, square and free of decorative transitio
 })
 
 test('brand artwork is flat, square and monochrome', () => {
-  for (const path of ['public/vsw-logo.svg', 'public/favicon.svg']) {
+  for (const path of ['public/vsw-logo.svg', 'public/vsw-logo-maskable.svg', 'public/favicon.svg']) {
     const svg = readFrontendFile(path)
 
     expect(svg).not.toContain('linearGradient')

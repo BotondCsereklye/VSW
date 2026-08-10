@@ -35,7 +35,7 @@ describe('PWA metadata', () => {
     expect(manifest.icons).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          src: '/vsw-logo.svg',
+          src: '/vsw-logo-maskable.svg',
           sizes: 'any',
           purpose: expect.stringContaining('maskable'),
         }),

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">VSW defensive scan mark</title>
+  <desc id="desc">A square black and white shield mark for the VSW defensive vulnerability scanner, padded for adaptive icon masks.</desc>
+  <rect width="128" height="128" fill="#000000"/>
+  <g transform="translate(64 64) scale(0.65) translate(-64 -64)">
+    <path d="M64 16 100 29v30c0 27-14.6 46-36 57-21.4-11-36-30-36-57V29l36-13Z" fill="#ffffff"/>
+    <path d="M64 30 86 38v21c0 17-8 30-22 39-14-9-22-22-22-39V38l22-8Z" fill="#000000"/>
+    <path d="M48 47 64 84 80 47" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="square" stroke-linejoin="miter"/>
+  </g>
+</svg>
