@@ -17,6 +17,7 @@ describe('PWA metadata', () => {
     expect(indexHtml).toContain('rel="manifest"')
     expect(indexHtml).toContain('name="theme-color"')
     expect(indexHtml).toContain('name="apple-mobile-web-app-capable"')
+    expect(indexHtml).toContain('rel="apple-touch-icon"')
   })
 
   test('web manifest keeps the mobile app installable without promising offline mode', () => {
