@@ -5,9 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vsw-backend"
 version = "0.1.0"
-description = "Defensive vulnerability scanner backend"
+description = "Defensive FastAPI backend for passive website security checks and vulnerability scan reports."
 readme = "README.md"
 requires-python = ">=3.12"
+keywords = ["fastapi", "security", "vulnerability-scanner", "passive-scanner", "tls", "security-headers", "portfolio-project"]
 dependencies = [
   "fastapi>=0.115.0,<1.0.0",
   "httpx>=0.28.0,<1.0.0",

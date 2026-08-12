@@ -1,6 +1,21 @@
 # Vulnerability Scanner Web App
 
+**Deutsch** | [English](README_EN.md)
+
 Professionelle defensive Fullstack-Web-App zur sicheren Analyse von Domains oder IPs. Die Anwendung führt ausschliesslich passive oder risikoarme Checks aus, speichert Reports und visualisiert Ergebnisse in einem React-Dashboard.
+
+## Welches Problem löst VSW?
+
+Viele kleine Websites haben offensichtliche Sicherheitslücken in der Konfiguration, zum Beispiel fehlende Security Header, unsaubere TLS-Einstellungen oder offen erreichbare Standardports. VSW hilft, solche risikoarmen, passiven Checks lokal nachvollziehbar auszuführen und Reports so darzustellen, dass technische Findings, Evidenz und Empfehlungen schneller verständlich werden.
+
+## Wobei hilft es?
+
+- Domains oder IPs defensiv und lokal prüfen
+- HTTP Security Header, TLS-Zustand und eine kleine sichere Portliste auswerten
+- Reports speichern, vergleichen und exportieren
+- Findings mit Risiko, Evidenz und Empfehlung erklären
+- Browser-Link-Prüfungen über eine lokale Extension vorbereiten
+- ein Fullstack-Security-Projekt für Portfolio und IMS-Recruiting verständlich zeigen
 
 ## Dokumentation
 
@@ -404,6 +419,11 @@ node --check extensions/vsw-link-capture/runtime-fallback.js
 node --test extensions/vsw-link-capture/score-gate.test.cjs
 node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 ```
+
+## Repository-Metadaten Vorschlag
+
+- Description: `Defensive fullstack vulnerability scanner for passive website checks, reports and browser-assisted link review.`
+- Topics: `security`, `fastapi`, `react`, `typescript`, `vulnerability-scanner`, `passive-scanner`, `tls`, `security-headers`, `portfolio-project`
 
 ## Architekturhinweise
 
