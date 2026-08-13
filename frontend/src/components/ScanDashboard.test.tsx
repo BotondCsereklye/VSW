@@ -108,6 +108,29 @@ test('splitScansByRecency keeps fresh scans out of score categories until the ti
   expect(archivedScans.map((item) => item.id)).toEqual(['old'])
 })
 
+test('splitScansByRecency accepts a five minute inbox window', () => {
+  const now = Date.parse('2026-05-28T08:30:00Z')
+  const { recentScans, archivedScans } = splitScansByRecency(
+    [
+      scan({
+        id: 'fresh-five',
+        client_seen_at: now - 4 * 60 * 1000,
+        updated_at: '2026-05-28T07:30:00Z',
+      }),
+      scan({
+        id: 'older-than-five',
+        client_seen_at: now - 6 * 60 * 1000,
+        updated_at: '2026-05-28T07:30:00Z',
+      }),
+    ],
+    5,
+    now,
+  )
+
+  expect(recentScans.map((item) => item.id)).toEqual(['fresh-five'])
+  expect(archivedScans.map((item) => item.id)).toEqual(['older-than-five'])
+})
+
 
 test('ScanDashboard renders score classification sections as collapsed groups', async () => {
   const user = userEvent.setup()

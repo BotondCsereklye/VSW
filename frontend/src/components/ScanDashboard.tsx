@@ -43,7 +43,7 @@ export function ScanDashboard({
           <label className="scan-dashboard__recent-setting">
             <span>{t('dashboard.recentRetention')}</span>
             <NumericSettingInput
-              min={10}
+              min={1}
               max={30}
               value={recentMinutes}
               ariaLabel={t('dashboard.recentAria')}
