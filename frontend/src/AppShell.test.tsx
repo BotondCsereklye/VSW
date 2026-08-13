@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, vi } from 'vitest'
 
 import { AppShell } from './AppShell'
+import { I18nProvider } from './i18n/I18nProvider'
 
 
 function jsonResponse(data: unknown, status = 200) {
@@ -25,6 +26,7 @@ describe('AppShell', () => {
     vi.unstubAllGlobals()
     fetchMock.mockReset()
     vi.useRealTimers()
+    window.localStorage.clear()
   })
 
   test('loads scans, navigates to a report and renders its detail state', async () => {
@@ -274,5 +276,25 @@ describe('AppShell', () => {
 
     expect(await screen.findByText(/backend online/i)).toBeInTheDocument()
     expect(await screen.findByText(/recovered backend/i)).toBeInTheDocument()
+  })
+
+  test('renders connection status messages in the selected language', async () => {
+    window.localStorage.setItem('vsw-language', 'de')
+    fetchMock.mockRejectedValueOnce(new Error('Backend offline'))
+
+    render(
+      <I18nProvider>
+        <MemoryRouter initialEntries={['/']}>
+          <AppShell />
+        </MemoryRouter>
+      </I18nProvider>,
+    )
+
+    expect((await screen.findAllByText(/Backend ist offline/i)).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /Erneut verbinden/i })).toBeInTheDocument()
+    expect(screen.queryByText(/backend is offline/i)).not.toBeInTheDocument()
+
+    expect(await screen.findByText(/Browserschutz inaktiv/i)).toBeInTheDocument()
+    expect(screen.queryByText(/browser protection inactive/i)).not.toBeInTheDocument()
   })
 })
