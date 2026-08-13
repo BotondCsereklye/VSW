@@ -72,7 +72,7 @@ export function splitScansByRecency(
   recentMinutes: number,
   now = Date.now(),
 ): SplitScansByRecencyResult {
-  const maxAgeMs = Math.max(10, Math.min(30, recentMinutes)) * 60 * 1000
+  const maxAgeMs = Math.max(1, Math.min(30, recentMinutes)) * 60 * 1000
   const recentScans: ScanSummary[] = []
   const archivedScans: ScanSummary[] = []
 
@@ -90,12 +90,13 @@ export function splitScansByRecency(
 }
 
 function getLatestScanActivityTime(scan: ScanSummary) {
+  if (typeof scan.client_seen_at === 'number' && Number.isFinite(scan.client_seen_at)) {
+    return scan.client_seen_at
+  }
+
   return Math.max(
-    ...[scan.client_seen_at, scan.updated_at, scan.completed_at, scan.started_at, scan.created_at]
+    ...[scan.updated_at, scan.completed_at, scan.started_at, scan.created_at]
       .map((value) => {
-        if (typeof value === 'number') {
-          return value
-        }
         return value === null || value === undefined ? Number.NaN : Date.parse(value)
       })
       .filter((value) => Number.isFinite(value)),

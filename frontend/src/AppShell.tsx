@@ -25,7 +25,12 @@ import {
   setSafetyMessageRetentionMinutes,
   type SafetyMessage,
 } from './safetyMessages'
-import { getRecentScanMinutes, setRecentScanMinutes } from './scanDisplaySettings'
+import {
+  getRecentScanMinutes,
+  loadRecentScanSeenAt,
+  saveRecentScanSeenAt,
+  setRecentScanMinutes,
+} from './scanDisplaySettings'
 import type { ScanDetail, ScanExportFormat, ScanSummary } from './types/scan'
 
 const ACTIVE_SCAN_POLL_INTERVAL_MS = 1500
@@ -45,7 +50,9 @@ export function AppShell() {
   const scanId = matchedRoute?.params.scanId ?? null
   const [scans, setScans] = useState<ScanSummary[]>([])
   const knownScanIdsRef = useRef<Set<string> | null>(null)
-  const [clientSeenScans, setClientSeenScans] = useState<Record<string, number>>({})
+  const [clientSeenScans, setClientSeenScans] = useState<Record<string, number>>(() =>
+    loadRecentScanSeenAt(),
+  )
   const [selectedScan, setSelectedScan] = useState<ScanDetail | null>(null)
   const [scanHistory, setScanHistory] = useState<ScanSummary[]>([])
   const [discoveredLinks, setDiscoveredLinks] = useState<string[]>([])
@@ -84,8 +91,16 @@ export function AppShell() {
     const knownIds = knownScanIdsRef.current
 
     if (knownIds === null) {
+      const seenAt = Date.now()
+      const nextSeenAtByScanId: Record<string, number> = {}
+      for (const scan of nextScans) {
+        nextSeenAtByScanId[scan.id] = clientSeenScans[scan.id] ?? seenAt
+      }
+
       knownScanIdsRef.current = nextIds
-      return nextScans
+      setClientSeenScans(nextSeenAtByScanId)
+      saveRecentScanSeenAt(nextSeenAtByScanId)
+      return nextScans.map((scan) => ({ ...scan, client_seen_at: nextSeenAtByScanId[scan.id] }))
     }
 
     const newScanIds = new Set(nextScans.map((scan) => scan.id).filter((scanId) => !knownIds.has(scanId)))
@@ -101,6 +116,7 @@ export function AppShell() {
       for (const scanId of newScanIds) {
         next[scanId] = seenAt
       }
+      saveRecentScanSeenAt(next)
       return next
     })
 
@@ -108,7 +124,7 @@ export function AppShell() {
     return nextScans.map((scan) =>
       newScanIds.has(scan.id) ? { ...scan, client_seen_at: seenAt } : scan,
     )
-  }, [])
+  }, [clientSeenScans])
 
   const refreshScans = useCallback(async () => {
     setIsLoadingScans(true)
@@ -307,7 +323,11 @@ export function AppShell() {
         const rememberedScans = rememberNewScans(refreshedScans).map((scan) =>
           scan.id === createdScan.id ? { ...scan, client_seen_at: createdAt } : scan,
         )
-        setClientSeenScans((previous) => ({ ...previous, [createdScan.id]: createdAt }))
+        setClientSeenScans((previous) => {
+          const next = { ...previous, [createdScan.id]: createdAt }
+          saveRecentScanSeenAt(next)
+          return next
+        })
         setScans(rememberedScans)
         setErrorMessage(null)
         setConnectionStatus('online')
