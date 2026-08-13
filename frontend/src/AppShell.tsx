@@ -35,7 +35,7 @@ import type { ScanDetail, ScanExportFormat, ScanSummary } from './types/scan'
 
 const ACTIVE_SCAN_POLL_INTERVAL_MS = 1500
 const SAFETY_MESSAGE_PRUNE_INTERVAL_MS = 30_000
-const BACKEND_OFFLINE_MESSAGE = 'Backend is offline. Start VSW Launcher or backend to continue.'
+const BACKEND_OFFLINE_MARKER = '__vsw_backend_offline__'
 
 function isScanInProgress(status: ScanSummary['status'] | null | undefined) {
   return status === 'pending' || status === 'running'
@@ -53,6 +53,7 @@ export function AppShell() {
   const [clientSeenScans, setClientSeenScans] = useState<Record<string, number>>(() =>
     loadRecentScanSeenAt(),
   )
+  const clientSeenScansRef = useRef(clientSeenScans)
   const [selectedScan, setSelectedScan] = useState<ScanDetail | null>(null)
   const [scanHistory, setScanHistory] = useState<ScanSummary[]>([])
   const [discoveredLinks, setDiscoveredLinks] = useState<string[]>([])
@@ -75,7 +76,7 @@ export function AppShell() {
     scanId !== null &&
     selectedScan?.id === scanId &&
     isScanInProgress(selectedScan.status)
-  const visibleErrorMessage = errorMessage === BACKEND_OFFLINE_MESSAGE ? null : errorMessage
+  const visibleErrorMessage = errorMessage === BACKEND_OFFLINE_MARKER ? null : errorMessage
 
   const decorateScansWithClientSeenAt = useCallback(
     (nextScans: ScanSummary[]) =>
@@ -94,10 +95,11 @@ export function AppShell() {
       const seenAt = Date.now()
       const nextSeenAtByScanId: Record<string, number> = {}
       for (const scan of nextScans) {
-        nextSeenAtByScanId[scan.id] = clientSeenScans[scan.id] ?? seenAt
+        nextSeenAtByScanId[scan.id] = clientSeenScansRef.current[scan.id] ?? seenAt
       }
 
       knownScanIdsRef.current = nextIds
+      clientSeenScansRef.current = nextSeenAtByScanId
       setClientSeenScans(nextSeenAtByScanId)
       saveRecentScanSeenAt(nextSeenAtByScanId)
       return nextScans.map((scan) => ({ ...scan, client_seen_at: nextSeenAtByScanId[scan.id] }))
@@ -111,20 +113,19 @@ export function AppShell() {
     }
 
     const seenAt = Date.now()
-    setClientSeenScans((previous) => {
-      const next = { ...previous }
-      for (const scanId of newScanIds) {
-        next[scanId] = seenAt
-      }
-      saveRecentScanSeenAt(next)
-      return next
-    })
+    const nextSeenAtByScanId = { ...clientSeenScansRef.current }
+    for (const scanId of newScanIds) {
+      nextSeenAtByScanId[scanId] = seenAt
+    }
+    clientSeenScansRef.current = nextSeenAtByScanId
+    setClientSeenScans(nextSeenAtByScanId)
+    saveRecentScanSeenAt(nextSeenAtByScanId)
 
     knownScanIdsRef.current = nextIds
     return nextScans.map((scan) =>
       newScanIds.has(scan.id) ? { ...scan, client_seen_at: seenAt } : scan,
     )
-  }, [clientSeenScans])
+  }, [])
 
   const refreshScans = useCallback(async () => {
     setIsLoadingScans(true)
@@ -144,7 +145,7 @@ export function AppShell() {
         setDiscoveredLinks([])
         setCheckedLinks([])
         setConnectionStatus('offline')
-        setErrorMessage(BACKEND_OFFLINE_MESSAGE)
+        setErrorMessage(BACKEND_OFFLINE_MARKER)
       })
     } finally {
       setIsLoadingScans(false)
@@ -218,7 +219,7 @@ export function AppShell() {
         } catch {
           if (isActive) {
             setConnectionStatus('offline')
-            setErrorMessage(BACKEND_OFFLINE_MESSAGE)
+            setErrorMessage(BACKEND_OFFLINE_MARKER)
           }
         }
       })()
@@ -323,11 +324,13 @@ export function AppShell() {
         const rememberedScans = rememberNewScans(refreshedScans).map((scan) =>
           scan.id === createdScan.id ? { ...scan, client_seen_at: createdAt } : scan,
         )
-        setClientSeenScans((previous) => {
-          const next = { ...previous, [createdScan.id]: createdAt }
-          saveRecentScanSeenAt(next)
-          return next
-        })
+        const nextSeenAtByScanId = {
+          ...clientSeenScansRef.current,
+          [createdScan.id]: createdAt,
+        }
+        clientSeenScansRef.current = nextSeenAtByScanId
+        setClientSeenScans(nextSeenAtByScanId)
+        saveRecentScanSeenAt(nextSeenAtByScanId)
         setScans(rememberedScans)
         setErrorMessage(null)
         setConnectionStatus('online')
@@ -427,14 +430,14 @@ export function AppShell() {
       <section className="app-shell__connection" data-state={connectionStatus}>
         <span>
           {connectionStatus === 'online'
-            ? 'Backend online'
+            ? t('connection.online')
             : connectionStatus === 'offline'
-              ? BACKEND_OFFLINE_MESSAGE
-              : 'Checking backend...'}
+              ? t('connection.offline')
+              : t('connection.checking')}
         </span>
         {connectionStatus === 'offline' ? (
           <button type="button" onClick={() => void refreshScans()}>
-            Reconnect
+            {t('connection.reconnect')}
           </button>
         ) : null}
       </section>
