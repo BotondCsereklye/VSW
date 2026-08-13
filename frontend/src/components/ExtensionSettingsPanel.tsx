@@ -116,7 +116,7 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
         <p>{t('extension.description')}</p>
         {!isAvailable ? (
           <p className="extension-settings__warning" role="alert">
-            Browser protection inactive. Enable or reload the VSW Link Capture extension.
+            {t('extension.inactiveWarning')}
           </p>
         ) : null}
       </div>
@@ -178,7 +178,7 @@ export function ExtensionSettingsPanel({ scans }: ExtensionSettingsPanelProps) {
           <strong>{t('extension.hosts', { count: hostSummaries.length })}</strong>
         </summary>
         <p>{t('extension.rulesHelp')}</p>
-        <div className="extension-settings__rule-legend" aria-label="Website rule explanation">
+        <div className="extension-settings__rule-legend" aria-label={t('extension.rulesLegendAria')}>
           <p>
             <strong>{t('extension.ignoreScore')}:</strong> {t('extension.ignoreScoreHelp')}
           </p>
