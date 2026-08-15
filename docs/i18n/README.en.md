@@ -28,8 +28,8 @@ docker compose up --build
 ## Browser Extension
 
 - Normal in-page links can be pre-scanned before navigation.
-- Address-bar and bookmark visits cannot be reliably blocked before loading by Manifest V3.
-- Those visits are recorded passively after loading through `webNavigation`.
+- Address-bar entries, bookmark-bar clicks, browser buttons, and external-app links cannot be reliably blocked before loading by Manifest V3.
+- Those visits are only recorded passively after loading when the extension and backend are active.
 - `Trust site` skips scans and blocking for that host.
 - `Ignore minimum score` still creates reports but skips score-based blocking.
 

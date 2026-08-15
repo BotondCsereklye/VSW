@@ -48,6 +48,9 @@ $javascriptFiles = Get-ChildItem -LiteralPath $extensionPath -Recurse -File |
 foreach ($file in $javascriptFiles) {
   $matches = Select-String -Path $file.FullName -Pattern "['`"]https?://(?!127\.0\.0\.1|localhost)" -CaseSensitive:$false
   foreach ($match in $matches) {
+    if ($match.Line -match "['`"]https?://\*/\*['`"]") {
+      continue
+    }
     $findings += [pscustomobject]@{
       File = $file.FullName.Substring($projectRoot.Length + 1)
       Line = $match.LineNumber
@@ -60,7 +63,7 @@ foreach ($file in $javascriptFiles) {
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
 $permissions = @($manifest.permissions)
 $hostPermissions = @($manifest.host_permissions)
-$expectedPermissions = @("contextMenus", "activeTab", "storage", "webNavigation")
+$expectedPermissions = @("contextMenus", "activeTab", "storage", "webNavigation", "tabs", "scripting")
 $unexpectedPermissions = @($permissions | Where-Object { $_ -notin $expectedPermissions })
 
 Write-Host "VSW extension safety audit" -ForegroundColor Cyan

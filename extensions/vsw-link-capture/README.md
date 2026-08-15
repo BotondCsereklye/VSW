@@ -11,8 +11,8 @@ This extension is a defensive helper for local development. It does not scan on 
 - Exposes visit-gate settings inside the local VSW app on `localhost:5173`
 - Supports host rules inside the local VSW app for regularly scanned websites
 - Adds live click capture for normal in-page link clicks (http/https)
-- Records completed browser navigations with `webNavigation` so address-bar,
-  bookmark-bar, and pinned-link visits still create passive VSW reports
+- Records completed browser navigations with `webNavigation` on a best-effort
+  basis after loading
 - Uses `tabs.onUpdated` as a fallback for browsers where completed navigation
   events are less reliable
 - Injects the live capture scripts into already open tabs after install/startup
@@ -94,7 +94,19 @@ Browser UI actions are different:
 Those actions are controlled by the browser UI, not by the page content script.
 The extension therefore cannot promise a reliable scan-before-visit block for
 them. VSW uses `webNavigation` to record these visits after the page load and
-create a passive defensive report instead.
+create a passive defensive report instead when possible.
+
+Release wording must stay precise:
+
+- Reliable: in-page link clicks, context-menu actions, and the popup action
+  `Scan and visit target`.
+- Best effort: address bar, bookmark bar, pinned browser links, browser buttons,
+  and external-app links after the browser has loaded the page.
+- Not supported as a guarantee: global blocking of every URL opened anywhere on
+  the computer.
+
+For strict scan-before-visit, use `Scan and visit target` instead of typing the
+target into the browser address bar.
 
 Host rules behave as follows:
 
@@ -189,7 +201,11 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
   - Test on a normal in-page link, not the browser address bar or tab strip.
 - Address-bar or bookmark visits do not block before loading:
   - This is a browser limitation.
-  - VSW should still create a passive report shortly after the visit.
+  - VSW may create a passive report shortly after the visit when the browser,
+    extension permissions, and backend state allow it.
+- Links from WhatsApp, mail clients, or other external apps do not block before loading:
+  - This is the same browser limitation.
+  - Use `Scan and visit target` for strict pre-scan behaviour.
 - A tab behaved strangely after disabling or reloading the extension:
   - Browser engines may keep old content scripts in open tabs until reload.
   - The fallback now lets navigation continue after a short timeout.

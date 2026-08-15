@@ -92,8 +92,9 @@ Sinnvolle Testfälle:
 Wichtig für die Erklärung:
 
 - Normale Links innerhalb einer Webseite können vor der Navigation geprüft werden.
-- Adressleiste, Lesezeichenleiste und Browser-Buttons können nicht zuverlässig vor dem Laden blockiert werden.
-- Diese Browser-UI-Navigationen werden höchstens passiv nach dem Laden erfasst.
+- Adressleiste, Lesezeichenleiste, angeheftete Browser-Links, Browser-Buttons und Links aus externen Apps können nicht zuverlässig vor dem Laden blockiert werden.
+- Diese Browser- und App-Navigationen werden höchstens passiv nach dem Laden erfasst, wenn Extension, Website-Zugriff und lokales Backend aktiv sind.
+- Für eine strikte Prüfung vor dem Besuch wird in der Demo das Extension-Popup `Scan and visit target` genutzt.
 
 ## Docker-Variante
 
@@ -106,7 +107,7 @@ docker compose up --build
 
 Docker ist die reproduzierbare Variante für Entwickler. Der Windows-Launcher ist die einfachere lokale Demo-Variante.
 
-Nicht gleichzeitig mehrere Varianten starten, wenn Ports `8000`, `5173` oder `5432` bereits belegt sind.
+Nicht gleichzeitig mehrere Varianten starten, wenn Ports `8000`, `8080`, `5173` oder `5432` bereits belegt sind. Docker veröffentlicht das gebaute Frontend standardmässig auf `http://localhost:8080`; der Launcher nutzt für die Vite-Entwicklung `http://127.0.0.1:5173`.
 
 ## Was nicht versprochen wird
 
