@@ -28,8 +28,8 @@ docker compose up --build
 ## Browser-Extension
 
 - Normale Links innerhalb einer Website können vor der Navigation geprüft werden.
-- Adresszeile und Bookmarks können durch Manifest V3 nicht zuverlässig vor dem Laden blockiert werden.
-- Diese Besuche werden über `webNavigation` nach dem Laden passiv erfasst.
+- Adresszeile, Lesezeichenleiste, Browser-Buttons und Links aus externen Apps können durch Manifest V3 nicht zuverlässig vor dem Laden blockiert werden.
+- Diese Besuche werden höchstens nach dem Laden passiv erfasst, wenn Extension und Backend aktiv sind.
 - `Trust site` überspringt Scans und Blocking für diesen Host.
 - `Ignore minimum score` erstellt weiter Reports, blockiert aber nicht wegen dem Score.
 

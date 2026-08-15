@@ -864,6 +864,7 @@
 .scan-row:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: 2px;
+  border-color: var(--line) !important;
 }
 
 .scan-row__main h4,
@@ -1262,6 +1263,7 @@
   }
 
   .extension-settings__host-actions button,
+  .extension-settings__manual-host button,
   .report-detail__link-actions button,
   .report-detail__findings-toggle,
   .report-detail__exports button {

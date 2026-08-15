@@ -28,8 +28,8 @@ docker compose up --build
 ## Browser Extension
 
 - A normál, oldalon belüli linkek előre ellenőrizhetők navigáció előtt.
-- A címsor és a bookmark kattintások Manifest V3 alatt nem blokkolhatók megbízhatóan betöltés előtt.
-- Ezeket a látogatásokat a `webNavigation` passzívan rögzíti betöltés után.
+- A címsor, a bookmark sáv, a böngészőgombok és a külső appokból nyitott linkek Manifest V3 alatt nem blokkolhatók megbízhatóan betöltés előtt.
+- Ezeket a látogatásokat csak akkor lehet passzívan rögzíteni betöltés után, ha az extension és a backend aktív.
 - `Trust site` kihagyja a skent és a blokkolást az adott hostnál.
 - `Ignore minimum score` továbbra is riportot készít, de nem blokkol csak a score miatt.
 

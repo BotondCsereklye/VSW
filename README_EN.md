@@ -68,6 +68,18 @@ Only scan systems you own or systems where you have explicit permission.
 - Browser extension MVP for local backend link capture
 - Basic rate limiting in the backend
 
+## Browser Extension Release Limits
+
+The extension must not be presented as a global browser or operating-system guard. For the release, the supported behaviour is:
+
+- Reliable pre-scan: normal links clicked inside an already loaded web page, context-menu actions, and the popup field `Scan and visit target`.
+- Best effort only: address-bar entries, bookmark-bar clicks, pinned browser links, browser UI buttons, and links opened from external apps such as WhatsApp, mail clients, or chat tools.
+- Not promised: complete global link blocking, control over other apps, or guaranteed pre-scan for already open tabs without reload.
+
+Manifest V3 does not let a content script reliably block browser UI or external-app navigation before the first load. VSW may record those visits passively after loading when the extension is active, the page allows extension access, and the local backend is running. That creates a defensive report, but it is not a protection guarantee.
+
+If a user wants strict scan-before-visit for a manually entered domain, use the extension popup action `Scan and visit target` or scan the domain directly in the VSW dashboard.
+
 ## Recommended Windows Start
 
 ```powershell
@@ -125,9 +137,11 @@ docker compose up --build
 
 Services:
 
-- Frontend: `http://localhost:5173`
+- Frontend: `http://localhost:8080`
 - Backend API: `http://localhost:8000`
 - PostgreSQL: `localhost:5432`
+
+Note: the Windows launcher uses `5173` for the Vite frontend in development mode. Docker publishes the built frontend on `8080` by default. The browser extension is aligned with the launcher/development mode on `127.0.0.1:8000` and `127.0.0.1:5173`; Docker demos should open the dashboard through `http://localhost:8080` and verify the extension configuration separately.
 
 ## Tests
 
@@ -168,6 +182,7 @@ node --test extensions/vsw-link-capture/runtime-fallback.test.cjs
 - No content audit of the target application
 - No external asset or JavaScript dependency analysis
 - No global mobile link blocking
+- No reliable pre-load blocking for address-bar, bookmark-bar, pinned browser-link, browser-button, or external-app navigation
 - No offline scanning in the PWA because backend, network and database must be reachable
 
 ## Repository Metadata Suggestion

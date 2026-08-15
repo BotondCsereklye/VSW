@@ -30,7 +30,7 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 - Popup-Trigger für die aktuelle Seite
 - Popup-Flow für `Scan and visit target` mit konfigurierbarem Mindestscore
 - Live-Capture im Content Script für normale In-Page-Link-Klicks mit Pre-Scan-Gate
-- Passive Erfassung von Adresszeilen-, Bookmark- und Browser-UI-Navigationen über `webNavigation`
+- Best-effort passive Erfassung von Browser-UI- und externen App-Navigationen nach dem Laden über `webNavigation`
 - Sendet nur Host-Ziele an das lokale Backend `POST /api/v1/scans`
 - Öffnet die lokale VSW-Scan-Detailseite bei Kontext- oder Popup-Trigger
 - Runtime-Fallback verhindert dauerhaft hängende Tabs, wenn eine bereits injizierte Extension-Runtime deaktiviert, entfernt oder neu geladen wurde
@@ -38,6 +38,8 @@ Defensive Fullstack-Web-App für sichere, passive oder risikoarme Infrastruktur-
 - Host-Regeln werden zentral normalisiert, damit `www.`-Hosts, Subdomains und URL-basierte Regeln stabil verglichen werden
 - Nutzt bewusst minimale Berechtigungen und keine Browserhistorie-Berechtigung
 - Enthält keine offensive Logik und keine eigenständige Scan-Engine
+
+Browser-Grenze für den Release: Die Extension kann normale Links innerhalb einer Webseite zuverlässig vor der Navigation prüfen. Adresszeile, Lesezeichenleiste, angeheftete Browser-Links, Browser-Buttons und Links aus externen Apps liegen ausserhalb des Content-Script-Flows und können durch Manifest V3 nicht zuverlässig vor dem ersten Laden blockiert werden. Diese Fälle bleiben Best-effort-Passiverfassung und dürfen nicht als vollständiges globales Link-Blocking verkauft werden.
 
 ### Infrastruktur
 

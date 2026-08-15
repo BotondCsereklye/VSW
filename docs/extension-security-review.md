@@ -9,6 +9,8 @@ Diese Notiz beschreibt, wie die VSW Link Capture Extension sicher gehalten wird 
 - Keine externe Script-Quelle in der Extension.
 - Keine `eval`- oder `new Function`-Nutzung.
 - Keine Browser-History-, Cookie-, Download-, Clipboard-, Bookmark- oder Native-Messaging-Berechtigung.
+- Die `tabs`-Berechtigung ist bewusst erlaubt, damit die Extension den aktuellen Tab prüfen, das Dashboard fokussieren und vorhandene VSW-Tabs wiederverwenden kann.
+- Die `scripting`-Berechtigung ist bewusst erlaubt, damit die Extension Content Scripts best-effort in bereits offene Tabs injizieren kann. Jede Erweiterung dieser Nutzung braucht Review.
 - Requests der Extension gehen nur an das lokale VSW-Backend `http://127.0.0.1:8000`.
 - Die Extension sendet nur Hostnamen an das Backend, nicht den kompletten Seiteninhalt.
 - `Trust site` und `Ignore minimum score` werden lokal in `chrome.storage.local` gespeichert.
@@ -20,6 +22,7 @@ Die Extension braucht breite Website-Berechtigungen, weil sie normale In-Page-Kl
 - Der aktuelle Code ist defensiv und begrenzt.
 - Wenn aber jemand Schadcode in die Extension einbaut, hätte dieser Code Zugriff auf viele besuchte Seiten.
 - Deshalb müssen Extension-Änderungen strenger geprüft werden als normale UI-Änderungen.
+- Adresszeile, Lesezeichenleiste, Browser-Buttons und Links aus externen Apps sind nur Best-effort-Passiverfassung nach dem Laden. Sie dürfen nicht als zuverlässiges Scan-vor-Besuch-Blocking dokumentiert oder beworben werden.
 
 ## Vor jedem Merge prüfen
 

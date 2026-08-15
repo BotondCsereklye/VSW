@@ -28,8 +28,8 @@ docker compose up --build
 ## Browser Extension
 
 - Normalni linkovi unutar stranice mogu da se provere pre navigacije.
-- Address bar i bookmark klikovi se u Manifest V3 ne mogu pouzdano blokirati pre učitavanja.
-- Te posete se pasivno beleže posle učitavanja kroz `webNavigation`.
+- Address bar, bookmark bar, dugmad browsera i linkovi iz spoljnih aplikacija se u Manifest V3 ne mogu pouzdano blokirati pre učitavanja.
+- Te posete se mogu pasivno beležiti tek posle učitavanja, ako su extension i backend aktivni.
 - `Trust site` preskače sken i blokiranje za taj host.
 - `Ignore minimum score` i dalje pravi izveštaje, ali ne blokira samo zbog score-a.
 

@@ -186,7 +186,7 @@ Funktionen:
 - Popup-Feld: `Scan and visit target`
 - Konfigurierbarer Mindestscore vor Weiterleitung
 - Live-Capture für normale In-Page-Link-Klicks mit Pre-Scan vor Navigation
-- Passive Navigationserfassung über `webNavigation` für Adresszeile, Bookmarks und angeheftete Browser-Links
+- Best-effort passive Navigationserfassung über `webNavigation` nach dem Laden
 - Popup zeigt nur Status und Schnellaktionen; die Visit-Gate-Einstellungen werden in der lokalen VSW-App verwaltet
 - Host-Regeln in der lokalen VSW-App für häufig genutzte Websites
 - Trigger an lokales Backend: `POST http://127.0.0.1:8000/api/v1/scans`
@@ -200,14 +200,24 @@ Wichtige Opera-/Chrome-Hinweise:
 - Nach dem Laden der Extension `Developer mode` aktiv lassen
 - In `Details` den Website-Zugriff auf `Auf allen Websites` setzen
 - Nach Änderungen oder nach erstem Laden die Zielseite mit `Ctrl+F5` neu laden
-- Live-Capture greift nur bei normalen Links im Seiteninhalt, nicht bei Adresszeile, Browser-Tabs oder Browser-Buttons
-- Adresszeile, Bookmarks und angeheftete Browser-Links können durch Manifest V3 nicht zuverlässig vor dem Besuch blockiert werden. VSW erfasst sie nach dem Laden passiv und erstellt daraus einen Report.
-- Links aus externen Apps wie WhatsApp, Mail oder Chat-Clients werden vom Browser wie neue Navigationsstarts behandelt. Die Extension kann solche Aufrufe nicht zuverlässig vor dem ersten Laden stoppen, kann sie aber über passive Navigation erfassen, sobald der Browser sie geladen hat und das lokale Backend läuft.
+- Live-Capture mit Scan-vor-Besuch greift nur bei normalen Links im Seiteninhalt
+- Adresszeile, Lesezeichenleiste, angeheftete Browser-Links, Tabs, Browser-Buttons und Links aus externen Apps wie WhatsApp, Mail oder Chat-Clients werden vom Browser selbst gesteuert. Manifest V3 erlaubt hier keinen zuverlässigen Block vor dem ersten Laden.
+- Solche Browser- oder App-Navigationen können höchstens nach dem Laden passiv erkannt werden, wenn die Extension aktiv ist, die Seite Extension-Zugriff erlaubt und das lokale Backend läuft. Das ist ein Best-effort-Report, kein Schutzversprechen.
 - Für echtes Scan-vor-Besuch bei manuell eingegebenen Domains das Popup-Feld `Scan and visit target` nutzen
 - Der Mindestscore wird in der VSW-App unter `Visit gate settings` angepasst, wenn die Extension geladen ist und Website-Zugriff auf `localhost`/`127.0.0.1` hat
 - Im Bereich `Website rules` können regelmässig gescannte Hosts verwaltet werden. `Ignore minimum score` scannt weiterhin, blockiert aber nicht wegen dem Score. `Trust site` erlaubt Navigation für diesen Host ohne Blocking.
 - Nach Sleep, Browser-Neustart oder Extension-Reload werden Host-Regeln neu aus dem Storage geladen und normalisiert. `www.github.com`, `github.com` und URL-basierte Regeln werden auf denselben Host zurückgeführt.
 - Wenn Backend/Frontend nicht laufen, zeigt das Frontend einen Offline-Status und einen `Reconnect`-Button, statt alte Scan-Daten als live darzustellen.
+
+### Release-Hinweis zu Browser-Grenzen
+
+VSW darf nicht so erklärt werden, als könnte die Extension jeden Browser- oder Systemklick vorab kontrollieren. Für den Release gilt diese klare Abgrenzung:
+
+- Zuverlässig: normale Links innerhalb einer geladenen Webseite, Kontextmenü-Aktionen und das Popup-Feld `Scan and visit target`.
+- Best effort: Adresszeile, Lesezeichenleiste, angeheftete Browser-Links und Links aus externen Apps. Diese Aufrufe können je nach Browser erst nach dem Laden erkannt werden.
+- Nicht versprochen: vollständiges globales Link-Blocking, Kontrolle über andere Apps oder garantierter Pre-Scan für bereits geöffnete Tabs ohne Reload.
+
+Wenn ein Nutzer eine Domain sicher vor dem Besuch prüfen will, soll er `Scan and visit target` in der Extension nutzen oder die Domain direkt im VSW-Dashboard scannen.
 
 Score-Gruppen im Dashboard:
 
@@ -347,6 +357,7 @@ Das Frontend erwartet standardmässig die API unter `http://localhost:8000/api/v
 - Keine tiefgehende Langzeit-Trendanalyse über viele Zeiträume
 - Keine Vollscanner-Extension direkt im Browser, weil die eigentlichen defensiven Checks bewusst im lokalen Backend bleiben
 - Browser-Limitation: Bereits injizierte Content Scripts können in offenen Tabs bis zum Reload verbleiben. Der Extension-Fallback verhindert dauerhaft kaputte Tabs, indem er bei Runtime-Verlust nach kurzer Wartezeit weiterleitet.
+- Browser-Limitation: Adresszeile, Lesezeichenleiste, angeheftete Browser-Links und externe App-Links lassen sich mit Manifest V3 nicht zuverlässig vor dem ersten Laden blockieren.
 - Kein mobiles globales Link-Blocking wie auf Desktop-Browsern mit Extension
 - Kein Offline-Scan in der PWA, weil Backend, Netzwerk und Datenbank erreichbar sein müssen
 
@@ -374,9 +385,11 @@ docker compose up --build
 
 3. Services:
 
-- Frontend: `http://localhost:5173`
+- Frontend: `http://localhost:8080`
 - Backend API: `http://localhost:8000`
 - PostgreSQL: `localhost:5432`
+
+Hinweis: Der Windows-Launcher nutzt im Entwicklungsmodus standardmässig `5173` für das Vite-Frontend. Docker veröffentlicht das gebaute Frontend standardmässig auf `8080`. Die Browser-Extension ist auf den Launcher-/Entwicklungsmodus mit `127.0.0.1:8000` und `127.0.0.1:5173` ausgerichtet. Für Docker-Demos ohne Launcher wird das Dashboard über `http://localhost:8080` geöffnet; die Extension sollte danach separat auf die aktuelle Release-Konfiguration geprüft werden.
 
 ## Wichtige Umgebungsvariablen
 

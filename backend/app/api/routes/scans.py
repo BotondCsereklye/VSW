@@ -150,6 +150,14 @@ def discover_scan_links_endpoint(
     session: DbSession,
     limit: int = Query(default=12, ge=1, le=50),
 ) -> ScanLinkDiscoveryResponse:
+    client_host = request.client.host if request.client is not None else "unknown"
+    rate_limiter = request.app.state.rate_limiter
+    if not rate_limiter.allow(f"link-discovery:{client_host}"):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded. Please try again later.",
+        )
+
     scan = get_scan_or_404(session, scan_id)
     discover_links = request.app.state.link_discovery
     links = discover_links(scan.normalized_target, limit=limit)
